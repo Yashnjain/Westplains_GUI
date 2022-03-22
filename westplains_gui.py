@@ -1,4 +1,3 @@
-import re
 from tkinter.filedialog import askdirectory, askopenfilename
 from tkinter import Menubutton, Tk, StringVar, Text
 from tkinter import PhotoImage
@@ -14,7 +13,7 @@ from tkinter import messagebox
 from pandas import json_normalize
 from pandas.core import frame 
 import requests, json
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 import numpy as np
 import glob, time
 import threading
@@ -30,6 +29,7 @@ from tabula import read_pdf
 from collections import defaultdict
 import xlwings.constants as win32c
 import threading, sys
+import PyPDF2
 
 
 
@@ -68,7 +68,269 @@ class MyDateEntry(DateEntry):
         label(self._top_cal, bg='gray90', anchor='w',
                  text='Today: %s' % date.today().strftime('%x')).pack(fill='both', expand=1)
 
+def bbr_other_tabs(input_date, wb, input_ar, input_ctm):
+    try:
+        
+        # input_xl = r"J:\WEST PLAINS\REPORT\BBR Reports\Raw Files" +f"\\{input_date}_Borrowing Base Report.xlsx"
+        # if not os.path.exists(input_xl):
+        #         return(f"{input_xl} Excel file not present for date {input_date}")
+        # input_xl = r"C:\Users\Yashn.jain\Desktop\WEST PLAINS\REPORT\BBR Reports\Raw Files"+f"\\{input_date}_Borrowing Base Report.xlsx"
+        # input_ar = r"J:\WEST PLAINS\REPORT\Open AR\Output files"+f"\\Open AR _{input_date} - Production.xlsx"
+        # if not os.path.exists(input_ar):
+        #         return(f"{input_ar} Excel file not present for date {input_date}")
+        # input_ar = r"C:\Users\Yashn.jain\Desktop\WEST PLAINS\REPORT\Open AR\Output files"+f"\\Open AR _{input_date} - Production.xlsx"
+        # input_ctm = r"J:\WEST PLAINS\REPORT\CTM Combined report\Output files"+f"\\CTM Combined _{input_date}.xlsx"
+        # if not os.path.exists(input_ctm):
+        #         return(f"{input_ctm} Excel file not present for date {input_date}")
+        # input_ctm = r"C:\Users\Yashn.jain\Desktop\WEST PLAINS\REPORT\CTM Combined report\Output files"+f"\\CTM Combined _{input_date}.xlsx"
+        # output_location=r"J:WEST PLAINS\REPORT\BBR Reports\Output"
+        # output_location=r"C:\Users\Yashn.jain\Desktop\Sample_BBR"
+        # retry=0
+        while retry < 10:
+            try:
+                ar_wb=xw.Book(input_ar)
+                break
+            except Exception as e:
+                time.sleep(5)
+                retry+=1
+                if retry ==10:
+                    raise e           
+        wsar1=ar_wb.sheets["Eligible"]
+        wsar1.activate()
+        last_row = wsar1.range(f'A'+ str(wsar1.cells.last_cell.row)).end('up').row
+        column_list = wsar1.range("A1").expand('right').value
+        total_column=column_list.index('total')+1
+        total_letter_column = num_to_col_letters(column_list.index('total')+1)
+        # wb.app.quit()
+        ar_wb.close()
 
+        # retry=0
+        # while retry < 10:
+        #     try:
+        #         wb=xw.Book(input_xl)
+        #         break
+        #     except Exception as e:
+        #         time.sleep(5)
+        #         retry+=1
+        #         if retry ==10:
+        #             raise e
+
+
+        ws1=wb.sheets["AR-Trade By Tier - Eligible"]
+        ws1.select()
+        # pivotCount = wb.api.ActiveSheet.PivotTables().Count
+        # #'\\Bio-India-FS\India sync$\WEST PLAINS\REPORT\BBR Reports\Raw Files\[Open AR _02.07.2022 - Production.xlsx]Eligible'!$A$1:$K$123
+        # # 'Data 02.21.2022'!$A$1:$G$4731
+        # #'\\Bio-India-FS\India sync$\WEST PLAINS\REPORT\BBR Reports\Raw Files\[Open AR _02.07.2022 - Production.xlsx]Eligible'!$A$1:$K$123
+        # for j in range(1, pivotCount+1):
+        #     wb.api.ActiveSheet.PivotTables("PivotTable1").PivotSelect("Tier[All]", win32c.PTSelectionMode.xlLabelOnly,True)
+        #     # wb.api.ActiveSheet.PivotTables(j).PivotCache().SourceData = f"'J:\WEST PLAINS\REPORT\Open AR\Output files\[Open AR _{input_date} - Production]Eligible'!R1C1:R{last_row}C{total_column}"
+        #     wb.api.ActiveSheet.PivotTables(j).PivotCache().Refresh()  
+
+        ###logger.info("Adding Worksheet for Pivot Table")
+        wb.sheets.add("AR-Trade By Tier - Eligible2",after=wb.sheets["Account Receivable Summary"])
+        ###logger.info("Clearing contents for new sheet")
+        wb.sheets["AR-Trade By Tier - Eligible2"].clear_contents()
+        ws2=wb.sheets["AR-Trade By Tier - Eligible2"]
+        ###logger.info("Declaring Variables for columns and rows")
+        # last_row = ws5.range(f'A'+ str(ws1.cells.last_cell.row)).end('up').row
+        # last_column = ws5.range('A1').end('right').last_cell.column
+        # last_column_letter=num_to_col_letters(ws5.range('A1').end('right').last_cell.column)
+        ###logger.info("Creating Pivot Table")
+        PivotCache=wb.api.PivotCaches().Create(SourceType=win32c.PivotTableSourceType.xlDatabase, SourceData=f"'J:\\WEST PLAINS\\REPORT\\Open AR\\Output files\\[Open AR _{input_date} - Production.xlsx]Eligible'!R1C1:R{last_row}C{total_column}", Version=win32c.PivotTableVersionList.xlPivotTableVersion14)
+        PivotTable = PivotCache.CreatePivotTable(TableDestination=f"'J:\\WEST PLAINS\\REPORT\\BBR Reports\\Raw Files\\[{input_date}_Borrowing Base Report.xlsx]AR-Trade By Tier - Eligible2'!R7C1", TableName="PivotTable1", DefaultVersion=win32c.PivotTableVersionList.xlPivotTableVersion14)
+        ###logger.info("Adding particular Row in Pivot Table")
+
+        PivotTable.PivotFields('Tier').Orientation = win32c.PivotFieldOrientation.xlRowField
+        PivotTable.PivotFields('Tier').Position = 1
+        PivotTable.PivotFields('Customer Name').Orientation = win32c.PivotFieldOrientation.xlRowField
+        ###logger.info("Adding particular Data Field in Pivot Table")
+        PivotTable.PivotFields('Current').Orientation = win32c.PivotFieldOrientation.xlDataField
+        PivotTable.PivotFields('Sum of Current').NumberFormat= '_("$"* #,##0.00_);_("$"* (#,##0.00);_("$"* "-"??_);_(@_)'
+        PivotTable.PivotFields(' 1 - 10').Orientation = win32c.PivotFieldOrientation.xlDataField
+        PivotTable.PivotFields('Sum of  1 - 10').NumberFormat= '_("$"* #,##0.00_);_("$"* (#,##0.00);_("$"* "-"??_);_(@_)'
+        PivotTable.PivotFields(' 11 - 30').Orientation = win32c.PivotFieldOrientation.xlDataField
+        PivotTable.PivotFields('Sum of  11 - 30').NumberFormat= '_("$"* #,##0.00_);_("$"* (#,##0.00);_("$"* "-"??_);_(@_)'
+        PivotTable.PivotFields(' 31 - 60').Orientation = win32c.PivotFieldOrientation.xlDataField
+        PivotTable.PivotFields('Sum of  31 - 60').NumberFormat= '_("$"* #,##0.00_);_("$"* (#,##0.00);_("$"* "-"??_);_(@_)'
+        PivotTable.PivotFields(' 61 - 9999').Orientation = win32c.PivotFieldOrientation.xlDataField
+        PivotTable.PivotFields('Sum of  61 - 9999').NumberFormat= '_("$"* #,##0.00_);_("$"* (#,##0.00);_("$"* "-"??_);_(@_)'
+        PivotTable.PivotFields('Balance').Orientation = win32c.PivotFieldOrientation.xlDataField
+        PivotTable.PivotFields('Sum of Balance').NumberFormat= '_("$"* #,##0.00_);_("$"* (#,##0.00);_("$"* "-"??_);_(@_)'
+        ###logger.info("Adding particular Page Field in Pivot Table")
+        PivotTable.PivotFields('Eligiblity').Orientation = win32c.PivotFieldOrientation.xlPageField
+        ###logger.info("Applying filter in Data Field in Pivot Table")
+        PivotTable.PivotFields('Eligiblity').CurrentPage = "Eligible"
+        ###logger.info("Changing No Format in Pivot Table")
+        # PivotTable.RowAxisLayout(1)
+        ###logger.info("Changing Table Style in Pivot Table")
+        PivotTable.TableStyle2 = ""
+        ###logger.info("Changing Table Layout in Pivot Table")
+        PivotTable.RowAxisLayout(1)
+        wb.api.ActiveSheet.PivotTables("PivotTable1").InGridDropZones = True
+        wb.api.ActiveSheet.PivotTables("PivotTable1").DataPivotField.Caption = "Data"
+
+        ws1.api.Range("A1:A3").Copy()
+        ws2.api.Paste()
+        wb.app.api.CutCopyMode=False
+        # ws1.delete()
+        # ws2.name="AR-Trade By Tier - Eligible"
+        ws3=wb.sheets["AR-Trade By Tier - Ineligible"]
+        ws3.select()
+        wb.sheets.add("AR-Trade By Tier - Ineligible2",after=wb.sheets["AR-Trade By Tier - Eligible2"])
+        ###logger.info("Clearing contents for new sheet")
+        wb.sheets["AR-Trade By Tier - Ineligible2"].clear_contents()
+        ws4=wb.sheets["AR-Trade By Tier - Ineligible2"]
+        ###logger.info("Declaring Variables for columns and rows")
+        # last_row = ws5.range(f'A'+ str(ws1.cells.last_cell.row)).end('up').row
+        # last_column = ws5.range('A1').end('right').last_cell.column
+        # last_column_letter=num_to_col_letters(ws5.range('A1').end('right').last_cell.column)
+        ###logger.info("Creating Pivot Table")
+        PivotCache=wb.api.PivotCaches().Create(SourceType=win32c.PivotTableSourceType.xlDatabase, SourceData=f"'J:\\WEST PLAINS\\REPORT\\Open AR\\Output files\\[Open AR _{input_date} - Production.xlsx]Eligible'!R1C1:R{last_row}C{total_column}", Version=win32c.PivotTableVersionList.xlPivotTableVersion14)
+        PivotTable = PivotCache.CreatePivotTable(TableDestination=f"'J:\\WEST PLAINS\\REPORT\\BBR Reports\\Raw Files\\[{input_date}_Borrowing Base Report.xlsx]AR-Trade By Tier - Ineligible2'!R7C1", TableName="PivotTable1", DefaultVersion=win32c.PivotTableVersionList.xlPivotTableVersion14)
+        ###logger.info("Adding particular Row in Pivot Table")
+
+        PivotTable.PivotFields('Tier').Orientation = win32c.PivotFieldOrientation.xlRowField
+        PivotTable.PivotFields('Tier').Position = 1
+        PivotTable.PivotFields('Customer Name').Orientation = win32c.PivotFieldOrientation.xlRowField
+        ###logger.info("Adding particular Data Field in Pivot Table")
+        PivotTable.PivotFields('Current').Orientation = win32c.PivotFieldOrientation.xlDataField
+        PivotTable.PivotFields('Sum of Current').NumberFormat= '_("$"* #,##0.00_);_("$"* (#,##0.00);_("$"* "-"??_);_(@_)'
+        PivotTable.PivotFields(' 1 - 10').Orientation = win32c.PivotFieldOrientation.xlDataField
+        PivotTable.PivotFields('Sum of  1 - 10').NumberFormat= '_("$"* #,##0.00_);_("$"* (#,##0.00);_("$"* "-"??_);_(@_)'
+        PivotTable.PivotFields(' 11 - 30').Orientation = win32c.PivotFieldOrientation.xlDataField
+        PivotTable.PivotFields('Sum of  11 - 30').NumberFormat= '_("$"* #,##0.00_);_("$"* (#,##0.00);_("$"* "-"??_);_(@_)'
+        PivotTable.PivotFields(' 31 - 60').Orientation = win32c.PivotFieldOrientation.xlDataField
+        PivotTable.PivotFields('Sum of  31 - 60').NumberFormat= '_("$"* #,##0.00_);_("$"* (#,##0.00);_("$"* "-"??_);_(@_)'
+        PivotTable.PivotFields(' 61 - 9999').Orientation = win32c.PivotFieldOrientation.xlDataField
+        PivotTable.PivotFields('Sum of  61 - 9999').NumberFormat= '_("$"* #,##0.00_);_("$"* (#,##0.00);_("$"* "-"??_);_(@_)'
+        PivotTable.PivotFields('Balance').Orientation = win32c.PivotFieldOrientation.xlDataField
+        PivotTable.PivotFields('Sum of Balance').NumberFormat= '_("$"* #,##0.00_);_("$"* (#,##0.00);_("$"* "-"??_);_(@_)'
+        ###logger.info("Adding particular Page Field in Pivot Table")
+        PivotTable.PivotFields('Eligiblity').Orientation = win32c.PivotFieldOrientation.xlPageField
+        ###logger.info("Applying filter in Data Field in Pivot Table")
+        PivotTable.PivotFields('Eligiblity').CurrentPage = "Ineligible"
+        ###logger.info("Changing No Format in Pivot Table")
+        # PivotTable.RowAxisLayout(1)
+        ###logger.info("Changing Table Style in Pivot Table")
+        PivotTable.TableStyle2 = ""
+        ###logger.info("Changing Table Layout in Pivot Table")
+        PivotTable.RowAxisLayout(1)
+        wb.api.ActiveSheet.PivotTables("PivotTable1").InGridDropZones = True
+        wb.api.ActiveSheet.PivotTables("PivotTable1").DataPivotField.Caption = "Data"
+
+        ws3.api.Range("A1:A3").Copy()
+        ws4.api.Paste()
+        wb.app.api.CutCopyMode=False
+        # ws3.delete()
+        # ws4.name="AR-Trade By Tier - Ineligible"
+        # ws5=wb.sheets['Detail CTM Non MCUI']
+
+        retry=0
+        while retry < 10:
+            try:
+                wb1=xw.Book(input_ctm)
+                break
+            except Exception as e:
+                time.sleep(5)
+                retry+=1
+                if retry ==10:
+                    raise e 
+
+        excl_sht = wb1.sheets("Excl Macq & IC")
+        ##logger.info("Copy tier sheet AFTER the intercompany sheet of input book.")
+        num_row = excl_sht.range('A1').end('down').row
+        last_column = excl_sht.range('A1').end('right').last_cell.column
+        last_column_letter=num_to_col_letters(last_column)
+        excl_sht.range(f'A1:{last_column_letter}{num_row}').copy()
+        wb.activate()
+        ws5 = wb.sheets['Detail CTM Non MCUI']
+        ws5.range('A1').paste()
+        wb.app.api.CutCopyMode=False
+        wb1.activate()
+        wb1.close()
+        wb.activate()
+        ws6 = wb.sheets['Unrlz- Gains- Contracts Non MC']
+        wb.sheets['Unrlz- Gains- Contracts Non MC'].select()
+
+        #logger.info("Adding Worksheet for Pivot Table")
+        wb.sheets.add("Unrlz- Gains- Contracts Non MC2",after=wb.sheets["Inventory -Other"])
+        #logger.info("Clearing New Worksheet")
+        wb.sheets["Unrlz- Gains- Contracts Non MC2"].clear_contents()
+        ws7=wb.sheets["Unrlz- Gains- Contracts Non MC2"]
+        #logger.info("Declaring Variables for columns and rows")
+        last_column = ws5.range('A1').end('right').last_cell.column
+        last_column_letter=num_to_col_letters(ws5.range('A1').end('right').last_cell.column)
+        num_row = ws5.range('A1').end('down').row
+        #logger.info("Creating Pivot table")
+        PivotCache=wb.api.PivotCaches().Create(SourceType=win32c.PivotTableSourceType.xlDatabase, SourceData=f"\'Detail CTM Non MCUI\'!R1C1:R{num_row}C{last_column}", Version=win32c.PivotTableVersionList.xlPivotTableVersion14)
+        PivotTable = PivotCache.CreatePivotTable(TableDestination="'Unrlz- Gains- Contracts Non MC2'!R7C1", TableName="PivotTable1", DefaultVersion=win32c.PivotTableVersionList.xlPivotTableVersion14)
+        #logger.info("Adding particular Row Data in Pivot Table")
+        PivotTable.PivotFields('Location Id').Orientation = win32c.PivotFieldOrientation.xlRowField
+        PivotTable.PivotFields('Location Id').Position = 1
+        # PivotTable.PivotFields('Tier').RepeatLabels=True
+        PivotTable.PivotFields('Commodity Id').Orientation = win32c.PivotFieldOrientation.xlRowField
+        #logger.info("Adding particular Data Field in Pivot Table")
+        PivotTable.PivotFields('Gain/LossTotal').Orientation = win32c.PivotFieldOrientation.xlDataField
+        PivotTable.PivotFields('Sum of Gain/LossTotal').NumberFormat= '_(* #,##0.00_);_(* (#,##0.00);_(* "-"??_);_(@_)'
+        #logger.info("Adding particular Page Field in Pivot Table")
+        PivotTable.PivotFields('Ship Tier').Orientation = win32c.PivotFieldOrientation.xlPageField
+        #logger.info("Applying filter in pagefield in Pivot Table")
+        PivotTable.PivotFields('Ship Tier').CurrentPage = "W/n 12 Months"
+        #logger.info("Changing No Format in Pivot Table")
+        #logger.info("Changing Table layout")
+        PivotTable.PivotFields('Location Id').Subtotals=(False, False, False, False, False, False, False, False, False, False, False, False)
+        PivotTable.RowAxisLayout(1)
+        #logger.info("Changing Table Style")
+        PivotTable.TableStyle2 = ""
+        wb.api.ActiveSheet.PivotTables("PivotTable1").InGridDropZones = True
+
+        #logger.info("Declaring Variables for columns and rows")
+        last_column = ws5.range('A1').end('right').last_cell.column
+        last_column_letter=num_to_col_letters(ws5.range('A1').end('right').last_cell.column)
+        num_row = ws5.range('A1').end('down').row
+        last_row2 = ws7.range(f'A'+ str(ws1.cells.last_cell.row)).end('up').row
+        last_row2+=10
+        #logger.info("Creating Pivot table")
+        PivotCache=wb.api.PivotCaches().Create(SourceType=win32c.PivotTableSourceType.xlDatabase, SourceData=f"\'Detail CTM Non MCUI\'!R1C1:R{num_row}C{last_column}", Version=win32c.PivotTableVersionList.xlPivotTableVersion14)
+        PivotTable = PivotCache.CreatePivotTable(TableDestination=f"'Unrlz- Gains- Contracts Non MC2'!R{last_row2}C1", TableName="PivotTable2", DefaultVersion=win32c.PivotTableVersionList.xlPivotTableVersion14)
+        #logger.info("Adding particular Row Data in Pivot Table")
+        PivotTable.PivotFields('Location Id').Orientation = win32c.PivotFieldOrientation.xlRowField
+        PivotTable.PivotFields('Location Id').Position = 1
+        # PivotTable.PivotFields('Tier').RepeatLabels=True
+        PivotTable.PivotFields('Commodity Id').Orientation = win32c.PivotFieldOrientation.xlRowField
+        PivotTable.PivotFields('Delivery End Date').Orientation = win32c.PivotFieldOrientation.xlRowField
+        #logger.info("Adding particular Data Field in Pivot Table")
+        PivotTable.PivotFields('Gain/LossTotal').Orientation = win32c.PivotFieldOrientation.xlDataField
+        PivotTable.PivotFields('Sum of Gain/LossTotal').NumberFormat= '_(* #,##0.00_);_(* (#,##0.00);_(* "-"??_);_(@_)'
+        #logger.info("Adding particular Page Field in Pivot Table")
+        PivotTable.PivotFields('Ship Tier').Orientation = win32c.PivotFieldOrientation.xlPageField
+        #logger.info("Applying filter in pagefield in Pivot Table")
+        PivotTable.PivotFields('Ship Tier').CurrentPage = ">12 months"
+        #logger.info("Changing No Format in Pivot Table")
+        #logger.info("Changing Table layout")
+        PivotTable.PivotFields('Location Id').Subtotals=(False, False, False, False, False, False, False, False, False, False, False, False)
+        PivotTable.PivotFields('Commodity Id').Subtotals=(False, False, False, False, False, False, False, False, False, False, False, False)
+        PivotTable.RowAxisLayout(1)
+        #logger.info("Changing Table Style")
+        PivotTable.TableStyle2 = ""
+        wb.api.ActiveSheet.PivotTables("PivotTable2").InGridDropZones = True
+        #logic for adding total
+        last_row3 = ws7.range(f'A'+ str(ws1.cells.last_cell.row)).end('up').row 
+        last_row3+=5
+        ws7.range(f"E{last_row3}").value=f'=+GETPIVOTDATA("Gain/LossTotal",$A$7)+GETPIVOTDATA("Gain/LossTotal",$A${last_row2})'
+        ws7.range(f"E{last_row3}").api.NumberFormat= '_(* #,##0.00_);_(* (#,##0.00);_(* "-"??_);_(@_)'
+
+        ws6.api.Range("A1:A3").Copy()
+        ws7.api.Paste()
+        ws7.api.Columns("C:C").ColumnWidth = 17
+        wb.app.api.CutCopyMode=False
+        # ws6.delete()
+        # ws7.name="Unrlz- Gains- Contracts Non MC"
+        # wb.save(f"{output_location}\\{input_date}_Borrowing Base Report.xlsx")
+        # wb.app.quit()
+    except Exception as e:
+            raise e
 
 def cash_colat(wb,bank_recons_loc, input_date_date):
     try:
@@ -107,7 +369,7 @@ def cash_colat(wb,bank_recons_loc, input_date_date):
     except Exception as e:
         raise e
 
-def ar_unsettled_by_tier(wb, unset_rec_loc):
+def ar_unsettled_by_tier(wb, unset_rec_loc, input_date):
     try:
         retry=0
         while retry < 10:
@@ -270,7 +532,7 @@ def ar_open_storage_rcbl(wb, strg_accr_loc, input_date):
     except Exception as e:
         raise e
 
-def inv_whre_n_in_trans(wb, mtm_loc):
+def inv_whre_n_in_trans(wb, mtm_loc, input_date):
     try:
         retry=0
         while retry < 10:
@@ -461,15 +723,6 @@ def payables(wb, bbr_mapping_loc, open_ap_loc,unset_pay_loc):
         raise e
 
 
-
-
-
-
-
-
-
-
-
 def moc_get_df_from_input_excel(input_xl, mtm_file, open_ap_file, open_ar_file,unsettled_pay_file, unsettled_recev_file):
     """This function returns the dataframe that will be used the MOC allocment process"""
     try:
@@ -653,7 +906,6 @@ def update_moc_excel(main_df,template_dir,output_dir, input_date):
             wb_alloc.app.quit()
         except Exception as e:
             print(e)
-
 
 
 def getColumnName(n):
@@ -1080,6 +1332,16 @@ def bbr(input_date, output_date):
 
         if not os.path.exists(unset_pay_loc):
             return(f"{unset_pay_loc} Excel file not present for date {input_date}")
+
+
+
+        input_ctm = r"J:\WEST PLAINS\REPORT\CTM Combined report\Output files"+f"\\CTM Combined _{input_date}.xlsx"
+        if not os.path.exists(input_ctm):
+                return(f"{input_ctm} Excel file not present for date {input_date}")
+
+        input_ar = r"J:\WEST PLAINS\REPORT\Open AR\Output files"+f"\\Open AR _{input_date} - Production.xlsx"
+        if not os.path.exists(input_ar):
+                return(f"{input_ar} Excel file not present for date {input_date}")
         # amount_dict = comm_acc_pdf_ext(account_lst, pdf_loc)
         # print(amount_dict)
         # print()
@@ -1098,11 +1360,11 @@ def bbr(input_date, output_date):
 
         cash_colat(wb,bank_recons_loc, input_date_date)
         comm_acc_xl(wb, pdf_loc)
-        ar_unsettled_by_tier(wb, unset_rec_loc)
+        ar_unsettled_by_tier(wb, unset_rec_loc, input_date)
         ar_open_storage_rcbl(wb, strg_accr_loc, input_date)
         inv_whre_n_in_trans(wb, mtm_loc)
         payables(wb, bbr_mapping_loc, open_ap_loc,unset_pay_loc)
-
+        bbr_other_tabs(input_date, wb, input_ar, input_ctm)
         wb.save(output_location)
         print()
         return f"BBR Report for date {input_date} Generated"
@@ -2720,7 +2982,7 @@ def unsetteled_payables(input_date, output_date):
 
         wb.save(output_location)
         wb.app.quit()
-        return f"Unsettled Receivables report Generated for {input_date}"
+        return f"Unsettled Payables report Generated for {input_date}"
     except Exception as e:
         raise e
     finally:
@@ -3000,7 +3262,7 @@ def moc_interest_alloc(input_date, output_date):
           
         main_df = moc_get_df_from_input_excel(input_xl, mtm_file, open_ap_file, open_ar_file,unsettled_pay_file, unsettled_recev_file)
         update_moc_excel(main_df, template_dir, output_dir, input_date)
-        return "MOC Interest Allocation Report Generated"
+        return f"MOC Interest Allocation Report Generated for {input_date}"
     except Exception as e:
         raise e
     
