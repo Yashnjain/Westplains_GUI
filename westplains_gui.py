@@ -70,30 +70,24 @@ class MyDateEntry(DateEntry):
 
 def bbr_other_tabs(input_date, wb, input_ar, input_ctm):
     try:
-        
+        # input_date = "02.07.2022"
         # input_xl = r"J:\WEST PLAINS\REPORT\BBR Reports\Raw Files" +f"\\{input_date}_Borrowing Base Report.xlsx"
-        # if not os.path.exists(input_xl):
-        #         return(f"{input_xl} Excel file not present for date {input_date}")
         # input_xl = r"C:\Users\Yashn.jain\Desktop\WEST PLAINS\REPORT\BBR Reports\Raw Files"+f"\\{input_date}_Borrowing Base Report.xlsx"
         # input_ar = r"J:\WEST PLAINS\REPORT\Open AR\Output files"+f"\\Open AR _{input_date} - Production.xlsx"
-        # if not os.path.exists(input_ar):
-        #         return(f"{input_ar} Excel file not present for date {input_date}")
         # input_ar = r"C:\Users\Yashn.jain\Desktop\WEST PLAINS\REPORT\Open AR\Output files"+f"\\Open AR _{input_date} - Production.xlsx"
         # input_ctm = r"J:\WEST PLAINS\REPORT\CTM Combined report\Output files"+f"\\CTM Combined _{input_date}.xlsx"
-        # if not os.path.exists(input_ctm):
-        #         return(f"{input_ctm} Excel file not present for date {input_date}")
         # input_ctm = r"C:\Users\Yashn.jain\Desktop\WEST PLAINS\REPORT\CTM Combined report\Output files"+f"\\CTM Combined _{input_date}.xlsx"
-        # output_location=r"J:WEST PLAINS\REPORT\BBR Reports\Output"
+        # output_location=r"J:\WEST PLAINS\REPORT\BBR Reports\Output files"
         # output_location=r"C:\Users\Yashn.jain\Desktop\Sample_BBR"
-        # retry=0
+        retry=0
         while retry < 10:
             try:
                 ar_wb=xw.Book(input_ar)
                 break
             except Exception as e:
-                time.sleep(5)
+                time.sleep(2)
                 retry+=1
-                if retry ==10:
+                if retry ==9:
                     raise e           
         wsar1=ar_wb.sheets["Eligible"]
         wsar1.activate()
@@ -101,7 +95,7 @@ def bbr_other_tabs(input_date, wb, input_ar, input_ctm):
         column_list = wsar1.range("A1").expand('right').value
         total_column=column_list.index('total')+1
         total_letter_column = num_to_col_letters(column_list.index('total')+1)
-        # wb.app.quit()
+        # ar_wb.app.quit()
         ar_wb.close()
 
         # retry=0
@@ -110,9 +104,9 @@ def bbr_other_tabs(input_date, wb, input_ar, input_ctm):
         #         wb=xw.Book(input_xl)
         #         break
         #     except Exception as e:
-        #         time.sleep(5)
+        #         time.sleep(2)
         #         retry+=1
-        #         if retry ==10:
+        #         if retry ==9:
         #             raise e
 
 
@@ -138,9 +132,7 @@ def bbr_other_tabs(input_date, wb, input_ar, input_ctm):
         # last_column_letter=num_to_col_letters(ws5.range('A1').end('right').last_cell.column)
         ###logger.info("Creating Pivot Table")
         PivotCache=wb.api.PivotCaches().Create(SourceType=win32c.PivotTableSourceType.xlDatabase, SourceData=f"'J:\\WEST PLAINS\\REPORT\\Open AR\\Output files\\[Open AR _{input_date} - Production.xlsx]Eligible'!R1C1:R{last_row}C{total_column}", Version=win32c.PivotTableVersionList.xlPivotTableVersion14)
-        PivotTable = PivotCache.CreatePivotTable(TableDestination=f"'J:\\WEST PLAINS\\REPORT\\BBR Reports\\Raw Files\\[{input_date}_Borrowing Base Report.xlsx]AR-Trade By Tier - Eligible2'!R7C1", TableName="PivotTable1", DefaultVersion=win32c.PivotTableVersionList.xlPivotTableVersion14)
-        ###logger.info("Adding particular Row in Pivot Table")
-
+        PivotTable = PivotCache.CreatePivotTable(TableDestination=f"'AR-Trade By Tier - Eligible2'!R7C1", TableName="PivotTable1", DefaultVersion=win32c.PivotTableVersionList.xlPivotTableVersion14)        ###logger.info("Adding particular Row in Pivot Table")
         PivotTable.PivotFields('Tier').Orientation = win32c.PivotFieldOrientation.xlRowField
         PivotTable.PivotFields('Tier').Position = 1
         PivotTable.PivotFields('Customer Name').Orientation = win32c.PivotFieldOrientation.xlRowField
@@ -173,11 +165,11 @@ def bbr_other_tabs(input_date, wb, input_ar, input_ctm):
         ws1.api.Range("A1:A3").Copy()
         ws2.api.Paste()
         wb.app.api.CutCopyMode=False
-        # ws1.delete()
-        # ws2.name="AR-Trade By Tier - Eligible"
+        ws1.delete()
+        ws2.name="AR-Trade By Tier - Eligible"
         ws3=wb.sheets["AR-Trade By Tier - Ineligible"]
         ws3.select()
-        wb.sheets.add("AR-Trade By Tier - Ineligible2",after=wb.sheets["AR-Trade By Tier - Eligible2"])
+        wb.sheets.add("AR-Trade By Tier - Ineligible2",after=wb.sheets["AR-Trade By Tier - Eligible"])
         ###logger.info("Clearing contents for new sheet")
         wb.sheets["AR-Trade By Tier - Ineligible2"].clear_contents()
         ws4=wb.sheets["AR-Trade By Tier - Ineligible2"]
@@ -187,9 +179,7 @@ def bbr_other_tabs(input_date, wb, input_ar, input_ctm):
         # last_column_letter=num_to_col_letters(ws5.range('A1').end('right').last_cell.column)
         ###logger.info("Creating Pivot Table")
         PivotCache=wb.api.PivotCaches().Create(SourceType=win32c.PivotTableSourceType.xlDatabase, SourceData=f"'J:\\WEST PLAINS\\REPORT\\Open AR\\Output files\\[Open AR _{input_date} - Production.xlsx]Eligible'!R1C1:R{last_row}C{total_column}", Version=win32c.PivotTableVersionList.xlPivotTableVersion14)
-        PivotTable = PivotCache.CreatePivotTable(TableDestination=f"'J:\\WEST PLAINS\\REPORT\\BBR Reports\\Raw Files\\[{input_date}_Borrowing Base Report.xlsx]AR-Trade By Tier - Ineligible2'!R7C1", TableName="PivotTable1", DefaultVersion=win32c.PivotTableVersionList.xlPivotTableVersion14)
-        ###logger.info("Adding particular Row in Pivot Table")
-
+        PivotTable = PivotCache.CreatePivotTable(TableDestination=f"'AR-Trade By Tier - Ineligible2'!R7C1", TableName="PivotTable1", DefaultVersion=win32c.PivotTableVersionList.xlPivotTableVersion14)        ###logger.info("Adding particular Row in Pivot Table")
         PivotTable.PivotFields('Tier').Orientation = win32c.PivotFieldOrientation.xlRowField
         PivotTable.PivotFields('Tier').Position = 1
         PivotTable.PivotFields('Customer Name').Orientation = win32c.PivotFieldOrientation.xlRowField
@@ -222,8 +212,8 @@ def bbr_other_tabs(input_date, wb, input_ar, input_ctm):
         ws3.api.Range("A1:A3").Copy()
         ws4.api.Paste()
         wb.app.api.CutCopyMode=False
-        # ws3.delete()
-        # ws4.name="AR-Trade By Tier - Ineligible"
+        ws3.delete()
+        ws4.name="AR-Trade By Tier - Ineligible"
         # ws5=wb.sheets['Detail CTM Non MCUI']
 
         retry=0
@@ -232,9 +222,9 @@ def bbr_other_tabs(input_date, wb, input_ar, input_ctm):
                 wb1=xw.Book(input_ctm)
                 break
             except Exception as e:
-                time.sleep(5)
+                time.sleep(2)
                 retry+=1
-                if retry ==10:
+                if retry ==9:
                     raise e 
 
         excl_sht = wb1.sheets("Excl Macq & IC")
@@ -289,7 +279,7 @@ def bbr_other_tabs(input_date, wb, input_ar, input_ctm):
         last_column = ws5.range('A1').end('right').last_cell.column
         last_column_letter=num_to_col_letters(ws5.range('A1').end('right').last_cell.column)
         num_row = ws5.range('A1').end('down').row
-        last_row2 = ws7.range(f'A'+ str(ws1.cells.last_cell.row)).end('up').row
+        last_row2 = ws7.range(f'A'+ str(ws7.cells.last_cell.row)).end('up').row
         last_row2+=10
         #logger.info("Creating Pivot table")
         PivotCache=wb.api.PivotCaches().Create(SourceType=win32c.PivotTableSourceType.xlDatabase, SourceData=f"\'Detail CTM Non MCUI\'!R1C1:R{num_row}C{last_column}", Version=win32c.PivotTableVersionList.xlPivotTableVersion14)
@@ -316,7 +306,7 @@ def bbr_other_tabs(input_date, wb, input_ar, input_ctm):
         PivotTable.TableStyle2 = ""
         wb.api.ActiveSheet.PivotTables("PivotTable2").InGridDropZones = True
         #logic for adding total
-        last_row3 = ws7.range(f'A'+ str(ws1.cells.last_cell.row)).end('up').row 
+        last_row3 = ws7.range(f'A'+ str(ws7.cells.last_cell.row)).end('up').row 
         last_row3+=5
         ws7.range(f"E{last_row3}").value=f'=+GETPIVOTDATA("Gain/LossTotal",$A$7)+GETPIVOTDATA("Gain/LossTotal",$A${last_row2})'
         ws7.range(f"E{last_row3}").api.NumberFormat= '_(* #,##0.00_);_(* (#,##0.00);_(* "-"??_);_(@_)'
@@ -325,9 +315,9 @@ def bbr_other_tabs(input_date, wb, input_ar, input_ctm):
         ws7.api.Paste()
         ws7.api.Columns("C:C").ColumnWidth = 17
         wb.app.api.CutCopyMode=False
-        # ws6.delete()
-        # ws7.name="Unrlz- Gains- Contracts Non MC"
-        # wb.save(f"{output_location}\\{input_date}_Borrowing Base Report.xlsx")
+        ws6.delete()
+        ws7.name="Unrlz- Gains- Contracts Non MC"
+        # wb.save(f"{output_location}\\{input_date}_Borrowing Base Report_y.xlsx")
         # wb.app.quit()
     except Exception as e:
             raise e
@@ -341,9 +331,9 @@ def cash_colat(wb,bank_recons_loc, input_date_date):
                 bank_wb=xw.Book(bank_recons_loc)
                 break
             except Exception as e:
-                time.sleep(5)
+                time.sleep(2)
                 retry+=1
-                if retry ==10:
+                if retry ==9:
                     raise e
 
         while True:
@@ -351,19 +341,19 @@ def cash_colat(wb,bank_recons_loc, input_date_date):
                 cash_colat_sht = wb.sheets["Cash Collateral"] #wb.sheets[0].name in 'Unsettled Receivables _'+input_date
                 break
             except Exception as e:
-                time.sleep(5)
+                time.sleep(2)
 
         while True:
             try:
                 bank_colat_sht = bank_wb.sheets["BANK REC"] #wb.sheets[0].name in 'Unsettled Receivables _'+input_date
                 break
             except Exception as e:
-                time.sleep(5)
+                time.sleep(2)
         cash_colat_sht.range("A3").value = input_date_date
         # cash_colat_sht.range("B58").value = bank_colat_sht.range("B12").value
         # cash_colat_sht.range("E58").value = bank_colat_sht.range("B14").value
         cash_colat_sht.range("B12").value = bank_colat_sht.range("B58").value
-        cash_colat_sht.range("B14").value = bank_colat_sht.range("E58").value
+        cash_colat_sht.range("B14").value = -1*bank_colat_sht.range("E58").value
 
         bank_wb.close()
     except Exception as e:
@@ -377,9 +367,9 @@ def ar_unsettled_by_tier(wb, unset_rec_loc, input_date):
                 unset_rec_wb=xw.Book(unset_rec_loc)
                 break
             except Exception as e:
-                time.sleep(5)
+                time.sleep(2)
                 retry+=1
-                if retry ==10:
+                if retry ==9:
                     raise e
 
         while True:
@@ -387,7 +377,7 @@ def ar_unsettled_by_tier(wb, unset_rec_loc, input_date):
                 xl_mac_n_ic = unset_rec_wb.sheets["Excl Macq & IC"] #wb.sheets[0].name in 'Unsettled Receivables _'+input_date
                 break
             except Exception as e:
-                time.sleep(5)
+                time.sleep(2)
         last_row=xl_mac_n_ic.range(f'A' + str(xl_mac_n_ic.cells.last_cell.row)).end('up').row
         # 'J:\WEST PLAINS\REPORT\BBR Reports\Output\[Unsettled Receivables _02.14.2022.xlsx]Excl IC & Macq'!$A$1:$AJ$892
         unset_rec_wb.close()
@@ -396,14 +386,14 @@ def ar_unsettled_by_tier(wb, unset_rec_loc, input_date):
                 ar_unsettled_by_tier_sht = wb.sheets["AR Unsettled ByTier"] #wb.sheets[0].name in 'Unsettled Receivables _'+input_date
                 break
             except Exception as e:
-                time.sleep(5)
+                time.sleep(2)
 
         while True:
             try:
                 ar_unsettled_by_tier_sht.select()
                 break
             except Exception as e:
-                time.sleep(5)
+                time.sleep(2)
         
         # sht = wb.sheets["AR-Trade By Tier - Eligible"]
         wb.api.ActiveSheet.PivotTables(1).PivotCache().SourceData = f"'J:\\WEST PLAINS\\REPORT\\Unsettled Receivables\\Output Files\\[Unsettled Receivables _{input_date}.xlsx]Excl Macq & IC'!R1C1:R{last_row}C36"
@@ -476,7 +466,7 @@ def comm_acc_xl(wb,pdf_loc):
                 com_acc_sht = wb.sheets["Commodity Accounts (NLV)"] #wb.sheets[0].name in 'Unsettled Receivables _'+input_date
                 break
             except Exception as e:
-                time.sleep(5)
+                time.sleep(2)
         cell = 8
         account_lst = com_acc_sht.range("B8").expand("down").value
         account_lst = [str(account).replace(".0","") for account in account_lst]
@@ -503,9 +493,9 @@ def ar_open_storage_rcbl(wb, strg_accr_loc, input_date):
                 strg_accr_wb=xw.Book(strg_accr_loc)
                 break
             except Exception as e:
-                time.sleep(5)
+                time.sleep(2)
                 retry+=1
-                if retry ==10:
+                if retry ==9:
                     raise e
 
         while True:
@@ -513,14 +503,14 @@ def ar_open_storage_rcbl(wb, strg_accr_loc, input_date):
                 strg_acc_sht = strg_accr_wb.sheets[0] #wb.sheets[0].name in 'Unsettled Receivables _'+input_date
                 break
             except Exception as e:
-                time.sleep(5)
+                time.sleep(2)
 
         while True:
             try:
                 bbr_strg_acc_sht = wb.sheets["AR-Open Storage Rcbl"] #wb.sheets[0].name in 'Unsettled Receivables _'+input_date
                 break
             except Exception as e:
-                time.sleep(5)
+                time.sleep(2)
         # strg_acc_sht.copy(bbr_strg_acc_sht)
         bbr_strg_acc_sht.range("A5").value = strg_acc_sht.range("A5").value
         last_row = strg_acc_sht.range(f'A'+ str(strg_acc_sht.cells.last_cell.row)).end('up').row
@@ -540,9 +530,9 @@ def inv_whre_n_in_trans(wb, mtm_loc, input_date):
                 mtm_wb=xw.Book(mtm_loc)
                 break
             except Exception as e:
-                time.sleep(5)
+                time.sleep(2)
                 retry+=1
-                if retry ==10:
+                if retry ==9:
                     raise e
 
         while True:
@@ -550,20 +540,20 @@ def inv_whre_n_in_trans(wb, mtm_loc, input_date):
                 m_sht = mtm_wb.sheets[0] #wb.sheets[0].name in 'Unsettled Receivables _'+input_date
                 break
             except Exception as e:
-                time.sleep(5)
+                time.sleep(2)
 
         while True:
             try:
                 whre_sht = wb.sheets["Inventory Whre & In-Trans"] #wb.sheets[0].name in 'Unsettled Receivables _'+input_date
                 break
             except Exception as e:
-                time.sleep(5)
+                time.sleep(2)
         while True:
             try:
                 inv_oth_sht = wb.sheets["Inventory -Other"] #wb.sheets[0].name in 'Unsettled Receivables _'+input_date
                 break
             except Exception as e:
-                time.sleep(5)
+                time.sleep(2)
 
 
         last_row=m_sht.range(f'A' + str(m_sht.cells.last_cell.row)).end('up').row
@@ -631,9 +621,9 @@ def payables(wb, bbr_mapping_loc, open_ap_loc,unset_pay_loc):
                 open_ap_wb=xw.Book(open_ap_loc)
                 break
             except Exception as e:
-                time.sleep(5)
+                time.sleep(2)
                 retry+=1
-                if retry ==10:
+                if retry ==9:
                     raise e
 
         while True:
@@ -641,15 +631,16 @@ def payables(wb, bbr_mapping_loc, open_ap_loc,unset_pay_loc):
                 open_ap_sht = open_ap_wb.sheets["Pivot BB"] #wb.sheets[0].name in 'Unsettled Receivables _'+input_date
                 break
             except Exception as e:
-                time.sleep(5)
+                time.sleep(2)
+        retry=0
         while retry < 10:
             try:
                 payab_wb=xw.Book(unset_pay_loc)
                 break
             except Exception as e:
-                time.sleep(5)
+                time.sleep(2)
                 retry+=1
-                if retry ==10:
+                if retry ==9:
                     raise e
 
         while True:
@@ -657,13 +648,13 @@ def payables(wb, bbr_mapping_loc, open_ap_loc,unset_pay_loc):
                 payab_sht = payab_wb.sheets["Pivot BB"] #wb.sheets[0].name in 'Unsettled Receivables _'+input_date
                 break
             except Exception as e:
-                time.sleep(5)
+                time.sleep(2)
         while True:
             try:
                 bbr_payab_sht = wb.sheets["Payables"] #wb.sheets[0].name in 'Unsettled Receivables _'+input_date
                 break
             except Exception as e:
-                time.sleep(5)
+                time.sleep(2)
         f_last_row = open_ap_sht.range("A5").end('down').row
         open_ap_loc_lst = open_ap_sht.range(f"A5:A{int(f_last_row)-1}").value
 
@@ -677,21 +668,34 @@ def payables(wb, bbr_mapping_loc, open_ap_loc,unset_pay_loc):
         last_pivot = int(open_ap_sht.range(f"A{last_row}").end('up').row)+2
         open_ap_loc_2_lst = open_ap_sht.range(f"A{last_pivot}:A{int(last_row)-1}").value
 
-        last_col_num = open_ap_sht.range(f"A{last_pivot}").expand("right").last_cell.column
+        last_col_num = open_ap_sht.range(f"A{last_pivot-1}").expand("right").last_cell.column
         last_col = num_to_col_letters(last_col_num)
         grnd_ttl = open_ap_sht.range(f"{last_col}{last_pivot}:{last_col}{int(last_row)-1}").value
 
         dict_2 = dict(zip(open_ap_loc_2_lst,grnd_ttl))
 
         bbr_loc = bbr_payab_sht.range("A10").expand("down").value
+        bbr_last_row = bbr_payab_sht.range("A10").end("down").row
+        #inserting row
+        if len(bbr_loc) != len(open_ap_loc_lst):
+            if len(open_ap_loc_lst) > len(bbr_loc):
+                for i in range(len(open_ap_loc_lst) - len(bbr_loc)):
+                    bbr_payab_sht.range(f"{bbr_last_row+i}:{bbr_last_row+i}").insert()
+            else:
+                for i in range(len(bbr_loc) - len(open_ap_loc_lst)):
+                    bbr_payab_sht.range(f"{bbr_last_row-i}:{bbr_last_row-i}").delete()
+        else:
+            pass
+
         i=10
-        for loc in bbr_loc:
+        for loc in open_ap_loc_lst:
+            bbr_payab_sht.range(f"A{i}").value = new_dict[loc]
             try:
-                bbr_payab_sht.range(f"C{i}").value = dict_1[new_dict[loc]]
+                bbr_payab_sht.range(f"C{i}").value = dict_1[loc]
             except:
                 bbr_payab_sht.range(f"C{i}").value = 0
             try:
-                bbr_payab_sht.range(f"E{i}").value = dict_2[new_dict[loc]]
+                bbr_payab_sht.range(f"E{i}").value = dict_2[loc]
             except:
                 bbr_payab_sht.range(f"E{i}").value = 0
             i+=1
@@ -707,9 +711,10 @@ def payables(wb, bbr_mapping_loc, open_ap_loc,unset_pay_loc):
 
         bbr_payb_loc_lst = bbr_payab_sht.range(f"A{payb_loc}").expand("down").value
         bbr_payb_loc_lst = bbr_payb_loc_lst[:-1]
-        for loc in bbr_payb_loc_lst:
+        for loc in payab_loc_lst:
+            bbr_payab_sht.range(f"A{i}").value = payab_dict[loc]
             try:
-                bbr_payab_sht.range(f"C{payb_loc}").value = dict_3[payab_dict[loc]]
+                bbr_payab_sht.range(f"C{payb_loc}").value = dict_3[loc]
             except:
                 bbr_payab_sht.range(f"C{payb_loc}").value = 0
             payb_loc+=1
@@ -723,7 +728,7 @@ def payables(wb, bbr_mapping_loc, open_ap_loc,unset_pay_loc):
         raise e
 
 
-def moc_get_df_from_input_excel(input_xl, mtm_file, open_ap_file, open_ar_file,unsettled_pay_file, unsettled_recev_file):
+def moc_get_df_from_input_excel(mtm_file, open_ap_file, open_ar_file,unsettled_pay_file, unsettled_recev_file):
     """This function returns the dataframe that will be used the MOC allocment process"""
     try:
         req_dict = {}
@@ -758,7 +763,7 @@ def moc_get_df_from_input_excel(input_xl, mtm_file, open_ap_file, open_ar_file,u
             try:
                 wb_mtm.app.quit()
             except Exception as e:
-                print(e)
+                pass
         
         """"This is the code for Open AP files"""
         try:
@@ -905,7 +910,7 @@ def update_moc_excel(main_df,template_dir,output_dir, input_date):
         try:
             wb_alloc.app.quit()
         except Exception as e:
-            print(e)
+            pass
 
 
 def getColumnName(n):
@@ -1044,9 +1049,9 @@ def mtm_excel(input_date,input_xl,loc_dict,loc_sheet, output_location, hrw_fut, 
 
                 break
             except Exception as e:
-                time.sleep(5)
+                time.sleep(2)
                 retry+=1
-                if retry==10:
+                if retry==9:
                     raise e
         retry = 0
         while retry<10:
@@ -1055,9 +1060,9 @@ def mtm_excel(input_date,input_xl,loc_dict,loc_sheet, output_location, hrw_fut, 
 
                 break
             except Exception as e:
-                time.sleep(5)
+                time.sleep(2)
                 retry+=1
-                if retry==10:
+                if retry==9:
                     raise e
         
 
@@ -1151,9 +1156,9 @@ def mtm_excel(input_date,input_xl,loc_dict,loc_sheet, output_location, hrw_fut, 
 
                 break
             except Exception as e:
-                time.sleep(5)
+                time.sleep(2)
                 retry+=1
-                if retry==10:
+                if retry==9:
                     raise e
         
         last_col_num = hrw_sht.range("A3").expand("right").last_cell.column
@@ -1213,9 +1218,9 @@ def mtm_excel(input_date,input_xl,loc_dict,loc_sheet, output_location, hrw_fut, 
 
                 break
             except Exception as e:
-                time.sleep(5)
+                time.sleep(2)
                 retry+=1
-                if retry==10:
+                if retry==9:
                     raise e
         
         last_col_num = yc_sht.range("A3").expand("right").last_cell.column
@@ -1281,13 +1286,28 @@ def mtm_excel(input_date,input_xl,loc_dict,loc_sheet, output_location, hrw_fut, 
     except Exception as e:
         raise e
     finally:
-        wb.app.quit()
+        try:
+            wb.app.quit()
+        except:
+            pass
     
 
 def bbr(input_date, output_date):
     try:
+        prev_files_loc= r'J:\WEST PLAINS\REPORT\BBR Reports\Output files'
+        file_list = glob.glob(prev_files_loc+"\\*.xlsx")
+        file_list.sort()
+        prev_bbr = file_list[-1]
         output_location = r'J:\WEST PLAINS\REPORT\BBR Reports\Output files'+f"\\{input_date}_Borrowing Base Report.xlsx"
         input_date_date = datetime.strptime(input_date, "%m.%d.%Y").date()
+        prev_date = datetime.strptime(file_list[-1].split("_")[0].split("\\")[-1], "%m.%d.%Y").date()
+        i=2
+        while prev_date>=input_date_date:
+            prev_date = datetime.strptime(file_list[-i].split("_")[0].split("\\")[-1], "%m.%d.%Y").date()
+            prev_bbr = file_list[-i]
+            i+=1
+
+
         prev_month_year = datetime.strftime((datetime.strptime(input_date, "%m.%d.%Y").replace(day=1)-timedelta(days=1)),"%b %Y").upper()
         print(prev_month_year)
         input_xl = r"J:\WEST PLAINS\REPORT\BBR Reports\Raw Files" +f"\\{input_date}_Borrowing Base Report.xlsx"
@@ -1313,8 +1333,12 @@ def bbr(input_date, output_date):
         if not os.path.exists(bbr_mapping_loc):
                 return(f"{bbr_mapping_loc} Excel file not present for date {input_date}")
 
-
-
+        input_ar = r"J:\WEST PLAINS\REPORT\Open AR\Output files"+f"\\Open AR _{input_date} - Production.xlsx"
+        if not os.path.exists(input_ar):
+            return(f"{input_ar} Excel file not present for date {input_date}")
+        input_ctm = r"J:\WEST PLAINS\REPORT\CTM Combined report\Output files"+f"\\CTM Combined _{input_date}.xlsx"
+        if not os.path.exists(input_ctm):
+            return(f"{input_ctm} Excel file not present for date {input_date}")
 
         unset_rec_loc = r'J:\WEST PLAINS\REPORT\Unsettled Receivables\Output files\Unsettled Receivables _'+input_date+'.xlsx'
         if not os.path.exists(unset_rec_loc):
@@ -1332,16 +1356,6 @@ def bbr(input_date, output_date):
 
         if not os.path.exists(unset_pay_loc):
             return(f"{unset_pay_loc} Excel file not present for date {input_date}")
-
-
-
-        input_ctm = r"J:\WEST PLAINS\REPORT\CTM Combined report\Output files"+f"\\CTM Combined _{input_date}.xlsx"
-        if not os.path.exists(input_ctm):
-                return(f"{input_ctm} Excel file not present for date {input_date}")
-
-        input_ar = r"J:\WEST PLAINS\REPORT\Open AR\Output files"+f"\\Open AR _{input_date} - Production.xlsx"
-        if not os.path.exists(input_ar):
-                return(f"{input_ar} Excel file not present for date {input_date}")
         # amount_dict = comm_acc_pdf_ext(account_lst, pdf_loc)
         # print(amount_dict)
         # print()
@@ -1352,70 +1366,132 @@ def bbr(input_date, output_date):
                 wb=xw.Book(input_xl)
                 break
             except Exception as e:
-                time.sleep(5)
+                time.sleep(2)
                 retry+=1
-                if retry ==10:
+                if retry ==9:
                     raise e
-
-
+        retry=0
+        while retry < 10:
+            try:
+                bbr_sht = wb.sheets["BBR"]
+                break
+            except Exception as e:
+                time.sleep(2)
+                retry+=1
+                if retry ==9:
+                    raise e
+        if 4 <= input_date_date.day <= 20 or 24 <= input_date_date.day <= 30:
+            suffix = "th"
+        else:
+            suffix = ["st", "nd", "rd"][input_date_date.day % 10 - 1]
+        cur_date= datetime.strftime(input_date_date, f"%B %d{suffix}, %Y")
+        bbr_sht.range("A4").value = f'As of {cur_date} (the "Determination Date")'
+        #Replcaing sheets from prev file
+        
+        retry=0
+        while retry < 10:
+            try:
+                p_wb=xw.Book(prev_bbr)
+                break
+            except Exception as e:
+                time.sleep(2)
+                retry+=1
+                if retry ==9:
+                    raise e
+        try:
+            wb.sheets['AR-Re-Purchase Storage Rcbl'].name = "AR-Re-Purch Org"
+        except:
+            try:
+               wb.sheets['AR-Re-Purchase Storage Rcbl '].name = "AR-Re-Purch Org"
+            except Exception as e:
+                raise e
+        
+        try:
+            wb.sheets['Unrld Gains-Contracts MCUI'].name = "Unrld Gains Org"
+        except:
+            try:
+                wb.sheets["Unrld Gains-Contracts MCUI "].name = "Unrld Gains Org"
+            except Exception as e:
+                raise e
+        
+        try:
+            p_wb.sheets['AR-Re-Purchase Storage Rcbl'].copy(before = wb.sheets["AR-Re-Purch Org"])
+        except:
+            try:
+                p_wb.sheets['AR-Re-Purchase Storage Rcbl'].copy(before = wb.sheets["AR-Re-Purch Org"])
+            except Exception as e:
+                raise e
+        try:
+            p_wb.sheets['Unrld Gains-Contracts MCUI'].copy(before = wb.sheets["Unrld Gains Org"])
+        except:
+            try:
+                p_wb.sheets['Unrld Gains-Contracts MCUI '].copy(before = wb.sheets["Unrld Gains Org"])
+            except Exception as e:
+                raise e
+        wb.sheets["AR-Re-Purch Org"].delete()
+        wb.sheets["Unrld Gains Org"].delete()
         cash_colat(wb,bank_recons_loc, input_date_date)
         comm_acc_xl(wb, pdf_loc)
         ar_unsettled_by_tier(wb, unset_rec_loc, input_date)
         ar_open_storage_rcbl(wb, strg_accr_loc, input_date)
-        inv_whre_n_in_trans(wb, mtm_loc)
+        inv_whre_n_in_trans(wb, mtm_loc, input_date)
         payables(wb, bbr_mapping_loc, open_ap_loc,unset_pay_loc)
         bbr_other_tabs(input_date, wb, input_ar, input_ctm)
         wb.save(output_location)
         print()
-        return f"BBR Report for date {input_date} Generated"
+        return f"BBR report generated for {input_date}"
     except Exception as e:
         raise e
     finally:
-        wb.app.quit()
+        try:
+            wb.app.quit()
+        except:
+            pass
 
 
 def cpr(input_date, output_date):
-    cpr_file_date = input_date.replace('.','-')
-    output_cpr  = r'J:\WEST PLAINS\REPORT\CPR reports\Output files'+'\\Counter Party Risk Consolidated '+cpr_file_date+'.xlsx'
-    output_cpr_copy  = r'J:\WEST PLAINS\REPORT\CPR reports\Output files'+'\\Counter Party Risk Consolidated '+cpr_file_date+' Report Copy.xlsx'
-    
-    input_cpr = r'J:\WEST PLAINS\REPORT\CPR reports\Raw Files\Counter Party Risk Consolidated '+cpr_file_date+'.xlsx'
-
-    input_cpr_copy = r'J:\WEST PLAINS\REPORT\CPR reports\Raw Files\Counter Party Risk Consolidated '+cpr_file_date+' Report Copy.xlsx'
-
-    UnsettledRec_book = r'J:\WEST PLAINS\REPORT\Unsettled Receivables\Output files\Unsettled Receivables _'+input_date+'.xlsx'
-
-    UnsettledPay_book = r'J:\WEST PLAINS\REPORT\Unsettled Payables\Output files\Unsettled Payables _'+input_date+'.xlsx'
-
-    Open_AR_book = r'J:\WEST PLAINS\REPORT\Open AR\Output files\Open AR _'+input_date+' - Production.xlsx'
-
-    Open_AP_book = r'J:\WEST PLAINS\REPORT\Open AP\Output files\Open AP _'+input_date+'.xlsx'
-
-    CTM_book = r'J:\WEST PLAINS\REPORT\CTM Combined report\Output files\CTM Combined _'+input_date+'.xlsx'
-
-    if not os.path.exists(input_cpr):
-            return(f"{input_cpr} Excel file not present for date {cpr_file_date}")
-
-    if not os.path.exists(input_cpr_copy):
-            return(f"{input_cpr_copy}Excel file not present for date {cpr_file_date}")
-
-    if not os.path.exists(UnsettledRec_book):
-            return(f"{UnsettledRec_book}Excel file not present for date {input_date}")
-
-    if not os.path.exists(UnsettledPay_book):
-            return(f"{UnsettledPay_book}Excel file not present for date {input_date}")
-
-    if not os.path.exists(Open_AR_book):
-            return(f"{Open_AR_book}Excel file not present for date {input_date}")
-    
-    if not os.path.exists(Open_AP_book):
-            return(f"{Open_AP_book}Excel file not present for date {input_date}")
-
-    if not os.path.exists(CTM_book):
-            return(f"{CTM_book}Excel file not present for date {input_date}")
-
-
     try:
+        cpr_file_date = input_date.replace('.','-')
+        output_cpr  = r'J:\WEST PLAINS\REPORT\CPR reports\Output files'+'\\Counter Party Risk Consolidated '+cpr_file_date+'.xlsx'
+        output_cpr_copy  = r'J:\WEST PLAINS\REPORT\CPR reports\Output files'+'\\Counter Party Risk Consolidated '+cpr_file_date+' Report Copy.xlsx'
+        
+        input_cpr = r'J:\WEST PLAINS\REPORT\CPR reports\Raw Files\Counter Party Risk Consolidated '+cpr_file_date+'.xlsx'
+
+        input_cpr_copy = r'J:\WEST PLAINS\REPORT\CPR reports\Raw Files\Counter Party Risk Consolidated '+cpr_file_date+' Report Copy.xlsx'
+
+        UnsettledRec_book = r'J:\WEST PLAINS\REPORT\Unsettled Receivables\Output files\Unsettled Receivables _'+input_date+'.xlsx'
+
+        UnsettledPay_book = r'J:\WEST PLAINS\REPORT\Unsettled Payables\Output files\Unsettled Payables _'+input_date+'.xlsx'
+
+        Open_AR_book = r'J:\WEST PLAINS\REPORT\Open AR\Output files\Open AR _'+input_date+' - Production.xlsx'
+
+        Open_AP_book = r'J:\WEST PLAINS\REPORT\Open AP\Output files\Open AP _'+input_date+'.xlsx'
+
+        CTM_book = r'J:\WEST PLAINS\REPORT\CTM Combined report\Output files\CTM Combined _'+input_date+'.xlsx'
+
+        if not os.path.exists(input_cpr):
+                return(f"{input_cpr} Excel file not present for date {cpr_file_date}")
+
+        if not os.path.exists(input_cpr_copy):
+                return(f"{input_cpr_copy}Excel file not present for date {cpr_file_date}")
+
+        if not os.path.exists(UnsettledRec_book):
+                return(f"{UnsettledRec_book}Excel file not present for date {input_date}")
+
+        if not os.path.exists(UnsettledPay_book):
+                return(f"{UnsettledPay_book}Excel file not present for date {input_date}")
+
+        if not os.path.exists(Open_AR_book):
+                return(f"{Open_AR_book}Excel file not present for date {input_date}")
+        
+        if not os.path.exists(Open_AP_book):
+                return(f"{Open_AP_book}Excel file not present for date {input_date}")
+
+        if not os.path.exists(CTM_book):
+                return(f"{CTM_book}Excel file not present for date {input_date}")
+
+
+    
         
         # input_file = f'{book_name} {sheet_date}.xlsx'
 
@@ -1425,7 +1501,7 @@ def cpr(input_date, output_date):
                 wb = xw.Book(input_cpr, update_links=False)
                 break
             except:
-                time.sleep(5)
+                time.sleep(2)
                 retry+=1
         
         retry = 0
@@ -1433,9 +1509,10 @@ def cpr(input_date, output_date):
             try:
                 
                 ws1 = wb.sheets[f'Data {input_date}']
+                ws1.api.AutoFilterMode=False
                 break
             except:
-                time.sleep(5)
+                time.sleep(2)
                 retry+=1
 
         num_row = ws1.range('A1').end('down').row
@@ -1451,9 +1528,9 @@ def cpr(input_date, output_date):
                 UnsettledRec_wb = xw.Book(UnsettledRec_book,update_links=False)
                 break
             except Exception as e:
-                time.sleep(5)
+                time.sleep(2)
                 retry+=1
-                if retry==10:
+                if retry==9:
                     raise e
         retry=0
         while retry<10:
@@ -1461,9 +1538,9 @@ def cpr(input_date, output_date):
                 UnsettledRec_ws = UnsettledRec_wb.sheets['Excl Macq & IC']
                 break
             except Exception as e:
-                time.sleep(5)
+                time.sleep(2)
                 retry+=1
-                if retry==10:
+                if retry==9:
                     raise e
 
         column_lst =  UnsettledRec_ws.range('A1').expand('right').value
@@ -1484,9 +1561,9 @@ def cpr(input_date, output_date):
                 
                 break
             except Exception as e:
-                time.sleep(5)
+                time.sleep(2)
                 retry+=1
-                if retry==10:
+                if retry==9:
                     raise e
         retry=0
         while retry<10:
@@ -1495,9 +1572,9 @@ def cpr(input_date, output_date):
                 UnsettledPay_ws = UnsettledPay_wb.sheets['Excl Macq & IC']
                 break
             except Exception as e:
-                time.sleep(5)
+                time.sleep(2)
                 retry+=1
-                if retry==10:
+                if retry==9:
                     raise e
 
         column_lst =  UnsettledPay_ws.range('A1').expand('right').value
@@ -1516,9 +1593,9 @@ def cpr(input_date, output_date):
                 OpenAR_wb = xw.Book(Open_AR_book,update_links=False)
                 break
             except Exception as e:
-                time.sleep(5)
+                time.sleep(2)
                 retry+=1
-                if retry==10:
+                if retry==9:
                     raise e
         retry=0
         while retry<10:
@@ -1526,9 +1603,9 @@ def cpr(input_date, output_date):
                 OpenAR_ws = OpenAR_wb.sheets['Eligible']
                 break
             except Exception as e:
-                time.sleep(5)
+                time.sleep(2)
                 retry+=1
-                if retry==10:
+                if retry==9:
                     raise e
         OpenAR_ws = OpenAR_wb.sheets['Eligible']
         column_lst =  OpenAR_ws.range('A1').expand('right').value
@@ -1549,9 +1626,9 @@ def cpr(input_date, output_date):
                 
                 break
             except Exception as e:
-                time.sleep(5)
+                time.sleep(2)
                 retry+=1
-                if retry==10:
+                if retry==9:
                     raise e
         retry = 0
         while retry<10:
@@ -1560,9 +1637,9 @@ def cpr(input_date, output_date):
                 OpenAP_ws = OpenAP_wb.sheets['Excl Macq & IC']
                 break
             except Exception as e:
-                time.sleep(5)
+                time.sleep(2)
                 retry+=1
-                if retry==10:
+                if retry==9:
                     raise e
         column_lst =  OpenAP_ws.range('A1').expand('right').value
         name_col = column_lst.index('Vendor')
@@ -1579,9 +1656,9 @@ def cpr(input_date, output_date):
                 CTM_wb = xw.Book(CTM_book,update_links=False)
                 break
             except Exception as e:
-                time.sleep(5)
+                time.sleep(2)
                 retry+=1
-                if retry==10:
+                if retry==9:
                     raise e
         retry = 0
         while retry<10:
@@ -1589,9 +1666,9 @@ def cpr(input_date, output_date):
                 CTM_ws = CTM_wb.sheets['Excl Macq & IC']
                 break
             except Exception as e:
-                time.sleep(5)
+                time.sleep(2)
                 retry+=1
-                if retry==10:
+                if retry==9:
                     raise e
 
         column_lst = CTM_ws.range('A1').expand('right').value
@@ -1611,17 +1688,17 @@ def cpr(input_date, output_date):
         num_col = ws1.range('A1').end('right').column
         
         retry=0
-        while retry<15:
+        while retry<10:
             try:
                 pivot_sht = wb.sheets["Pivot"]
-                time.sleep(5)
+                time.sleep(2)
                 # pivot_sht.select()
                 pivot_sht.activate()
                 break
             except Exception as e:
-                time.sleep(5)
+                time.sleep(2)
                 retry+=1
-                if retry==15:
+                if retry==9:
                     raise e
         # pivot_sht.api.Select()
         
@@ -1649,15 +1726,16 @@ def cpr(input_date, output_date):
                 BB_wb = xw.Book(input_cpr_copy,update_links=True)
                 break
             except Exception as e:
-                time.sleep(5)
+                time.sleep(2)
                 retry+=1
-                if retry==10:
+                if retry==9:
                     raise e
         
         #logger.info('Opening Master sheet')
         while True:
             try:
                 BB_ws = BB_wb.sheets['Master']
+                BB_ws.api.AutoFilterMode=False
                 break
             except:
                 time.sleep(10)
@@ -1702,8 +1780,9 @@ def cpr(input_date, output_date):
         while i<= BB_Master25_Row:
             if (type(BB_Master25ws.range(f'H{i}').value) == int) or (type(BB_Master25ws.range(f'H{i}').value) == float):
                 if  (-25000 < BB_Master25ws.range(f'H{i}').value) and (BB_Master25ws.range(f'H{i}').value <25000):
-                    # BB_Master25ws.range(f'{i}:{i}').api.Delete(DeleteShiftDirection.xlShiftUp)
-                    BB_Master25ws.range(f'{i}:{i}').api.Delete()
+                    # BB_Master25ws.range(f'{i}:{i}').api.Delete(win32c.DeleteShiftDirection.xlShiftDown)
+                    BB_Master25ws.range(f"{i}:{i}").api.Delete(win32c.DeleteShiftDirection.xlShiftUp)
+                    # BB_Master25ws.range(f'{i}:{i}').delete()
                     i-=1
                 else:
                     i+=1
@@ -1752,9 +1831,9 @@ def ctm(input_date, output_date):
                 wb=xw.Book(input_sheet)
                 break
             except Exception as e:
-                time.sleep(5)
+                time.sleep(2)
                 retry+=1
-                if retry ==10:
+                if retry ==9:
                     raise e
         ###logger.info("Adding sheet to the same workbook")
         wb.sheets.add("Excl Macq & IC",after=wb.sheets[f"CTM Combined _{input_date}"]) 
@@ -2040,9 +2119,9 @@ def freight_analysis(input_date, output_date):
                     wb = xw.Book(input_sheet, update_links=True)
                     break
                 except Exception as e:
-                    time.sleep(5)
+                    time.sleep(2)
                     retry+=1
-                    if retry==10:
+                    if retry==9:
                         raise e
             
             #####logger.info("Sheet Opened")
@@ -2196,9 +2275,9 @@ def open_ar(input_date, output_date):
                 wb=xw.Book(input_sheet)
                 break
             except Exception as e:
-                time.sleep(5)
+                time.sleep(2)
                 retry+=1
-                if retry ==10:
+                if retry ==9:
                     raise e
         ##logger.info("Adding sheet to the same workbook")
         wb.sheets.add("Excl Macq & IC",after=wb.sheets[f"Open AR _{input_date} - Productio"]) 
@@ -2283,9 +2362,9 @@ def open_ar(input_date, output_date):
                 tier_wb = xw.Book(prev_output,update_links=True)
                 break
             except Exception as e:
-                time.sleep(5)
+                time.sleep(2)
                 retry+=1
-                if retry ==10:
+                if retry ==9:
                     raise e     
         # tier_wb = xw.Book(prev_output,update_links=True)
         tier_sht = tier_wb.sheets("Tier")
@@ -2509,6 +2588,33 @@ def open_ar(input_date, output_date):
                     if ws5.range(f"E{i}").value<0:
                         ws5.range(f"D{i}").value = ws5.range(f"D{i}").value + ws5.range(f"E{i}").value
                         ws5.range(f"E{i}").value = 0
+        for i in range(2,int(f'{last_row}')):            
+                    if ws5.range(f"D{i}").value<0:
+                        if ws5.range(f"G{i}").value>0:
+                            if ws5.range(f"G{i}").value>abs(ws5.range(f"D{i}").value):
+                                ws5.range(f"G{i}").value = ws5.range(f"D{i}").value + ws5.range(f"G{i}").value
+                                ws5.range(f"D{i}").value = 0 
+                            else:
+                                ws5.range(f"D{i}").value = ws5.range(f"D{i}").value + ws5.range(f"G{i}").value
+                                ws5.range(f"G{i}").value = 0 
+        for i in range(2,int(f'{last_row}')):            
+                    if ws5.range(f"D{i}").value<0:
+                        if ws5.range(f"F{i}").value>0:
+                            if ws5.range(f"F{i}").value>abs(ws5.range(f"D{i}").value):
+                                ws5.range(f"F{i}").value = ws5.range(f"D{i}").value + ws5.range(f"F{i}").value
+                                ws5.range(f"D{i}").value = 0 
+                            else:
+                                ws5.range(f"D{i}").value = ws5.range(f"D{i}").value + ws5.range(f"F{i}").value
+                                ws5.range(f"F{i}").value = 0                                
+        for i in range(2,int(f'{last_row}')):            
+                    if ws5.range(f"D{i}").value<0:
+                        if ws5.range(f"E{i}").value>0:
+                            if ws5.range(f"E{i}").value>abs(ws5.range(f"D{i}").value):
+                                ws5.range(f"E{i}").value = ws5.range(f"D{i}").value + ws5.range(f"E{i}").value
+                                ws5.range(f"D{i}").value = 0 
+                            else:
+                                ws5.range(f"D{i}").value = ws5.range(f"D{i}").value + ws5.range(f"E{i}").value
+                                ws5.range(f"E{i}").value = 0 
         
         ##logger.info("Adding Worksheet for Pivot Table")
         wb.sheets.add("Pivot BB",after=wb.sheets["Eligible"])
@@ -2656,9 +2762,9 @@ def open_ap(input_date, output_date):
                 wb=xw.Book(input_sheet)
                 break
             except Exception as e:
-                time.sleep(5)
+                time.sleep(2)
                 retry+=1
-                if retry ==10:
+                if retry ==9:
                     raise e
         #logger.info("Adding sheet to the same workbook")
         wb.sheets.add("EXCLUDING",after=wb.sheets[f"Open AP _{input_date}"]) 
@@ -2873,9 +2979,9 @@ def unsetteled_payables(input_date, output_date):
                 wb = xw.Book(input_xl, update_links=True)
                 break
             except Exception as e:
-                time.sleep(5)
+                time.sleep(2)
                 retry+=1
-                if retry==10:
+                if retry==9:
                     raise e
         
         #######logger.info("Sheet Opened")
@@ -3020,9 +3126,9 @@ def unsetteled_receivables(input_date, output_date):
                 wb = xw.Book(input_xl, update_links=False)
                 break
             except Exception as e:
-                time.sleep(5)
+                time.sleep(2)
                 retry+=1
-                if retry==10:
+                if retry==9:
                     raise e
         
         ######logger.info("Sheet Opened")
@@ -3030,11 +3136,12 @@ def unsetteled_receivables(input_date, output_date):
         while True:
             try:
                 inp_sht = wb.sheets[0] #wb.sheets[0].name in 'Unsettled Receivables _'+input_date
+                
                 break
             except Exception as e:
-                time.sleep(5)
+                time.sleep(2)
                 # retry+=1
-                # if retry==10:
+                # if retry==9:
                 #     raise e
         
 
@@ -3221,9 +3328,9 @@ def unsetteled_receivables(input_date, output_date):
 
 def moc_interest_alloc(input_date, output_date):
     try:
-        input_xl = r"J:\WEST PLAINS\REPORT\MOC Interest allocation\Raw files\Inventory MTM Excel Report " + input_date + ".xlsx"
-        if not os.path.exists(input_xl):
-                return(f"{input_xl} Excel file not present for date {input_date}")
+        # input_xl = r"J:\WEST PLAINS\REPORT\MOC Interest allocation\Raw files\Inventory MTM Excel Report " + input_date + ".xlsx"
+        # if not os.path.exists(input_xl):
+        #         return(f"{input_xl} Excel file not present for date {input_date}")
         dt = datetime.strptime(input_date,"%m.%d.%Y")
         mtm_input_date = dt.strftime("%B %Y")
 
@@ -3260,7 +3367,7 @@ def moc_interest_alloc(input_date, output_date):
 
 
           
-        main_df = moc_get_df_from_input_excel(input_xl, mtm_file, open_ap_file, open_ar_file,unsettled_pay_file, unsettled_recev_file)
+        main_df = moc_get_df_from_input_excel(mtm_file, open_ap_file, open_ar_file,unsettled_pay_file, unsettled_recev_file)
         update_moc_excel(main_df, template_dir, output_dir, input_date)
         return f"MOC Interest Allocation Report Generated for {input_date}"
     except Exception as e:
@@ -3277,6 +3384,11 @@ def main():
             root.destroy()
             sys.exit()
     def callback_2():
+    
+        # def report_callback_exception(self, exc, val, tb):
+        #     showerror("Error", message=str(exc) + str(val) +str(tb))
+
+        # try:
         if submit_text.get() != "Started" and 'Select' not in Rep_variable.get():
             submit_text.set("Started")
             text_box.delete(1.0, "end")
@@ -3302,17 +3414,31 @@ def main():
         elif 'Select' in Rep_variable.get():
             text_box.insert("end", f"Please select job first", "center")
 
-       
+
         root.update()
-    def callback():
-        threading.Thread(target=callback_2).start()
+        # except Exception as e:
+        #     Tk.report_callback_exception = report_callback_exception
+        
+        
+    # def callback():
+    #     try:
+    #         threading.Thread(target=callback_2).start()
+    #     except Exception as e:
+    #         raise e
+        
         
     def report_callback_exception(self, exc, val, tb):
-        showerror("Error", message=str(exc + val +tb))
+        showerror("Error", message=str(exc) + str(val) +str(tb))
+        text_box.delete(1.0, "end")
+        text_box.insert("end", str(exc), "center")
+        submit_text.set("Submit")
+        Rep_variable.set('Select')
+        root.update()
 
     Tk.report_callback_exception = report_callback_exception
     frame_title.grid(row=0, column=1,pady=(24,0),columnspan=3, padx=(30,0))
     logo = PhotoImage(file = path + '\\'+'wp_logo.png')
+    # logo = PhotoImage(file = path + '\\'+'wp_logo.png')
 
 
     title = Label(frame_title,image=logo, background='white')
@@ -3373,7 +3499,7 @@ def main():
 
     frame_submit.grid(row=5, column=1,columnspan=3)
     submit_text = StringVar()
-    submit = Button(frame_submit, textvariable=submit_text, font = ("Book Antiqua bold", 12), bg="#20bebe", fg="white", height=1, width=14, command=callback, activebackground="#20bebb")
+    submit = Button(frame_submit, textvariable=submit_text, font = ("Book Antiqua bold", 12), bg="#20bebe", fg="white", height=1, width=14, command=callback_2, activebackground="#20bebb")
     submit.grid(row=0, column=1, padx=(30,0))
     submit_text.set("Submit")
     
