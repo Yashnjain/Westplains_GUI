@@ -112,6 +112,8 @@ def bbr_other_tabs(input_date, wb, input_ar, input_ctm):
 
         ws1=wb.sheets["AR-Trade By Tier - Eligible"]
         ws1.select()
+        ws1.clear_contents()
+        ws1.activate()
         # pivotCount = wb.api.ActiveSheet.PivotTables().Count
         # #'\\Bio-India-FS\India sync$\WEST PLAINS\REPORT\BBR Reports\Raw Files\[Open AR _02.07.2022 - Production.xlsx]Eligible'!$A$1:$K$123
         # # 'Data 02.21.2022'!$A$1:$G$4731
@@ -122,17 +124,17 @@ def bbr_other_tabs(input_date, wb, input_ar, input_ctm):
         #     wb.api.ActiveSheet.PivotTables(j).PivotCache().Refresh()  
 
         ###logger.info("Adding Worksheet for Pivot Table")
-        wb.sheets.add("AR-Trade By Tier - Eligible2",after=wb.sheets["Account Receivable Summary"])
+        # wb.sheets.add("AR-Trade By Tier - Eligible2",after=wb.sheets["Account Receivable Summary"])
         ###logger.info("Clearing contents for new sheet")
-        wb.sheets["AR-Trade By Tier - Eligible2"].clear_contents()
-        ws2=wb.sheets["AR-Trade By Tier - Eligible2"]
+        # wb.sheets["AR-Trade By Tier - Eligible2"].clear_contents()
+        # ws2=wb.sheets["AR-Trade By Tier - Eligible2"]
         ###logger.info("Declaring Variables for columns and rows")
         # last_row = ws5.range(f'A'+ str(ws1.cells.last_cell.row)).end('up').row
         # last_column = ws5.range('A1').end('right').last_cell.column
         # last_column_letter=num_to_col_letters(ws5.range('A1').end('right').last_cell.column)
         ###logger.info("Creating Pivot Table")
         PivotCache=wb.api.PivotCaches().Create(SourceType=win32c.PivotTableSourceType.xlDatabase, SourceData=f"'J:\\WEST PLAINS\\REPORT\\Open AR\\Output files\\[Open AR _{input_date} - Production.xlsx]Eligible'!R1C1:R{last_row}C{total_column}", Version=win32c.PivotTableVersionList.xlPivotTableVersion14)
-        PivotTable = PivotCache.CreatePivotTable(TableDestination=f"'AR-Trade By Tier - Eligible2'!R7C1", TableName="PivotTable1", DefaultVersion=win32c.PivotTableVersionList.xlPivotTableVersion14)        ###logger.info("Adding particular Row in Pivot Table")
+        PivotTable = PivotCache.CreatePivotTable(TableDestination=f"'AR-Trade By Tier - Eligible'!R7C1", TableName="PivotTable1", DefaultVersion=win32c.PivotTableVersionList.xlPivotTableVersion14)        ###logger.info("Adding particular Row in Pivot Table")
         PivotTable.PivotFields('Tier').Orientation = win32c.PivotFieldOrientation.xlRowField
         PivotTable.PivotFields('Tier').Position = 1
         PivotTable.PivotFields('Customer Name').Orientation = win32c.PivotFieldOrientation.xlRowField
@@ -162,24 +164,29 @@ def bbr_other_tabs(input_date, wb, input_ar, input_ctm):
         wb.api.ActiveSheet.PivotTables("PivotTable1").InGridDropZones = True
         wb.api.ActiveSheet.PivotTables("PivotTable1").DataPivotField.Caption = "Data"
 
-        ws1.api.Range("A1:A3").Copy()
-        ws2.api.Paste()
-        wb.app.api.CutCopyMode=False
-        ws1.delete()
-        ws2.name="AR-Trade By Tier - Eligible"
+        # ws1.api.Range("A1:A3").Copy()
+        # ws2.api.Paste()
+        # wb.app.api.CutCopyMode=False
+        # ws1.delete()
+        # ws2.name="AR-Trade By Tier - Eligible"
+        ws1.range("A1").value = "West Plains, LLC"  
+        ws1.range("A2").value = "Open Accounts Receivable -  by Tier"
+        ws1.range("A3").value = input_date
+
         ws3=wb.sheets["AR-Trade By Tier - Ineligible"]
         ws3.select()
-        wb.sheets.add("AR-Trade By Tier - Ineligible2",after=wb.sheets["AR-Trade By Tier - Eligible"])
-        ###logger.info("Clearing contents for new sheet")
-        wb.sheets["AR-Trade By Tier - Ineligible2"].clear_contents()
-        ws4=wb.sheets["AR-Trade By Tier - Ineligible2"]
+        ws3.clear_contents()
+        # wb.sheets.add("AR-Trade By Tier - Ineligible2",after=wb.sheets["AR-Trade By Tier - Eligible"])
+        # ###logger.info("Clearing contents for new sheet")
+        # wb.sheets["AR-Trade By Tier - Ineligible2"].clear_contents()
+        # ws4=wb.sheets["AR-Trade By Tier - Ineligible2"]
         ###logger.info("Declaring Variables for columns and rows")
         # last_row = ws5.range(f'A'+ str(ws1.cells.last_cell.row)).end('up').row
         # last_column = ws5.range('A1').end('right').last_cell.column
         # last_column_letter=num_to_col_letters(ws5.range('A1').end('right').last_cell.column)
         ###logger.info("Creating Pivot Table")
         PivotCache=wb.api.PivotCaches().Create(SourceType=win32c.PivotTableSourceType.xlDatabase, SourceData=f"'J:\\WEST PLAINS\\REPORT\\Open AR\\Output files\\[Open AR _{input_date} - Production.xlsx]Eligible'!R1C1:R{last_row}C{total_column}", Version=win32c.PivotTableVersionList.xlPivotTableVersion14)
-        PivotTable = PivotCache.CreatePivotTable(TableDestination=f"'AR-Trade By Tier - Ineligible2'!R7C1", TableName="PivotTable1", DefaultVersion=win32c.PivotTableVersionList.xlPivotTableVersion14)        ###logger.info("Adding particular Row in Pivot Table")
+        PivotTable = PivotCache.CreatePivotTable(TableDestination=f"'AR-Trade By Tier - Ineligible'!R7C1", TableName="PivotTable1", DefaultVersion=win32c.PivotTableVersionList.xlPivotTableVersion14)        ###logger.info("Adding particular Row in Pivot Table")
         PivotTable.PivotFields('Tier').Orientation = win32c.PivotFieldOrientation.xlRowField
         PivotTable.PivotFields('Tier').Position = 1
         PivotTable.PivotFields('Customer Name').Orientation = win32c.PivotFieldOrientation.xlRowField
@@ -209,13 +216,18 @@ def bbr_other_tabs(input_date, wb, input_ar, input_ctm):
         wb.api.ActiveSheet.PivotTables("PivotTable1").InGridDropZones = True
         wb.api.ActiveSheet.PivotTables("PivotTable1").DataPivotField.Caption = "Data"
 
-        ws3.api.Range("A1:A3").Copy()
-        ws4.api.Paste()
-        wb.app.api.CutCopyMode=False
-        ws3.delete()
-        ws4.name="AR-Trade By Tier - Ineligible"
-        # ws5=wb.sheets['Detail CTM Non MCUI']
+        ws3.range("A1").value = "West Plains, LLC"  
+        ws3.range("A2").value = "Open Accounts Receivable -  by Tier"
+        ws3.range("A3").value = input_date
 
+        # ws3.api.Range("A1:A3").Copy()
+        # ws4.api.Paste()
+        # wb.app.api.CutCopyMode=False
+        # ws3.delete()
+        # ws4.name="AR-Trade By Tier - Ineligible"
+        # ws5=wb.sheets['Detail CTM Non MCUI']
+        wb.sheets["Account Receivable Summary"].range("C8").formula = '=+GETPIVOTDATA("Sum of  1 - 10",\'AR-Trade By Tier - Eligible\'!$A$7,"Tier","Tier I")'
+        wb.sheets["Account Receivable Summary"].range("E8").formula = '=+GETPIVOTDATA("Sum of  1 - 10",\'AR-Trade By Tier - Eligible\'!$A$7,"Tier","Tier II")'
         retry=0
         while retry < 10:
             try:
@@ -241,20 +253,21 @@ def bbr_other_tabs(input_date, wb, input_ar, input_ctm):
         wb1.close()
         wb.activate()
         ws6 = wb.sheets['Unrlz- Gains- Contracts Non MC']
-        wb.sheets['Unrlz- Gains- Contracts Non MC'].select()
+        ws6.select()
+        ws6.clear_contents()
 
         #logger.info("Adding Worksheet for Pivot Table")
-        wb.sheets.add("Unrlz- Gains- Contracts Non MC2",after=wb.sheets["Inventory -Other"])
+        # wb.sheets.add("Unrlz- Gains- Contracts Non MC2",after=wb.sheets["Inventory -Other"])
         #logger.info("Clearing New Worksheet")
-        wb.sheets["Unrlz- Gains- Contracts Non MC2"].clear_contents()
-        ws7=wb.sheets["Unrlz- Gains- Contracts Non MC2"]
+        # wb.sheets["Unrlz- Gains- Contracts Non MC2"].clear_contents()
+        # ws7=wb.sheets["Unrlz- Gains- Contracts Non MC2"]
         #logger.info("Declaring Variables for columns and rows")
         last_column = ws5.range('A1').end('right').last_cell.column
         last_column_letter=num_to_col_letters(ws5.range('A1').end('right').last_cell.column)
         num_row = ws5.range('A1').end('down').row
         #logger.info("Creating Pivot table")
         PivotCache=wb.api.PivotCaches().Create(SourceType=win32c.PivotTableSourceType.xlDatabase, SourceData=f"\'Detail CTM Non MCUI\'!R1C1:R{num_row}C{last_column}", Version=win32c.PivotTableVersionList.xlPivotTableVersion14)
-        PivotTable = PivotCache.CreatePivotTable(TableDestination="'Unrlz- Gains- Contracts Non MC2'!R7C1", TableName="PivotTable1", DefaultVersion=win32c.PivotTableVersionList.xlPivotTableVersion14)
+        PivotTable = PivotCache.CreatePivotTable(TableDestination="'Unrlz- Gains- Contracts Non MC'!R7C1", TableName="PivotTable1", DefaultVersion=win32c.PivotTableVersionList.xlPivotTableVersion14)
         #logger.info("Adding particular Row Data in Pivot Table")
         PivotTable.PivotFields('Location Id').Orientation = win32c.PivotFieldOrientation.xlRowField
         PivotTable.PivotFields('Location Id').Position = 1
@@ -279,11 +292,11 @@ def bbr_other_tabs(input_date, wb, input_ar, input_ctm):
         last_column = ws5.range('A1').end('right').last_cell.column
         last_column_letter=num_to_col_letters(ws5.range('A1').end('right').last_cell.column)
         num_row = ws5.range('A1').end('down').row
-        last_row2 = ws7.range(f'A'+ str(ws7.cells.last_cell.row)).end('up').row
+        last_row2 = ws6.range(f'A'+ str(ws6.cells.last_cell.row)).end('up').row
         last_row2+=10
         #logger.info("Creating Pivot table")
         PivotCache=wb.api.PivotCaches().Create(SourceType=win32c.PivotTableSourceType.xlDatabase, SourceData=f"\'Detail CTM Non MCUI\'!R1C1:R{num_row}C{last_column}", Version=win32c.PivotTableVersionList.xlPivotTableVersion14)
-        PivotTable = PivotCache.CreatePivotTable(TableDestination=f"'Unrlz- Gains- Contracts Non MC2'!R{last_row2}C1", TableName="PivotTable2", DefaultVersion=win32c.PivotTableVersionList.xlPivotTableVersion14)
+        PivotTable = PivotCache.CreatePivotTable(TableDestination=f"'Unrlz- Gains- Contracts Non MC'!R{last_row2}C1", TableName="PivotTable2", DefaultVersion=win32c.PivotTableVersionList.xlPivotTableVersion14)
         #logger.info("Adding particular Row Data in Pivot Table")
         PivotTable.PivotFields('Location Id').Orientation = win32c.PivotFieldOrientation.xlRowField
         PivotTable.PivotFields('Location Id').Position = 1
@@ -306,21 +319,24 @@ def bbr_other_tabs(input_date, wb, input_ar, input_ctm):
         PivotTable.TableStyle2 = ""
         wb.api.ActiveSheet.PivotTables("PivotTable2").InGridDropZones = True
         #logic for adding total
-        last_row3 = ws7.range(f'A'+ str(ws7.cells.last_cell.row)).end('up').row 
+        last_row3 = ws6.range(f'A'+ str(ws6.cells.last_cell.row)).end('up').row 
         last_row3+=5
-        ws7.range(f"E{last_row3}").value=f'=+GETPIVOTDATA("Gain/LossTotal",$A$7)+GETPIVOTDATA("Gain/LossTotal",$A${last_row2})'
-        ws7.range(f"E{last_row3}").api.NumberFormat= '_(* #,##0.00_);_(* (#,##0.00);_(* "-"??_);_(@_)'
+        ws6.range(f"E{last_row3}").value=f'=+GETPIVOTDATA("Gain/LossTotal",$A$7)+GETPIVOTDATA("Gain/LossTotal",$A${last_row2})'
+        ws6.range(f"E{last_row3}").api.NumberFormat= '_(* #,##0.00_);_(* (#,##0.00);_(* "-"??_);_(@_)'
 
-        ws6.api.Range("A1:A3").Copy()
-        ws7.api.Paste()
-        ws7.api.Columns("C:C").ColumnWidth = 17
-        wb.app.api.CutCopyMode=False
-        ws6.delete()
-        ws7.name="Unrlz- Gains- Contracts Non MC"
+        ws6.range("A1").value = "West Plains, LLC"  
+        ws6.range("A2").value = "Net Unrealized Gains on Forward Contracts - Non MCUI"
+        ws6.range("A3").value = input_date
+        # ws6.api.Range("A1:A3").Copy()
+        # ws7.api.Paste()
+        # ws7.api.Columns("C:C").ColumnWidth = 17
+        # wb.app.api.CutCopyMode=False
+        # ws6.delete()
+        # ws7.name="Unrlz- Gains- Contracts Non MC"
         # wb.save(f"{output_location}\\{input_date}_Borrowing Base Report_y.xlsx")
         # wb.app.quit()
     except Exception as e:
-            raise e
+        raise e
 
 def cash_colat(wb,bank_recons_loc, input_date_date):
     try:
@@ -613,8 +629,10 @@ def payables(wb, bbr_mapping_loc, open_ap_loc,unset_pay_loc):
     try:
         df = pd.read_excel(bbr_mapping_loc, usecols="A,B")   
         new_dict = dict(zip(df.iloc[:,0],df.iloc[:,1]))
+        inv_dict = dict(zip(df.iloc[:,1],df.iloc[:,0]))
         payab_df = pd.read_excel(bbr_mapping_loc, usecols="D,E")
         payab_dict = dict(zip(payab_df.iloc[:,0],payab_df.iloc[:,1]))
+        inv_payab_dict = dict(zip(payab_df.iloc[:,1],payab_df.iloc[:,0]))
         retry=0
         while retry < 10:
             try:
@@ -680,25 +698,56 @@ def payables(wb, bbr_mapping_loc, open_ap_loc,unset_pay_loc):
         if len(bbr_loc) != len(open_ap_loc_lst):
             if len(open_ap_loc_lst) > len(bbr_loc):
                 for i in range(len(open_ap_loc_lst) - len(bbr_loc)):
-                    bbr_payab_sht.range(f"{bbr_last_row+i}:{bbr_last_row+i}").insert()
-            else:
-                for i in range(len(bbr_loc) - len(open_ap_loc_lst)):
-                    bbr_payab_sht.range(f"{bbr_last_row-i}:{bbr_last_row-i}").delete()
+                    bbr_payab_sht.range(f"{bbr_last_row+i+1}:{bbr_last_row+i+1}").insert()
+                    new_loc = f"{bbr_last_row+i+1}"
+            # else:
+            #     for i in range(len(bbr_loc) - len(open_ap_loc_lst)):
+            #         bbr_payab_sht.range(f"{bbr_last_row-i}:{bbr_last_row-i}").delete()
         else:
             pass
 
         i=10
         for loc in open_ap_loc_lst:
-            bbr_payab_sht.range(f"A{i}").value = new_dict[loc]
+            if inv_dict[loc] not in bbr_loc:
+                bbr_payab_sht.range(f"A{new_loc}").value = inv_dict[loc]
+                bbr_payab_sht.range(f"C{int(new_loc)+1}").formula = f"=+SUM(C10:C{new_loc})"
+                bbr_payab_sht.range(f"D{int(new_loc)+1}").formula = f"=+SUM(D10:D{new_loc})"
+                bbr_payab_sht.range(f"E{int(new_loc)+1}").formula = f"=+SUM(E10:E{new_loc})"
+                bbr_payab_sht.range(f"F{int(new_loc)+1}").formula = f"=+SUM(F10:F{new_loc})"
+            # if new_dict[loc] == bbr_payab_sht.range(f"A{i}").value:
+                # bbr_payab_sht.range(f"A{i}").value = new_dict[loc]
             try:
-                bbr_payab_sht.range(f"C{i}").value = dict_1[loc]
+                bbr_payab_sht.range(f"C{i}").value = dict_1[new_dict[bbr_payab_sht.range(f"A{i}").value]]
             except:
                 bbr_payab_sht.range(f"C{i}").value = 0
             try:
-                bbr_payab_sht.range(f"E{i}").value = dict_2[loc]
+                bbr_payab_sht.range(f"E{i}").value = dict_2[new_dict[bbr_payab_sht.range(f"A{i}").value]]
             except:
                 bbr_payab_sht.range(f"E{i}").value = 0
             i+=1
+            # elif bbr_payab_sht.range(f"A{i}").value is None:
+            #     bbr_payab_sht.range(f"A{i}").value = new_dict[loc]
+            #     try:
+            #         bbr_payab_sht.range(f"C{i}").value = dict_1[loc]
+            #     except:
+            #         bbr_payab_sht.range(f"C{i}").value = 0
+            #     try:
+            #         bbr_payab_sht.range(f"E{i}").value = dict_2[loc]
+            #     except:
+            #         bbr_payab_sht.range(f"E{i}").value = 0
+            #     i+=1
+
+        # for loc in open_ap_loc_lst:
+        #     bbr_payab_sht.range(f"A{i}").value = new_dict[loc]
+        #     try:
+        #         bbr_payab_sht.range(f"C{i}").value = dict_1[loc]
+        #     except:
+        #         bbr_payab_sht.range(f"C{i}").value = 0
+        #     try:
+        #         bbr_payab_sht.range(f"E{i}").value = dict_2[loc]
+        #     except:
+        #         bbr_payab_sht.range(f"E{i}").value = 0
+        #     i+=1
         p_last_row = payab_sht.range("A4").end('down').row
         payab_loc_lst = payab_sht.range(f"A4:A{int(p_last_row)-1}").value
         total_col = payab_sht.range(f"D4:D{int(p_last_row)-1}").value
@@ -708,13 +757,32 @@ def payables(wb, bbr_mapping_loc, open_ap_loc,unset_pay_loc):
         dict_3 = dict(zip(payab_loc_lst,total_col))
 
         payb_loc = bbr_payab_sht.range(f"A{i}").end("down").end("down").row
+        payb_last_loc = bbr_payab_sht.range(f"A{i}").end("down").end("down").end("down").row
+        bbr_payb_loc = bbr_payab_sht.range(f"A{payb_loc}:A{int(payb_last_loc)-1}").expand('down').value
 
         bbr_payb_loc_lst = bbr_payab_sht.range(f"A{payb_loc}").expand("down").value
         bbr_payb_loc_lst = bbr_payb_loc_lst[:-1]
+        #inserting row
+        if len(bbr_payb_loc_lst) != len(payab_loc_lst):
+            if len(payab_loc_lst) > len(bbr_payb_loc_lst):
+                for i in range(len(payab_loc_lst) - len(bbr_payb_loc_lst)):
+                    bbr_payab_sht.range(f"{payb_last_loc+i}:{payb_last_loc+i}").insert()
+                    new_loc = f"{payb_last_loc+i}"
+            # else:
+            #     for i in range(len(bbr_loc) - len(open_ap_loc_lst)):
+            #         bbr_payab_sht.range(f"{bbr_last_row-i}:{bbr_last_row-i}").delete()
+        else:
+            pass
         for loc in payab_loc_lst:
+            if payab_dict[loc] not in bbr_payb_loc:
+                bbr_payab_sht.range(f"A{new_loc}").value = inv_dict[loc]
+                bbr_payab_sht.range(f"C{int(new_loc)+1}").formula = f"=+SUM(C10:C{new_loc})"
+                bbr_payab_sht.range(f"D{int(new_loc)+1}").formula = f"=+SUM(D10:D{new_loc})"
+                bbr_payab_sht.range(f"E{int(new_loc)+1}").formula = f"=+SUM(E10:E{new_loc})"
+                bbr_payab_sht.range(f"F{int(new_loc)+1}").formula = f"=+SUM(F10:F{new_loc})"
             bbr_payab_sht.range(f"A{i}").value = payab_dict[loc]
             try:
-                bbr_payab_sht.range(f"C{payb_loc}").value = dict_3[loc]
+                bbr_payab_sht.range(f"C{payb_loc}").value = dict_3[inv_payab_dict[bbr_payab_sht.range(f"A{payb_loc}").value]]
             except:
                 bbr_payab_sht.range(f"C{payb_loc}").value = 0
             payb_loc+=1
@@ -1399,37 +1467,85 @@ def bbr(input_date, output_date):
                 if retry ==9:
                     raise e
         try:
-            wb.sheets['AR-Re-Purchase Storage Rcbl'].name = "AR-Re-Purch Org"
+            # wb.sheets['AR-Re-Purchase Storage Rcbl'].name = "AR-Re-Purch Org"
+            wb.sheets['AR-Re-Purchase Storage Rcbl'].clear_contents()
         except:
             try:
-               wb.sheets['AR-Re-Purchase Storage Rcbl '].name = "AR-Re-Purch Org"
+            #    wb.sheets['AR-Re-Purchase Storage Rcbl '].name = "AR-Re-Purch Org"
+                wb.sheets['AR-Re-Purchase Storage Rcbl '].clear_contents()
             except Exception as e:
                 raise e
         
         try:
-            wb.sheets['Unrld Gains-Contracts MCUI'].name = "Unrld Gains Org"
+            # wb.sheets['Unrld Gains-Contracts MCUI'].name = "Unrld Gains Org"
+            wb.sheets['Unrld Gains-Contracts MCUI'].clear_contents()
         except:
             try:
-                wb.sheets["Unrld Gains-Contracts MCUI "].name = "Unrld Gains Org"
+                # wb.sheets["Unrld Gains-Contracts MCUI "].name = "Unrld Gains Org"
+                wb.sheets["Unrld Gains-Contracts MCUI "].clear_contents()
             except Exception as e:
                 raise e
         
         try:
-            p_wb.sheets['AR-Re-Purchase Storage Rcbl'].copy(before = wb.sheets["AR-Re-Purch Org"])
+            wb.app.api.CutCopyMode=False
+            p_wb.app.api.CutCopyMode=False
+            # p_wb.sheets['AR-Re-Purchase Storage Rcbl'].copy(before = wb.sheets["AR-Re-Purch Org"])
+            p_wb.sheets['AR-Re-Purchase Storage Rcbl'].api.Range(p_wb.sheets['AR-Re-Purchase Storage Rcbl'].api.Cells.SpecialCells(12).Address).Copy()
+            wb.sheets['AR-Re-Purchase Storage Rcbl'].api.Activate()
+            wb.sheets['AR-Re-Purchase Storage Rcbl'].api.Range("A1").Select()
+            wb.sheets['AR-Re-Purchase Storage Rcbl'].api.Paste()
+
+            wb.app.api.CutCopyMode=False
+            p_wb.app.api.CutCopyMode=False
+
+
         except:
             try:
-                p_wb.sheets['AR-Re-Purchase Storage Rcbl'].copy(before = wb.sheets["AR-Re-Purch Org"])
+                # p_wb.sheets['AR-Re-Purchase Storage Rcbl'].copy(before = wb.sheets["AR-Re-Purch Org"])
+                wb.app.api.CutCopyMode=False
+                p_wb.app.api.CutCopyMode=False
+                # p_wb.sheets['AR-Re-Purchase Storage Rcbl'].copy(before = wb.sheets["AR-Re-Purch Org"])
+                p_wb.sheets['AR-Re-Purchase Storage Rcbl '].api.Range(p_wb.sheets['AR-Re-Purchase Storage Rcbl'].api.Cells.SpecialCells(12).Address).Copy()
+                wb.sheets['AR-Re-Purchase Storage Rcbl '].api.Activate()
+                wb.sheets['AR-Re-Purchase Storage Rcbl '].api.Range("A1").Select()
+                wb.sheets['AR-Re-Purchase Storage Rcbl '].api.Paste()
+
+                wb.app.api.CutCopyMode=False
+                p_wb.app.api.CutCopyMode=False
             except Exception as e:
                 raise e
         try:
-            p_wb.sheets['Unrld Gains-Contracts MCUI'].copy(before = wb.sheets["Unrld Gains Org"])
+            wb.app.api.CutCopyMode=False
+            p_wb.app.api.CutCopyMode=False
+            # p_wb.sheets['AR-Re-Purchase Storage Rcbl'].copy(before = wb.sheets["AR-Re-Purch Org"])
+            p_wb.sheets['Unrld Gains-Contracts MCUI'].api.Range(p_wb.sheets['Unrld Gains-Contracts MCUI'].api.Cells.SpecialCells(12).Address).Copy()
+            wb.sheets['Unrld Gains-Contracts MCUI'].api.Activate()
+            wb.sheets['Unrld Gains-Contracts MCUI'].api.Range("A1").Select()
+            wb.sheets['Unrld Gains-Contracts MCUI'].api.Paste()
+
+            wb.app.api.CutCopyMode=False
+            p_wb.app.api.CutCopyMode=False
+            
         except:
             try:
-                p_wb.sheets['Unrld Gains-Contracts MCUI '].copy(before = wb.sheets["Unrld Gains Org"])
+                wb.app.api.CutCopyMode=False
+                p_wb.app.api.CutCopyMode=False
+                # p_wb.sheets['AR-Re-Purchase Storage Rcbl'].copy(before = wb.sheets["AR-Re-Purch Org"])
+                p_wb.sheets['Unrld Gains-Contracts MCUI '].api.Range(p_wb.sheets['Unrld Gains-Contracts MCUI '].api.Cells.SpecialCells(12).Address).Copy()
+                wb.sheets['Unrld Gains-Contracts MCUI '].api.Activate()
+                wb.sheets['Unrld Gains-Contracts MCUI '].api.Range("A1").Select()
+                wb.sheets['Unrld Gains-Contracts MCUI '].api.Paste()
+
+                wb.app.api.CutCopyMode=False
+                p_wb.app.api.CutCopyMode=False
+                
             except Exception as e:
                 raise e
-        wb.sheets["AR-Re-Purch Org"].delete()
-        wb.sheets["Unrld Gains Org"].delete()
+        # wb.sheets["AR-Re-Purch Org"].delete()
+        # wb.sheets["Unrld Gains Org"].delete()
+        p_wb.close()
+        # bbr_other_tabs(input_date, wb, input_ar, input_ctm)
+        # payables(wb, bbr_mapping_loc, open_ap_loc,unset_pay_loc)
         cash_colat(wb,bank_recons_loc, input_date_date)
         comm_acc_xl(wb, pdf_loc)
         ar_unsettled_by_tier(wb, unset_rec_loc, input_date)
@@ -1778,17 +1894,16 @@ def cpr(input_date, output_date):
         # for i in range(7,BB_Master25_Row+1):
         i = 7
         while i<= BB_Master25_Row:
-            if (type(BB_Master25ws.range(f'H{i}').value) == int) or (type(BB_Master25ws.range(f'H{i}').value) == float):
-                if  (-25000 < BB_Master25ws.range(f'H{i}').value) and (BB_Master25ws.range(f'H{i}').value <25000):
-                    # BB_Master25ws.range(f'{i}:{i}').api.Delete(win32c.DeleteShiftDirection.xlShiftDown)
-                    BB_Master25ws.range(f"{i}:{i}").api.Delete(win32c.DeleteShiftDirection.xlShiftUp)
-                    # BB_Master25ws.range(f'{i}:{i}').delete()
-                    i-=1
-                else:
-                    i+=1
-                   
+            # if (type(BB_Master25ws.range(f'H{i}').value) == int) or (type(BB_Master25ws.range(f'H{i}').value) == float):
+            if  (-25000 < BB_Master25ws.range(f'H{i}').value) and (BB_Master25ws.range(f'H{i}').value <25000):
+                # BB_Master25ws.range(f'{i}:{i}').api.Delete(win32c.DeleteShiftDirection.xlShiftDown)
+                BB_Master25ws.range(f"{i}:{i}").api.Delete(win32c.DeleteShiftDirection.xlShiftUp)
+                # BB_Master25ws.range(f'{i}:{i}').delete()
+                i-=1
             else:
                 i+=1
+                
+        # gt
         ####logger.info('Refreshing all tab')  
         BB_wb.api.RefreshAll()
         BB_wb.sheets[2].select()
@@ -3373,7 +3488,143 @@ def moc_interest_alloc(input_date, output_date):
     except Exception as e:
         raise e
     
+def bbr_monthEnd(input_date, output_date):
+    try:
+        monthYear = datetime.strftime(datetime.strptime(input_date, "%m.%d.%Y"), "%b%Y").upper()
+        input_bbr = r"J:\WEST PLAINS\REPORT\BBR Reports\Output files" +f"\\{input_date}_Borrowing Base Report.xlsx"
+        output_loc = r"J:\WEST PLAINS\REPORT\BBR Reports\Output files\Month_End" +f"\\{input_date}_Borrowing Base Report.xlsx"
+        if not os.path.exists(input_bbr):
+            return(f"{input_bbr} Excel file not present for date {input_date}")
 
+        strg_accr = r'J:\WEST PLAINS\REPORT\Storage Month End Report\Output Files'+f"\\{monthYear}.xlsx"
+        if not os.path.exists(strg_accr):
+            return(f"{strg_accr} Excel file not present for date {input_date}")
+
+        retry=0
+        while retry < 10:
+            try:
+                bbr_wb=xw.Book(input_bbr)
+                break
+            except Exception as e:
+                time.sleep(2)
+                retry+=1
+                if retry ==9:
+                    raise e
+
+        retry=0
+        while retry < 10:
+            try:
+                accr_wb=xw.Book(strg_accr)
+                break
+            except Exception as e:
+                time.sleep(2)
+                retry+=1
+                if retry ==9:
+                    raise e
+        
+        try:
+            bbr_wb.sheets['AR-Open Storage Rcbl'].name = "AR-Open Storage Rcbl Org"
+        except:
+            try:
+                bbr_wb.sheets['AR-Open Storage Rcbl '].name = "AR-Open Storage Rcbl Org"
+            except Exception as e:
+                raise e
+
+        accr_wb.sheets[0].copy(before = bbr_wb.sheets["AR-Open Storage Rcbl Org"])
+        bbr_wb.sheets["AR-Open Storage Rcbl Org"].delete()
+        bbr_wb.save(output_loc)
+    except Exception as e:
+        raise e
+    finally:
+        bbr_wb.app.quit()
+
+
+
+def month_end_storage_accrual(input_date, output_date):
+    try:
+        monthYear = datetime.strftime(datetime.strptime(input_date, "%m.%d.%Y"), "%b%Y").upper()
+        
+        pdf_loc = r'J:\WEST PLAINS\REPORT\Storage Month End Report\Raw Files'+f"\\{monthYear}\\PDF"
+        if not os.path.exists(pdf_loc):
+            return(f"{pdf_loc} Excel file not present for date {input_date}")
+        template_loc = r'J:\WEST PLAINS\REPORT\Storage Month End Report\Raw Files\template\STORAGE ACCRUAL.xlsx'
+        if not os.path.exists(template_loc):
+                    return(f"{template_loc} Excel file not present for date {input_date}")
+        output_location = r'J:\WEST PLAINS\REPORT\Storage Month End Report\Output Files'+f"\\{monthYear}.xlsx"
+        loc_dict = {}
+        # comm_dict = {}
+        # # location_lst = []
+        # commodity_lst = []
+        # values_lst = []
+        for loc in glob.glob(pdf_loc+"\\*.pdf"):
+            # loc =  r'J:\WEST PLAINS\REPORT\Storage Month End Report\Raw Files\FEB2022\DailyPositionRecordForm2539A.pdf'
+            df = read_pdf(loc, pages = 'all', guess = False, stream = True,
+                                            pandas_options={'header':0}, area = ["65,630,590,735"], columns=["680"])
+            df = pd.concat(df, ignore_index=True)
+            location = loc.split("\\")[-1].split(".")[0]
+            if location == "ALLIANCET":
+                location = "ALLIANCE TERMINAL"
+            if location == "HAYSPRING":
+                location = "HAY SPRINGS"
+            
+            commodity = loc.split("\\")[-1].split(".")[1]
+            value = float(df.iloc[-1][-1].replace(",",""))
+
+            # location_lst.append(loc.split("\\")[-1].split(".")[0])
+            # commodity_lst.append(loc.split("\\")[-1].split(".")[1])
+            # values_lst.append(float(df.iloc[-1][-1].replace(",","")))
+
+            if location in loc_dict.keys():  
+                if commodity in loc_dict[location].keys():
+                    loc_dict[location][commodity].append(value)
+                else:
+                    loc_dict[location][commodity] = [value]
+            else:  
+                loc_dict[location] = {}
+                loc_dict[location][commodity] = [value]
+                
+        retry=0
+        while retry < 10:
+            try:
+                wb=xw.Book(template_loc)
+                break
+            except Exception as e:
+                time.sleep(2)
+                retry+=1
+                if retry ==9:
+                    raise e
+        retry=0
+        while retry < 10:
+            try:
+                accr_sht = wb.sheets[0]
+                break
+            except Exception as e:
+                time.sleep(2)
+                retry+=1
+                if retry ==9:
+                    raise e
+        print()
+        accr_sht.range("A5").value = f"Schedule of inventory held for third parties (open storage ticket report) as of {input_date}"
+        last_row = accr_sht.range(f'A'+ str(accr_sht.cells.last_cell.row)).end('up').row
+
+        for i in range(10,last_row):
+            if accr_sht.range(f"A{i}").value is not None:
+                if accr_sht.range(f"A{i}").value in loc_dict.keys():
+                    print(accr_sht.range(f"A{i}").value)
+                    for j in range(len(accr_sht.range("C9").expand('right'))):
+                        try:
+                            accr_sht.range(chr(ord("C")+j)+f"{i}").value = loc_dict[accr_sht.range(f"A{i}").value][accr_sht.range(chr(ord("C")+j)+"9").value]
+                        except:
+                            pass
+        wb.save(output_location)
+       
+        print()
+        return f"Storage Accrual Sheet Generated for {monthYear}"
+    except Exception as e:
+        raise e
+    finally:
+        wb.app.quit()
+    
 
 
 
@@ -3450,7 +3701,8 @@ def main():
     # output_date = None
     frame_options.grid(row=1,column=0, pady=30, padx=35, columnspan=2, rowspan=3)
     wp_job_ids = {'ABS':1,'BBR':bbr,'CPR Report':cpr, 'Freight analysis':freight_analysis, 'CTM combined':ctm,'Inventory MTM excel report summary':inv_mtm,
-                    'MOC Interest Allocation':moc_interest_alloc,'Open AR':open_ar,'Open AP':open_ap, 'Unsettled Payable Report':unsetteled_payables,'Unsettled Receivable Report':unsetteled_receivables}
+                    'MOC Interest Allocation':moc_interest_alloc,'Open AR':open_ar,'Open AP':open_ap, 'Unsettled Payable Report':unsetteled_payables,'Unsettled Receivable Report':unsetteled_receivables,
+                    'Storage Month End Report':month_end_storage_accrual, "Month End BBr":bbr_monthEnd}
     # department_ids = {'Select \t\t\t\t\t\t\t\t\t': 9, 'Ethanol\t\t\t\t\t\t\t\t': 1, 'WestPlains': 8}
     Rep_variable = StringVar()
     doc_type_variable = StringVar()
