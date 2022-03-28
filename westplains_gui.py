@@ -321,8 +321,8 @@ def bbr_other_tabs(input_date, wb, input_ar, input_ctm):
         #logic for adding total
         last_row3 = ws6.range(f'A'+ str(ws6.cells.last_cell.row)).end('up').row 
         last_row3+=5
-        ws6.range(f"E{last_row3}").value=f'=+GETPIVOTDATA("Gain/LossTotal",$A$7)+GETPIVOTDATA("Gain/LossTotal",$A${last_row2})'
-        ws6.range(f"E{last_row3}").api.NumberFormat= '_(* #,##0.00_);_(* (#,##0.00);_(* "-"??_);_(@_)'
+        ws6.range(f"E58").value=f'=+GETPIVOTDATA("Gain/LossTotal",$A$7)+GETPIVOTDATA("Gain/LossTotal",$A${last_row2})'
+        ws6.range(f"E58").api.NumberFormat= '_(* #,##0.00_);_(* (#,##0.00);_(* "-"??_);_(@_)'
 
         ws6.range("A1").value = "West Plains, LLC"  
         ws6.range("A2").value = "Net Unrealized Gains on Forward Contracts - Non MCUI"
@@ -713,7 +713,9 @@ def payables(wb, bbr_mapping_loc, open_ap_loc,unset_pay_loc):
                 bbr_payab_sht.range(f"C{int(new_loc)+1}").formula = f"=+SUM(C10:C{new_loc})"
                 bbr_payab_sht.range(f"D{int(new_loc)+1}").formula = f"=+SUM(D10:D{new_loc})"
                 bbr_payab_sht.range(f"E{int(new_loc)+1}").formula = f"=+SUM(E10:E{new_loc})"
-                bbr_payab_sht.range(f"F{int(new_loc)+1}").formula = f"=+SUM(F10:F{new_loc})"
+                # bbr_payab_sht.range(f"F{int(new_loc)+1}").formula = f"=+SUM(F10:F{new_loc})"
+                bbr_payab_sht.range(f"F{int(new_loc)}").formula = f"=C{int(new_loc)}-D{int(new_loc)}-E{int(new_loc)}"
+                
             # if new_dict[loc] == bbr_payab_sht.range(f"A{i}").value:
                 # bbr_payab_sht.range(f"A{i}").value = new_dict[loc]
             try:
@@ -779,8 +781,10 @@ def payables(wb, bbr_mapping_loc, open_ap_loc,unset_pay_loc):
                 bbr_payab_sht.range(f"C{int(new_loc)+1}").formula = f"=+SUM(C10:C{new_loc})"
                 bbr_payab_sht.range(f"D{int(new_loc)+1}").formula = f"=+SUM(D10:D{new_loc})"
                 bbr_payab_sht.range(f"E{int(new_loc)+1}").formula = f"=+SUM(E10:E{new_loc})"
-                bbr_payab_sht.range(f"F{int(new_loc)+1}").formula = f"=+SUM(F10:F{new_loc})"
-            bbr_payab_sht.range(f"A{i}").value = payab_dict[loc]
+                
+                bbr_payab_sht.range(f"F{int(new_loc)+1}").formula = f"=C{new_loc}-D{new_loc}-E{new_loc}"
+
+            # bbr_payab_sht.range(f"A{i}").value = payab_dict[loc]
             try:
                 bbr_payab_sht.range(f"C{payb_loc}").value = dict_3[inv_payab_dict[bbr_payab_sht.range(f"A{payb_loc}").value]]
             except:
@@ -1545,13 +1549,13 @@ def bbr(input_date, output_date):
         # wb.sheets["Unrld Gains Org"].delete()
         p_wb.close()
         # bbr_other_tabs(input_date, wb, input_ar, input_ctm)
-        # payables(wb, bbr_mapping_loc, open_ap_loc,unset_pay_loc)
+        payables(wb, bbr_mapping_loc, open_ap_loc,unset_pay_loc)
         cash_colat(wb,bank_recons_loc, input_date_date)
         comm_acc_xl(wb, pdf_loc)
         ar_unsettled_by_tier(wb, unset_rec_loc, input_date)
         ar_open_storage_rcbl(wb, strg_accr_loc, input_date)
         inv_whre_n_in_trans(wb, mtm_loc, input_date)
-        payables(wb, bbr_mapping_loc, open_ap_loc,unset_pay_loc)
+        # payables(wb, bbr_mapping_loc, open_ap_loc,unset_pay_loc)
         bbr_other_tabs(input_date, wb, input_ar, input_ctm)
         wb.save(output_location)
         print()
