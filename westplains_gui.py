@@ -171,7 +171,9 @@ def bbr_other_tabs(input_date, wb, input_ar, input_ctm):
         # ws2.name="AR-Trade By Tier - Eligible"
         ws1.range("A1").value = "West Plains, LLC"  
         ws1.range("A2").value = "Open Accounts Receivable -  by Tier"
-        ws1.range("A3").value = input_date
+        ws1.range("A3").value = input_date.replace(".","/")
+        ws1.api.Range("A3").NumberFormat = 'mm/dd/yyyy'
+
 
         ws3=wb.sheets["AR-Trade By Tier - Ineligible"]
         ws3.select()
@@ -218,7 +220,8 @@ def bbr_other_tabs(input_date, wb, input_ar, input_ctm):
 
         ws3.range("A1").value = "West Plains, LLC"  
         ws3.range("A2").value = "Open Accounts Receivable -  by Tier"
-        ws3.range("A3").value = input_date
+        ws3.range("A3").value = input_date.replace(".","/")
+        ws3.api.Range("A3").NumberFormat = 'mm/dd/yyyy'
 
         # ws3.api.Range("A1:A3").Copy()
         # ws4.api.Paste()
@@ -228,6 +231,7 @@ def bbr_other_tabs(input_date, wb, input_ar, input_ctm):
         # ws5=wb.sheets['Detail CTM Non MCUI']
         wb.sheets["Account Receivable Summary"].range("C8").formula = '=+GETPIVOTDATA("Sum of  1 - 10",\'AR-Trade By Tier - Eligible\'!$A$7,"Tier","Tier I")'
         wb.sheets["Account Receivable Summary"].range("E8").formula = '=+GETPIVOTDATA("Sum of  1 - 10",\'AR-Trade By Tier - Eligible\'!$A$7,"Tier","Tier II")'
+        wb.sheets["Account Receivable Summary"].api.Range("A3").NumberFormat = 'mm/dd/yyyy'
         retry=0
         while retry < 10:
             try:
@@ -241,7 +245,8 @@ def bbr_other_tabs(input_date, wb, input_ar, input_ctm):
 
         excl_sht = wb1.sheets("Excl Macq & IC")
         ##logger.info("Copy tier sheet AFTER the intercompany sheet of input book.")
-        num_row = excl_sht.range('A1').end('down').row
+        # num_row = excl_sht.range('A1').end('down').row
+        num_row=excl_sht.range(f'A' + str(excl_sht.cells.last_cell.row)).end('up').row
         last_column = excl_sht.range('A1').end('right').last_cell.column
         last_column_letter=num_to_col_letters(last_column)
         excl_sht.range(f'A1:{last_column_letter}{num_row}').copy()
@@ -326,7 +331,9 @@ def bbr_other_tabs(input_date, wb, input_ar, input_ctm):
 
         ws6.range("A1").value = "West Plains, LLC"  
         ws6.range("A2").value = "Net Unrealized Gains on Forward Contracts - Non MCUI"
-        ws6.range("A3").value = input_date
+        ws6.range("A3").value = input_date.replace(".","/")
+        ws6.api.Range("A3").NumberFormat = 'mm/dd/yyyy'
+        print()
         # ws6.api.Range("A1:A3").Copy()
         # ws7.api.Paste()
         # ws7.api.Columns("C:C").ColumnWidth = 17
@@ -366,6 +373,7 @@ def cash_colat(wb,bank_recons_loc, input_date_date):
             except Exception as e:
                 time.sleep(2)
         cash_colat_sht.range("A3").value = input_date_date
+        cash_colat_sht.api.Range("A3").NumberFormat = 'mm/dd/yyyy'
         # cash_colat_sht.range("B58").value = bank_colat_sht.range("B12").value
         # cash_colat_sht.range("E58").value = bank_colat_sht.range("B14").value
         cash_colat_sht.range("B12").value = bank_colat_sht.range("B58").value
@@ -395,6 +403,7 @@ def ar_unsettled_by_tier(wb, unset_rec_loc, input_date):
             except Exception as e:
                 time.sleep(2)
         last_row=xl_mac_n_ic.range(f'A' + str(xl_mac_n_ic.cells.last_cell.row)).end('up').row
+        
         # 'J:\WEST PLAINS\REPORT\BBR Reports\Output\[Unsettled Receivables _02.14.2022.xlsx]Excl IC & Macq'!$A$1:$AJ$892
         unset_rec_wb.close()
         while True:
@@ -416,6 +425,8 @@ def ar_unsettled_by_tier(wb, unset_rec_loc, input_date):
         
           #f'Details!R1C1:R{len(new_rows)+1}C18' #Updateing data source
         wb.api.ActiveSheet.PivotTables(1).PivotCache().Refresh()
+
+        ar_unsettled_by_tier_sht.api.Range("A3").NumberFormat = 'mm/dd/yyyy'
         print("Refreshed")
         print()
         
@@ -484,6 +495,7 @@ def comm_acc_xl(wb,pdf_loc):
             except Exception as e:
                 time.sleep(2)
         cell = 8
+        com_acc_sht.api.Range("A3").NumberFormat = 'mm/dd/yyyy'
         account_lst = com_acc_sht.range("B8").expand("down").value
         account_lst = [str(account).replace(".0","") for account in account_lst]
         amount_dict = comm_acc_pdf_ext(account_lst, pdf_loc)
@@ -577,7 +589,9 @@ def inv_whre_n_in_trans(wb, mtm_loc, input_date):
         hrw_value=0
         yc_value = 0
         whre_sht.range(f"A3").value = datetime.strptime(input_date,"%m.%d.%Y")
+        whre_sht.api.Range("A3").NumberFormat = 'mm/dd/yyyy'
         inv_oth_sht.range(f"A3").value = datetime.strptime(input_date,"%m.%d.%Y")
+        inv_oth_sht.api.Range("A3").NumberFormat = 'mm/dd/yyyy'
         for i in range(len(main_loc)):
 
             if main_loc[i]=="HRW" and hrw_value==0:
@@ -625,7 +639,7 @@ def inv_whre_n_in_trans(wb, mtm_loc, input_date):
     except Exception as e:
         raise e
 
-def payables(wb, bbr_mapping_loc, open_ap_loc,unset_pay_loc):
+def payables(input_date,wb, bbr_mapping_loc, open_ap_loc,unset_pay_loc):
     try:
         df = pd.read_excel(bbr_mapping_loc, usecols="A,B")   
         new_dict = dict(zip(df.iloc[:,0],df.iloc[:,1]))
@@ -673,6 +687,8 @@ def payables(wb, bbr_mapping_loc, open_ap_loc,unset_pay_loc):
                 break
             except Exception as e:
                 time.sleep(2)
+
+        
         f_last_row = open_ap_sht.range("A5").end('down').row
         open_ap_loc_lst = open_ap_sht.range(f"A5:A{int(f_last_row)-1}").value
 
@@ -713,7 +729,7 @@ def payables(wb, bbr_mapping_loc, open_ap_loc,unset_pay_loc):
                 bbr_payab_sht.range(f"C{int(new_loc)+1}").formula = f"=+SUM(C10:C{new_loc})"
                 bbr_payab_sht.range(f"D{int(new_loc)+1}").formula = f"=+SUM(D10:D{new_loc})"
                 bbr_payab_sht.range(f"E{int(new_loc)+1}").formula = f"=+SUM(E10:E{new_loc})"
-                # bbr_payab_sht.range(f"F{int(new_loc)+1}").formula = f"=+SUM(F10:F{new_loc})"
+                bbr_payab_sht.range(f"F{int(new_loc)+1}").formula = f"=+SUM(F10:F{new_loc})"
                 bbr_payab_sht.range(f"F{int(new_loc)}").formula = f"=C{int(new_loc)}-D{int(new_loc)}-E{int(new_loc)}"
                 
             # if new_dict[loc] == bbr_payab_sht.range(f"A{i}").value:
@@ -790,7 +806,8 @@ def payables(wb, bbr_mapping_loc, open_ap_loc,unset_pay_loc):
             except:
                 bbr_payab_sht.range(f"C{payb_loc}").value = 0
             payb_loc+=1
-
+        bbr_payab_sht.range("A3").value = input_date.replace('.','/')
+        bbr_payab_sht.api.Range("A3").NumberFormat = 'mm/dd/yyyy'
         open_ap_wb.close()
         payab_wb.close()
 
@@ -1072,8 +1089,8 @@ def mtm_pdf_data_extractor(input_date, f, hrw_pdf_loc, yc_pdf_loc):
             df["Quantity.5"].fillna(0, inplace=True)
             df["Value.5"].fillna(0, inplace=True)
 
-            df["Quantity.5"] = df["Quantity.5"].astype(str).str.replace("(","-").str.replace(",","").str.replace(")","").astype(float).astype(int)
-            df["Value.5"] = df["Value.5"].astype(str).str.replace("(","-").str.replace(",","").str.replace(")","").astype(float).astype(int)
+            df["Quantity.5"] = df["Quantity.5"].astype(str).str.replace("(","-").str.replace(",","").str.replace(")","").astype(float)
+            df["Value.5"] = df["Value.5"].astype(str).str.replace("(","-").str.replace(",","").str.replace(")","").astype(float)
 
             for i in range(len(df)):
                 print(df.iloc[i,2]) #2 for "Offsite Name Cont. No."
@@ -1498,6 +1515,8 @@ def bbr(input_date, output_date):
             wb.sheets['AR-Re-Purchase Storage Rcbl'].api.Activate()
             wb.sheets['AR-Re-Purchase Storage Rcbl'].api.Range("A1").Select()
             wb.sheets['AR-Re-Purchase Storage Rcbl'].api.Paste()
+           
+            wb.sheets['AR-Re-Purchase Storage Rcbl'].api.Range("A3").NumberFormat = 'mm/dd/yyyy'
 
             wb.app.api.CutCopyMode=False
             p_wb.app.api.CutCopyMode=False
@@ -1514,6 +1533,8 @@ def bbr(input_date, output_date):
                 wb.sheets['AR-Re-Purchase Storage Rcbl '].api.Range("A1").Select()
                 wb.sheets['AR-Re-Purchase Storage Rcbl '].api.Paste()
 
+                wb.sheets['AR-Re-Purchase Storage Rcbl '].api.Range("A3").NumberFormat = 'mm/dd/yyyy'
+
                 wb.app.api.CutCopyMode=False
                 p_wb.app.api.CutCopyMode=False
             except Exception as e:
@@ -1526,6 +1547,8 @@ def bbr(input_date, output_date):
             wb.sheets['Unrld Gains-Contracts MCUI'].api.Activate()
             wb.sheets['Unrld Gains-Contracts MCUI'].api.Range("A1").Select()
             wb.sheets['Unrld Gains-Contracts MCUI'].api.Paste()
+
+            wb.sheets['Unrld Gains-Contracts MCUI'].api.Range("A3").NumberFormat = 'mm/dd/yyyy'
 
             wb.app.api.CutCopyMode=False
             p_wb.app.api.CutCopyMode=False
@@ -1540,6 +1563,9 @@ def bbr(input_date, output_date):
                 wb.sheets['Unrld Gains-Contracts MCUI '].api.Range("A1").Select()
                 wb.sheets['Unrld Gains-Contracts MCUI '].api.Paste()
 
+                wb.sheets['Unrld Gains-Contracts MCUI '].api.Range("A3").NumberFormat = 'mm/dd/yyyy'
+
+
                 wb.app.api.CutCopyMode=False
                 p_wb.app.api.CutCopyMode=False
                 
@@ -1549,14 +1575,16 @@ def bbr(input_date, output_date):
         # wb.sheets["Unrld Gains Org"].delete()
         p_wb.close()
         # bbr_other_tabs(input_date, wb, input_ar, input_ctm)
-        payables(wb, bbr_mapping_loc, open_ap_loc,unset_pay_loc)
+        # payables(input_date,wb, bbr_mapping_loc, open_ap_loc,unset_pay_loc)
         cash_colat(wb,bank_recons_loc, input_date_date)
         comm_acc_xl(wb, pdf_loc)
         ar_unsettled_by_tier(wb, unset_rec_loc, input_date)
         ar_open_storage_rcbl(wb, strg_accr_loc, input_date)
         inv_whre_n_in_trans(wb, mtm_loc, input_date)
-        # payables(wb, bbr_mapping_loc, open_ap_loc,unset_pay_loc)
+        payables(input_date,wb, bbr_mapping_loc, open_ap_loc,unset_pay_loc)
         bbr_other_tabs(input_date, wb, input_ar, input_ctm)
+
+        wb.sheets[0].activate()
         wb.save(output_location)
         print()
         return f"BBR report generated for {input_date}"
@@ -1899,11 +1927,13 @@ def cpr(input_date, output_date):
         i = 7
         while i<= BB_Master25_Row:
             # if (type(BB_Master25ws.range(f'H{i}').value) == int) or (type(BB_Master25ws.range(f'H{i}').value) == float):
-            if  (-25000 < BB_Master25ws.range(f'H{i}').value) and (BB_Master25ws.range(f'H{i}').value <25000):
+            if BB_Master25ws.range(f'H{i}').value is None:
+                break
+            if  (-25000 < float(BB_Master25ws.range(f'H{i}').value)) and (float(BB_Master25ws.range(f'H{i}').value) <25000):
                 # BB_Master25ws.range(f'{i}:{i}').api.Delete(win32c.DeleteShiftDirection.xlShiftDown)
                 BB_Master25ws.range(f"{i}:{i}").api.Delete(win32c.DeleteShiftDirection.xlShiftUp)
                 # BB_Master25ws.range(f'{i}:{i}').delete()
-                i-=1
+                # i+=1
             else:
                 i+=1
                 
