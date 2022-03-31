@@ -171,7 +171,7 @@ def bbr_other_tabs(input_date, wb, input_ar, input_ctm):
         # ws2.name="AR-Trade By Tier - Eligible"
         ws1.range("A1").value = "West Plains, LLC"  
         ws1.range("A2").value = "Open Accounts Receivable -  by Tier"
-        ws1.range("A3").value = input_date.replace(".","/")
+        ws1.range("A3").formula = "='Cash Collateral'!A3"
         ws1.api.Range("A3").NumberFormat = 'mm/dd/yyyy'
 
 
@@ -220,7 +220,7 @@ def bbr_other_tabs(input_date, wb, input_ar, input_ctm):
 
         ws3.range("A1").value = "West Plains, LLC"  
         ws3.range("A2").value = "Open Accounts Receivable -  by Tier"
-        ws3.range("A3").value = input_date.replace(".","/")
+        ws3.range("A3").formula = "='Cash Collateral'!A3"
         ws3.api.Range("A3").NumberFormat = 'mm/dd/yyyy'
 
         # ws3.api.Range("A1:A3").Copy()
@@ -231,6 +231,7 @@ def bbr_other_tabs(input_date, wb, input_ar, input_ctm):
         # ws5=wb.sheets['Detail CTM Non MCUI']
         wb.sheets["Account Receivable Summary"].range("C8").formula = '=+GETPIVOTDATA("Sum of  1 - 10",\'AR-Trade By Tier - Eligible\'!$A$7,"Tier","Tier I")'
         wb.sheets["Account Receivable Summary"].range("E8").formula = '=+GETPIVOTDATA("Sum of  1 - 10",\'AR-Trade By Tier - Eligible\'!$A$7,"Tier","Tier II")'
+        wb.sheets["Account Receivable Summary"].formula = "='Cash Collateral'!A3"
         wb.sheets["Account Receivable Summary"].api.Range("A3").NumberFormat = 'mm/dd/yyyy'
         retry=0
         while retry < 10:
@@ -331,7 +332,7 @@ def bbr_other_tabs(input_date, wb, input_ar, input_ctm):
 
         ws6.range("A1").value = "West Plains, LLC"  
         ws6.range("A2").value = "Net Unrealized Gains on Forward Contracts - Non MCUI"
-        ws6.range("A3").value = input_date.replace(".","/")
+        ws6.range("A3").formula = "='Cash Collateral'!A3"
         ws6.api.Range("A3").NumberFormat = 'mm/dd/yyyy'
         print()
         # ws6.api.Range("A1:A3").Copy()
@@ -426,6 +427,7 @@ def ar_unsettled_by_tier(wb, unset_rec_loc, input_date):
           #f'Details!R1C1:R{len(new_rows)+1}C18' #Updateing data source
         wb.api.ActiveSheet.PivotTables(1).PivotCache().Refresh()
 
+        ar_unsettled_by_tier_sht.api.Range("A3").Formula = "='Cash Collateral'!A3"
         ar_unsettled_by_tier_sht.api.Range("A3").NumberFormat = 'mm/dd/yyyy'
         print("Refreshed")
         print()
@@ -445,23 +447,28 @@ def comm_acc_pdf_ext(account_lst, pdf_loc):
             
             pageObj = pdfReader.getPage(page)
             a=pageObj.extractText()
+            # acc_no = a[a.find('Account'):a.find('Account')+17]
+            # acc_no = acc_no.replace("Account: ","")
+            # print(f"account_num = {acc_no}, prev_acc = {prev_acc_no} and page is {page}")
+            # if acc_no == "":
+            #     continue
+            # if prev_acc_no is None:
+            #     prev_acc_no=acc_no #a[25:42]
+            # elif prev_acc_no != acc_no:
+            #     print(page-1)
+                
+            #     print(acc_no)
+            #     if str(prev_acc_no) in account_lst:
             acc_no = a[a.find('Account'):a.find('Account')+17]
             acc_no = acc_no.replace("Account: ","")
-            print(f"account_num = {acc_no}, prev_acc = {prev_acc_no} and page is {page}")
-            if acc_no == "":
-                continue
-            if prev_acc_no is None:
-                prev_acc_no=acc_no #a[25:42]
-            elif prev_acc_no != acc_no:
-                print(page-1)
-                
-                print(acc_no)
-                if str(prev_acc_no) in account_lst:
-                    df = read_pdf(pdf_loc, pages = page, guess = False, stream = True ,
-                                pandas_options={'header':0}, area = ["75,10,725,850"], columns=["180,280"])
-                    df = pd.concat(df, ignore_index=True)
-                    print(df)
-                    amount_dict[prev_acc_no] = float(df.iloc[-1,-1].replace(",","")) 
+            if str(acc_no) in account_lst:
+                amount_dict[acc_no] = 0
+                if "Net Liquidating Value" in a:
+                        df = read_pdf(pdf_loc, pages = page+1, guess = False, stream = True ,
+                                    pandas_options={'header':0}, area = ["75,10,725,850"], columns=["180,280"])
+                        df = pd.concat(df, ignore_index=True)
+                        print(df)
+                        amount_dict[acc_no] = float(df.iloc[-1,-1].replace(",","")) 
                     # try:
                     #     amount_dict[acc_no] = float(df['Unnamed: 1'][len(df)-1].replace(",",""))
                     
@@ -478,9 +485,9 @@ def comm_acc_pdf_ext(account_lst, pdf_loc):
                     #             amount_dict[acc_no] = float(df['Unnamed: 1'][len(df)-1].replace(",",""))
                     #         except Exception as e:
                     #             raise e
-                    print(prev_acc_no)
-                    print()
-                prev_acc_no = acc_no
+                    # print(prev_acc_no)
+                    # print()
+                # prev_acc_no = acc_no
 
         return amount_dict
     except Exception as e:
@@ -495,6 +502,7 @@ def comm_acc_xl(wb,pdf_loc):
             except Exception as e:
                 time.sleep(2)
         cell = 8
+        com_acc_sht.api.Range("A3").Formula = "='Cash Collateral'!A3"
         com_acc_sht.api.Range("A3").NumberFormat = 'mm/dd/yyyy'
         account_lst = com_acc_sht.range("B8").expand("down").value
         account_lst = [str(account).replace(".0","") for account in account_lst]
@@ -588,9 +596,9 @@ def inv_whre_n_in_trans(wb, mtm_loc, input_date):
         main_loc = m_sht.range(f"A1:A{last_row}").value
         hrw_value=0
         yc_value = 0
-        whre_sht.range(f"A3").value = datetime.strptime(input_date,"%m.%d.%Y")
+        whre_sht.range(f"A3").formula = "='Cash Collateral'!A3"
         whre_sht.api.Range("A3").NumberFormat = 'mm/dd/yyyy'
-        inv_oth_sht.range(f"A3").value = datetime.strptime(input_date,"%m.%d.%Y")
+        inv_oth_sht.range(f"A3").formula = "='Cash Collateral'!A3"
         inv_oth_sht.api.Range("A3").NumberFormat = 'mm/dd/yyyy'
         for i in range(len(main_loc)):
 
@@ -612,25 +620,45 @@ def inv_whre_n_in_trans(wb, mtm_loc, input_date):
                 sunflwr = f"{i+1}"
 
 
-        whre_sht.range(f"C{hrw}").options(transpose=True).value = m_sht.range(f"C{hrw}").expand("down").value
-        whre_sht.range(f"F{hrw}").options(transpose=True).value = m_sht.range(f"F{hrw}").expand("down").value
-        whre_sht.range(f"I{hrw}").options(transpose=True).value = m_sht.range(f"I{hrw}:I{int(yc)-4}").value
+        # whre_sht.range(f"C{hrw}").options(transpose=True).value = [float(n[0]) if n[0]!= "" else n[0] for n in m_sht.range(f"C{hrw}").expand("down").formula] #m_sht.range(f"C{hrw}").expand("down").value
+        # whre_sht.range(f"F{hrw}").options(transpose=True).value = [float(n[0]) if n[0]!= "" else n[0] for n in m_sht.range(f"F{hrw}").expand("down").formula] #m_sht.range(f"F{hrw}").expand("down").value
+        # whre_sht.range(f"I{hrw}").options(transpose=True).value = [float(n[0]) if n[0]!= "" else n[0] for n in m_sht.range(f"I{hrw}:I{int(yc)-4}").formula] #m_sht.range(f"I{hrw}:I{int(yc)-4}").value
         
         
 
-        whre_sht.range(f"C{yc}").options(transpose=True).value = m_sht.range(f"C{yc}").expand("down").value
-        whre_sht.range(f"F{yc}").options(transpose=True).value = m_sht.range(f"F{yc}").expand("down").value
-        whre_sht.range(f"I{yc}").options(transpose=True).value = m_sht.range(f"I{yc}:I{int(other_loc_2)-5}").value
+        # whre_sht.range(f"C{yc}").options(transpose=True).value = [float(n[0]) if n[0]!= "" else n[0] for n in m_sht.range(f"C{yc}:C{int(other_loc_2)-5}").formula] #m_sht.range(f"C{yc}").expand("down").value
+        # whre_sht.range(f"F{yc}").options(transpose=True).value = [float(n[0]) if n[0]!= "" else n[0] for n in m_sht.range(f"F{yc}:F{int(other_loc_2)-5}").formula] #m_sht.range(f"F{yc}").expand("down").value
+        # whre_sht.range(f"I{yc}").options(transpose=True).value = [float(n[0]) if n[0]!= "" else n[0] for n in m_sht.range(f"I{yc}:I{int(other_loc_2)-5}").formula] #m_sht.range(f"I{yc}:I{int(other_loc_2)-5}").value
 
-        whre_sht.range(f"C{other_loc_2}").options(transpose=True).value = m_sht.range(f"C{other_loc_2}").expand("down").value
-        whre_sht.range(f"F{other_loc_2}").options(transpose=True).value = m_sht.range(f"F{other_loc_2}").expand("down").value
+        # whre_sht.range(f"C{other_loc_2}").options(transpose=True).value = [float(n[0]) if n[0]!= "" else n[0] for n in m_sht.range(f"C{other_loc_2}").expand("down").formula] #m_sht.range(f"C{other_loc_2}").expand("down").value
+        # whre_sht.range(f"F{other_loc_2}").options(transpose=True).value = [float(n[0]) if n[0]!= "" else n[0] for n in m_sht.range(f"F{other_loc_2}").expand("down").formula] #m_sht.range(f"F{other_loc_2}").expand("down").value
 
 
-        inv_oth_sht.range(f"C{int(other_loc)-64}").options(transpose=True).value = m_sht.range(f"C{other_loc}:C{int(sunflwr)-6}").value
-        inv_oth_sht.range(f"F{int(other_loc)-64}").options(transpose=True).value = m_sht.range(f"F{other_loc}:F{int(sunflwr)-6}").value
+        # inv_oth_sht.range(f"C{int(other_loc)-64}").options(transpose=True).value = [float(n[0]) if n[0]!= "" else n[0] for n in m_sht.range(f"C{other_loc}:C{int(sunflwr)-6}").formula]
+        # inv_oth_sht.range(f"F{int(other_loc)-64}").options(transpose=True).value = [float(n[0]) if n[0]!= "" else n[0] for n in m_sht.range(f"F{other_loc}:F{int(sunflwr)-6}").formula] #m_sht.range(f"F{other_loc}:F{int(sunflwr)-6}").value
         
-        inv_oth_sht.range(f"C{int(sunflwr)-64}").options(transpose=True).value = m_sht.range(f"C{sunflwr}").value
-        inv_oth_sht.range(f"F{int(sunflwr)-64}").options(transpose=True).value = m_sht.range(f"F{sunflwr}").value
+        # inv_oth_sht.range(f"C{int(sunflwr)-64}").options(transpose=True).value = float(m_sht.range(f"C{sunflwr}").value)
+        # inv_oth_sht.range(f"F{int(sunflwr)-64}").options(transpose=True).value = float(m_sht.range(f"F{sunflwr}").value)
+        
+        m_sht.range(f"C{hrw}").expand("down").copy(whre_sht.range(f"C{hrw}").options(transpose=True))
+        m_sht.range(f"F{hrw}").expand("down").copy(whre_sht.range(f"F{hrw}").options(transpose=True))
+        m_sht.range(f"I{hrw}:I{int(yc)-4}").copy(whre_sht.range(f"I{hrw}").options(transpose=True))
+        
+        
+
+        m_sht.range(f"C{yc}").expand("down").copy(whre_sht.range(f"C{yc}").options(transpose=True))
+        m_sht.range(f"F{yc}").expand("down").copy(whre_sht.range(f"F{yc}").options(transpose=True))
+        m_sht.range(f"I{yc}:I{int(other_loc_2)-5}").copy(whre_sht.range(f"I{yc}").options(transpose=True))
+
+        m_sht.range(f"C{other_loc_2}").expand("down").copy(whre_sht.range(f"C{other_loc_2}").options(transpose=True))
+        m_sht.range(f"F{other_loc_2}").expand("down").copy(whre_sht.range(f"F{other_loc_2}").options(transpose=True))
+
+
+        m_sht.range(f"C{other_loc}:C{int(sunflwr)-6}").copy(inv_oth_sht.range(f"C{int(other_loc)-64}").options(transpose=True))
+        m_sht.range(f"F{other_loc}:F{int(sunflwr)-6}").copy(inv_oth_sht.range(f"F{int(other_loc)-64}").options(transpose=True))
+        
+        m_sht.range(f"C{sunflwr}").copy(inv_oth_sht.range(f"C{int(sunflwr)-64}").options(transpose=True))
+        m_sht.range(f"F{sunflwr}").copy(inv_oth_sht.range(f"F{int(sunflwr)-64}").options(transpose=True))
 
 
         mtm_wb.close()
@@ -806,8 +834,9 @@ def payables(input_date,wb, bbr_mapping_loc, open_ap_loc,unset_pay_loc):
             except:
                 bbr_payab_sht.range(f"C{payb_loc}").value = 0
             payb_loc+=1
-        bbr_payab_sht.range("A3").value = input_date.replace('.','/')
+        bbr_payab_sht.range("A3").formula = "='Cash Collateral'!A3"
         bbr_payab_sht.api.Range("A3").NumberFormat = 'mm/dd/yyyy'
+        bbr_payab_sht.api.Range("C:F").NumberFormat = "_($* #,##0.00_);_($* (#,##0.00);_($* ""-""??_);_(@_)"
         open_ap_wb.close()
         payab_wb.close()
 
@@ -1516,10 +1545,16 @@ def bbr(input_date, output_date):
             wb.sheets['AR-Re-Purchase Storage Rcbl'].api.Range("A1").Select()
             wb.sheets['AR-Re-Purchase Storage Rcbl'].api.Paste()
            
+            wb.sheets['AR-Re-Purchase Storage Rcbl'].api.Range("A3").Formula = "='Cash Collateral'!A3"
             wb.sheets['AR-Re-Purchase Storage Rcbl'].api.Range("A3").NumberFormat = 'mm/dd/yyyy'
 
             wb.app.api.CutCopyMode=False
             p_wb.app.api.CutCopyMode=False
+
+            wb.sheets['AR-Re-Purchase Storage Rcbl'].activate()
+            wb.api.ChangeLink(Name = wb.api.LinkSources()[0], NewName=wb.fullname, Type=1)
+
+            pass
 
 
         except:
@@ -1533,10 +1568,14 @@ def bbr(input_date, output_date):
                 wb.sheets['AR-Re-Purchase Storage Rcbl '].api.Range("A1").Select()
                 wb.sheets['AR-Re-Purchase Storage Rcbl '].api.Paste()
 
+                wb.sheets['AR-Re-Purchase Storage Rcbl '].api.Range("A3").Formula = "='Cash Collateral'!A3"
                 wb.sheets['AR-Re-Purchase Storage Rcbl '].api.Range("A3").NumberFormat = 'mm/dd/yyyy'
 
                 wb.app.api.CutCopyMode=False
                 p_wb.app.api.CutCopyMode=False
+
+                wb.sheets['AR-Re-Purchase Storage Rcbl'].activate()
+                wb.api.ChangeLink(Name = wb.api.LinkSources()[0], NewName=input_xl, Type=1)
             except Exception as e:
                 raise e
         try:
@@ -1547,7 +1586,8 @@ def bbr(input_date, output_date):
             wb.sheets['Unrld Gains-Contracts MCUI'].api.Activate()
             wb.sheets['Unrld Gains-Contracts MCUI'].api.Range("A1").Select()
             wb.sheets['Unrld Gains-Contracts MCUI'].api.Paste()
-
+            
+            wb.sheets['Unrld Gains-Contracts MCUI'].api.Range("A3").Formula = "='Cash Collateral'!A3"
             wb.sheets['Unrld Gains-Contracts MCUI'].api.Range("A3").NumberFormat = 'mm/dd/yyyy'
 
             wb.app.api.CutCopyMode=False
@@ -1563,6 +1603,7 @@ def bbr(input_date, output_date):
                 wb.sheets['Unrld Gains-Contracts MCUI '].api.Range("A1").Select()
                 wb.sheets['Unrld Gains-Contracts MCUI '].api.Paste()
 
+                wb.sheets['Unrld Gains-Contracts MCUI '].api.Range("A3").Formula = "='Cash Collateral'!A3"
                 wb.sheets['Unrld Gains-Contracts MCUI '].api.Range("A3").NumberFormat = 'mm/dd/yyyy'
 
 
@@ -1576,11 +1617,14 @@ def bbr(input_date, output_date):
         p_wb.close()
         # bbr_other_tabs(input_date, wb, input_ar, input_ctm)
         # payables(input_date,wb, bbr_mapping_loc, open_ap_loc,unset_pay_loc)
+        
         cash_colat(wb,bank_recons_loc, input_date_date)
         comm_acc_xl(wb, pdf_loc)
+        inv_whre_n_in_trans(wb, mtm_loc, input_date)
+        
         ar_unsettled_by_tier(wb, unset_rec_loc, input_date)
         ar_open_storage_rcbl(wb, strg_accr_loc, input_date)
-        inv_whre_n_in_trans(wb, mtm_loc, input_date)
+        
         payables(input_date,wb, bbr_mapping_loc, open_ap_loc,unset_pay_loc)
         bbr_other_tabs(input_date, wb, input_ar, input_ctm)
 
@@ -2764,6 +2808,7 @@ def open_ar(input_date, output_date):
                             else:
                                 ws5.range(f"D{i}").value = ws5.range(f"D{i}").value + ws5.range(f"E{i}").value
                                 ws5.range(f"E{i}").value = 0 
+        ws5.api.Range(f"A1:{last_column_letter}{last_row}").NumberFormat = "_($* #,##0.00_);_($* (#,##0.00);_($* ""-""??_);_(@_)"
         
         ##logger.info("Adding Worksheet for Pivot Table")
         wb.sheets.add("Pivot BB",after=wb.sheets["Eligible"])
