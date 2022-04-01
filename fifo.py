@@ -1,3 +1,5 @@
+
+import xlwings.constants as win32c
 from datetime import datetime
 import time
 import glob, os
@@ -54,7 +56,8 @@ def other_loc_extractor(input_pdf):
 
     print()
 
-def fifo(input_date, output_date, location):
+def fifo(input_date, output_date):
+    location = ["HRW", "YC"]
     inp_date = datetime.strftime(datetime.strptime(input_date, "%m.%d.%Y"), "%m.%d.%y")
     monthYear = datetime.strftime(datetime.strptime(input_date, "%m.%d.%Y"), "%B %Y")
     for loc in location:
@@ -115,6 +118,7 @@ def fifo(input_date, output_date, location):
         inp_sht.range("1:1").insert()
         inp_sht.api.AutoFilterMode=False
 
+        last_column = num_to_col_letters(inp_sht.range("A2").end('right').column)
         col_headers = inp_sht.range("A2").expand("right").value
         for col in range(len(col_headers)):
             if col_headers[col] == "Trans  Date":
@@ -134,7 +138,7 @@ def fifo(input_date, output_date, location):
                 cust_name_col = f"{num_to_col_letters(col+1+3)}"
         
         last_row = inp_sht.range(f'{transDate}'+ str(inp_sht.cells.last_cell.row)).end('up').row
-        inp_sht.range(f"{transDate}2:{transDate}{last_row}").api.Sort(Key1=inp_sht.range(f"{transDate}2:{transDate}{last_row}").api, Order1=2, Orientation=1)
+        inp_sht.range(f"A2:{last_column}{last_row}").api.Sort(Key1=inp_sht.range(f"{transDate}2:{transDate}{last_row}").api,Order1=2,DataOption1=0,Orientation=1)
         #inserting  columns after INVENTORY VALUE
         inp_sht.range(f"{qty_col}:{qty_col}").insert()
         inp_sht.range(f"{qty_col}2").value = "Qty"
@@ -278,20 +282,23 @@ def fifo(input_date, output_date, location):
                     if mtm_sht.range(f"I{i}").value is not None and mtm_sht.range(f"I{i}").value != 0:
                         print(i)
                         try:
-                            mtm_sht.range(f"J{i}").value = loc_dict[mtm_sht.range(f"F{i}").value][mtm_sht.range(f"E{i}").value]
+                            if mtm_sht.range(f"F{i}").value == "YGS":
+                                mtm_sht.range(f"J{i}").value = loc_dict["SORGHUM"][mtm_sht.range(f"E{i}").value]
+                            else:
+                                mtm_sht.range(f"J{i}").value = loc_dict[mtm_sht.range(f"F{i}").value][mtm_sht.range(f"E{i}").value]
                         except:
                             pass
 
 
 
             print()
-        mtm_sht.api.AutoFilterMode=False    
-        mtm_wb.api.ActiveSheet.PivotTables(1).PivotCache().Refresh()   
-        mtm_wb.api.ActiveSheet.PivotTables(2).PivotCache().Refresh()   
-        mtm_wb.save(mtm_ouput_loc)
+        
         wb.save(ouput_loc)
         wb.close()
-    
+    mtm_sht.api.AutoFilterMode=False    
+    mtm_wb.api.ActiveSheet.PivotTables(1).PivotCache().Refresh()   
+    mtm_wb.api.ActiveSheet.PivotTables(2).PivotCache().Refresh()  
+    mtm_wb.save(mtm_ouput_loc)
     mtm_wb.app.quit()
     print()
 
@@ -303,7 +310,7 @@ def fifo(input_date, output_date, location):
 
 input_date = "01.31.2022"
 output_date=None
-location = ["HRW", "YC"]
-msg = fifo(input_date, output_date, location)
+
+msg = fifo(input_date, output_date)
 print(msg)
 print()

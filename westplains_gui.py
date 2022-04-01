@@ -10,18 +10,14 @@ from tkinter import Label as label
 from tkcalendar import DateEntry
 from tkinter import messagebox
 # from typing import Text
-from pandas import json_normalize
+
 from pandas.core import frame 
 import requests, json
 from datetime import date, datetime, timedelta
 import numpy as np
 import glob, time
-import threading
 from tkinter.messagebox import showerror
 import pandas as pd
-from requests.models import to_key_val_list
-from tqdm import trange
-import win32com.client
 import os
 import xlwings as xw
 from tabula import read_pdf
@@ -3704,7 +3700,103 @@ def month_end_storage_accrual(input_date, output_date):
     finally:
         wb.app.quit()
     
+def bank_recons_rep(input_date,output_date):
+    try:
+        input_sheet = r'J:\WEST PLAINS\REPORT\Bank Recons\Raw Files\Raw Template'+f'\\template.xls'
+        if not os.path.exists(input_sheet):
+            return(f"{input_sheet} Excel file not present for date {input_date}")
+        pdf_input=r'J:\WEST PLAINS\REPORT\Bank Recons\Raw Files'+f'\\Outstanding Checks Report_{input_date}.pdf'
+        if not os.path.exists(pdf_input):
+                return(f"{pdf_input} Excel file not present for date {input_date}")
+        pdf_input2=r'J:\WEST PLAINS\REPORT\Bank Recons\Raw Files'+f'\\BOA 4003_{input_date}.pdf'
+        if not os.path.exists(pdf_input2):
+                return(f"{pdf_input2} Excel file not present for date {input_date}")
+        # job_name = "BANK_RECONS_Automation"
+        output_location = r'J:\WEST PLAINS\REPORT\Bank Recons\Output Files'
+        with open(pdf_input, 'rb') as f:
+                    pdf = PdfFileReader(f)
+                    number_of_pages = pdf.getNumPages()
+                    print(number_of_pages) 
+        i=1 
+        date_area=["8.798,105.876,47.048,508.266"]
+        df=tabula.read_pdf(pdf_input,stream=True, multiple_tables=True,pages=i,area=date_area,silent=True,guess=False)
+        text_value=df[0].columns[0]
+        Required_date=text_value[text_value.find("To"):].split()[1]
 
+        dictBOA={}
+        dictJP={}
+        for i in range(i,number_of_pages+1):
+            test_area=["35.573,23.256,66.173,297.891"]
+            df=tabula.read_pdf(pdf_input,stream=True, multiple_tables=True,pages=i,area=test_area,silent=True,guess=False)
+            Extracted_value=df[0].columns[1]
+            # Extracted_value=[item.replace(':', '') for item in Extracted_value]
+            column_seperator=["408,500"]
+            df=tabula.read_pdf(pdf_input,stream=True, multiple_tables=True,columns=column_seperator,pages=i,silent=True,guess=False)
+            df[0].drop(len(df[0])-1,inplace=True)
+            if Extracted_value in str(df[0].loc[len(df[0])-1]):
+                total=df[0].iloc[-1,:][1]
+                 
+            if "BANK OF AMERICA" in Extracted_value.upper():
+                if '-' in Extracted_value:
+                    Extracted_value=Extracted_value.split('-')[0].strip()
+                else:
+                    Extracted_value=Extracted_value.split()[0].strip()  
+                dictBOA[Extracted_value]=total
+
+            if "JP MORGAN CD" in Extracted_value.upper():
+                if '-' in Extracted_value:
+                    Extracted_value=Extracted_value.split('-')[0].strip()
+                else:
+                    Extracted_value=Extracted_value.split()[0].strip()  
+                dictJP[Extracted_value]=total    
+               
+        print("extraction done") 
+
+        with open(pdf_input2, 'rb') as f:
+                    pdf = PdfFileReader(f)
+                    page_object=pdf.getPage(0)
+                    page_text=page_object.extractText() 
+                    final_value=page_text[page_text.find("Closing Ledger Balance (015)"):].split()[4].split("€")[0]
+
+        retry=0
+        while retry < 10:
+            try:
+                wb=xw.Book(input_sheet)
+                break
+            except Exception as e:
+                time.sleep(5)
+                retry+=1
+                if retry ==10:
+                    raise e
+
+        ws1=wb.sheets[0]       
+        ws1.range("B6").value=Required_date
+        ws1.range("B40").value=final_value
+        jp_inserting_row=ws1.range('D1').end('down').end('down').end('down').row+1
+        jp_inserting_end_row=ws1.range('D1').end('down').end('down').end('down').end('down').row
+        for i in range(jp_inserting_row,jp_inserting_end_row+1):            
+            try:
+                ws1.range(f"E{i}").value = float(dictJP[((ws1.range(f'D{i}').value).split("CDA")[0].strip()).upper()].replace(',',''))
+            except:
+                ws1.range(f"E{i}").value = 0
+        BOA_inserting_row=ws1.range(f'D'+ str(ws1.cells.last_cell.row)).end('up').end('up').end('up').row+1
+        BOA_inserting_end_row=last_row =ws1.range(f'D'+ str(ws1.cells.last_cell.row)).end('up').end('up').row  
+        for i in range(BOA_inserting_row,BOA_inserting_end_row+1):
+            try:
+                ws1.range(f"E{i}").value = float(dictBOA[((ws1.range(f'D{i}').value).split("CDA")[0].strip()).upper()].replace(',',''))
+            except:
+                ws1.range(f"E{i}").value = 0
+        save_date=datetime.strptime(Required_date,"%m/%d/%Y")
+        save_date=datetime.strftime(save_date,"%m-%d-%Y")       
+        wb.save(f"{output_location}\\BANK RECONS_{save_date}.xls")
+        return f"Bank Recons Report Generated for {save_date}"
+    except Exception as e:
+        raise e
+    finally:
+        try:
+            wb.app.quit()
+        except:
+            pass
 
 
 def main():
@@ -3781,7 +3873,7 @@ def main():
     frame_options.grid(row=1,column=0, pady=30, padx=35, columnspan=2, rowspan=3)
     wp_job_ids = {'ABS':1,'BBR':bbr,'CPR Report':cpr, 'Freight analysis':freight_analysis, 'CTM combined':ctm,'Inventory MTM excel report summary':inv_mtm,
                     'MOC Interest Allocation':moc_interest_alloc,'Open AR':open_ar,'Open AP':open_ap, 'Unsettled Payable Report':unsetteled_payables,'Unsettled Receivable Report':unsetteled_receivables,
-                    'Storage Month End Report':month_end_storage_accrual, "Month End BBr":bbr_monthEnd}
+                    'Storage Month End Report':month_end_storage_accrual, "Month End BBr":bbr_monthEnd, "Bank Recons Report":bank_recons_rep}
     # department_ids = {'Select \t\t\t\t\t\t\t\t\t': 9, 'Ethanol\t\t\t\t\t\t\t\t': 1, 'WestPlains': 8}
     Rep_variable = StringVar()
     doc_type_variable = StringVar()
