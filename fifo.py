@@ -34,10 +34,12 @@ def other_loc_extractor(input_pdf):
         
         if not pd.isnull(df.loc[:,'Location'][i]):
             location = df['Location'][i]
-            if location == "NGREEL":
-                location = "NORTH GREELEY"
-            if location == "BROWNSVILL":
-                location = "BROWNSVILLE"
+            # if location == "NGREEL":
+            #     location = "NORTH GREELEY"
+            if location == "OMA COMM":
+                location = "TERMINAL"
+            # if location == "BROWNSVILL":
+            #     location = "BROWNSVILLE"
         product = df['Product'][i]
         value = df['Unit Cost'][i]
         if product in loc_dict.keys():  
@@ -66,8 +68,9 @@ def fifo(input_date, output_date):
         if not os.path.exists(input_xl):
                 return(f"{input_xl} Excel file not present for date {input_date}")
         
-        input_mtm = r"J:\WEST PLAINS\REPORT\MOC Interest allocation\Raw Files" +f"\\Inventory MTM Excel Report {monthYear}.xlsx"
-        # input_mtm = r"C:\Users\imam.khan\OneDrive - BioUrja Trading LLC\Documents\WEST PLAINS\REPORT\MOC Interest allocation\Raw files" +f"\\Inventory MTM Excel Report {monthYear}.xlsx"
+        # input_mtm = r"J:\WEST PLAINS\REPORT\MOC Interest allocation\Raw Files" +f"\\Inventory MTM Excel Report {monthYear}.xlsx"
+        input_mtm = r"J:\WEST PLAINS\REPORT\FIFO reports\Raw Files" +f"\\INVENTORY MTM FIFO ACC JE_{input_date}.xlsx"
+        # input_mtm = r"C:\Users\imam.khan\OneDrive - BioUrja Trading LLC\Documents\WEST PLAINS\REPORT\FIFO reports\Raw Files" +f"\\INVENTORY MTM FIFO ACC JE_{input_date}.xlsx"
         if not os.path.exists(input_mtm):
                 return(f"{input_mtm} Excel file not present for date {input_date}")
 
@@ -77,7 +80,7 @@ def fifo(input_date, output_date):
                 return(f"{input_mapping} Excel file not present for date")
         
         input_pdf = r"J:\WEST PLAINS\REPORT\FIFO reports\Raw Files" +f"\\Inventory Trial Balance_{inp_date}.pdf"
-        # input_mtm = r"C:\Users\imam.khan\OneDrive - BioUrja Trading LLC\Documents\WEST PLAINS\REPORT\MOC Interest allocation\Raw files" +f"\\Inventory MTM Excel Report {monthYear}.xlsx"
+        # input_pdf = r"C:\Users\imam.khan\OneDrive - BioUrja Trading LLC\Documents\WEST PLAINS\REPORT\FIFO reports\Raw Files" +f"\\Inventory Trial Balance_{inp_date}.pdf"
         if not os.path.exists(input_pdf):
                 return(f"{input_pdf} Excel file not present for date {input_date}")
 
@@ -85,10 +88,12 @@ def fifo(input_date, output_date):
         # if not os.path.exists(input_yc):
         #         return(f"{input_yc} Excel file not present for date {input_date}")
 
-        ouput_loc = r"J:\WEST PLAINS\REPORT\FIFO reports\Output files" +f"\\Inventory on site {loc}_{inp_date}.xlsx"
+        output_loc = r"J:\WEST PLAINS\REPORT\FIFO reports\Output files" +f"\\Inventory on site {loc}_{inp_date}.xlsx"
+        
         # output_loc = r"C:\Users\imam.khan\OneDrive - BioUrja Trading LLC\Documents\WEST PLAINS\REPORT\FIFO reports\Output files" +f"\\Inventory on site {loc}_{inp_date}.xlsx"
         # ouput_yc = r"J:\WEST PLAINS\REPORT\FIFO reports\Output files" +f"\\Inventory on site YC_{inp_date}.xlsx"
         mtm_ouput_loc = r"J:\WEST PLAINS\REPORT\FIFO reports\Output files" +f"\\Inventory MTM Excel Report {monthYear}.xlsx"
+        # mtm_ouput_loc = r"C:\Users\imam.khan\OneDrive - BioUrja Trading LLC\Documents\WEST PLAINS\REPORT\FIFO reports\Output files" +f"\\Inventory MTM Excel Report {monthYear}.xlsx"
 
         
 
@@ -192,7 +197,7 @@ def fifo(input_date, output_date):
             retry=0
             while retry < 10:
                 try:
-                    mtm_sht = mtm_wb.sheets["MTM Excel Summary"]
+                    mtm_sht = mtm_wb.sheets["INPUT DATA"]
                     break
                 except Exception as e:
                     time.sleep(2)
@@ -217,18 +222,43 @@ def fifo(input_date, output_date):
             new_sht.api.Paste()
             new_sht.range("N1").value = "MTM Qty"
             mtm_sht.api.AutoFilterMode=False
-            if loc == "HRW":
-                sub_loc = mtm_sht.range("B116:B119").value
-                for s_loc in range(len(sub_loc)):
-                    if sub_loc[s_loc] == columns_2[key]:
-                        new_sht.range("O1").value = mtm_sht.range(f"E{s_loc+116}").value
-                        new_sht.range("P1").value = mtm_sht.range(f"F{s_loc+116}").value
-            else:
-                sub_loc = mtm_sht.range("B121:B124").value
-                for s_loc in range(len(sub_loc)):
-                    if sub_loc[s_loc] == columns_2[key]:
-                        new_sht.range("O1").value = mtm_sht.range(f"E{s_loc+121}").value
-                        new_sht.range("P1").value = mtm_sht.range(f"F{s_loc+121}").value
+            mtm_last_row = mtm_sht.range(f'A'+ str(inp_sht.cells.last_cell.row)).end('up').row
+            # if loc  == "HRW":
+            mtm_sht.activate()
+            mtm_sht.api.AutoFilterMode=False
+            mtm_sht.api.Range(f"D3").AutoFilter(Field:=4,Criteria1:=loc, Operator:=7)
+            time.sleep(1)
+            if key == 'HaySprings':
+                columns_1[key] = columns_1[key].replace("ALLIANCETE", "ALLIANCE")
+            mtm_sht.api.Range(f"B3").AutoFilter(Field:=2,Criteria1:=columns_1[key].split(','), Operator:=7)
+            mtm_sht.api.Range(f"G4:G{mtm_last_row}").SpecialCells(12).Select()
+            qty_sum=0
+            price_sum = 0
+            for rng in mtm_wb.app.selection.address.split(','):
+                # if rng != '$G$3':
+                if type(mtm_sht.range(rng).value) is list:
+                    qty_sum+=float(sum(mtm_sht.range(rng).value))
+                    price_sum+=float(sum(mtm_sht.range(rng.replace("G","K")).value))
+                else:
+                    qty_sum+=float(mtm_sht.range(rng).value)
+                    price_sum+=float(mtm_sht.range(rng.replace("G","K")).value)
+
+
+
+                        
+                # sub_loc = mtm_sht.range("B116:B119").value
+                # for s_loc in range(len(sub_loc)):
+                #     if sub_loc[s_loc] == columns_2[key]:
+                #         new_sht.range("O1").value = mtm_sht.range(f"E{s_loc+116}").value
+                #         new_sht.range("P1").value = mtm_sht.range(f"F{s_loc+116}").value
+            new_sht.range("O1").value = qty_sum
+            new_sht.range("P1").value = price_sum
+            # else:
+            #     sub_loc = mtm_sht.range("B121:B124").value
+            #     for s_loc in range(len(sub_loc)):
+            #         if sub_loc[s_loc] == columns_2[key]:
+            #             new_sht.range("O1").value = mtm_sht.range(f"E{s_loc+121}").value
+            #             new_sht.range("P1").value = mtm_sht.range(f"F{s_loc+121}").value
             
             new_sht.range("Q1").value = "MTM Price"
             new_sht.range("R1").formula = "=P1/O1"
@@ -254,50 +284,75 @@ def fifo(input_date, output_date):
             new_sht.range(f"R{i}").formula = f"=Q{i}/P{i}"
             print()
 
+
             mtm_sht.activate()
             mtm_sht.api.AutoFilterMode=False
-            mtm_last_row = mtm_sht.range("F6").end("down").row
-            mtm_sht.api.Range(f"F6").AutoFilter(Field:=6,Criteria1:=loc, Operator:=7)
-            columns_1[key]=columns_1[key].replace("NGREEL","NORTH GREELEY")
-            columns_1[key]=columns_1[key].replace("BROWNSVILL","BROWNSVILLE")
-            
-            mtm_sht.api.Range(f"E6").AutoFilter(Field:=5,Criteria1:=columns_1[key].split(','), Operator:=7)
-
-            mtm_sht.api.Range(f"J7:J{mtm_last_row}").SpecialCells(12).Select()
+            mtm_sht.api.Range(f"D3").AutoFilter(Field:=4,Criteria1:=loc, Operator:=7)
+            time.sleep(1)
+            mtm_sht.api.Range(f"B3").AutoFilter(Field:=2,Criteria1:=columns_1[key].split(','), Operator:=7)
+            mtm_sht.api.Range(f"O4:O{mtm_last_row}").SpecialCells(12).Select()
             mtm_wb.app.selection.value = new_sht.range(f"R{i}").value
+
+            # mtm_sht.activate()
+            # mtm_sht.api.AutoFilterMode=False
+            # # mtm_last_row = mtm_sht.range("F6").end("down").row
+            # mtm_sht.api.Range(f"F6").AutoFilter(Field:=6,Criteria1:=loc, Operator:=7)
+            # columns_1[key]=columns_1[key].replace("NGREEL","NORTH GREELEY")
+            # columns_1[key]=columns_1[key].replace("BROWNSVILL","BROWNSVILLE")
+            
+            # mtm_sht.api.Range(f"E6").AutoFilter(Field:=5,Criteria1:=columns_1[key].split(','), Operator:=7)
+
+            # mtm_sht.api.Range(f"G8:G{mtm_last_row}").SpecialCells(12).Select()
+            # mtm_wb.app.selection.value = new_sht.range(f"R{i}").value
         if loc == "HRW":
             mtm_sht.api.AutoFilterMode=False
-            mtm_sht.api.Range(f"F6").AutoFilter(Field:=6,Criteria1:='<>HRW', Operator:=1, Criteria2:='<>YC')
+            mtm_sht.api.Range(f"D3").AutoFilter(Field:=4,Criteria1:='<>HRW', Operator:=1, Criteria2:='<>YC')
             
             try:
-                rng_lst = mtm_sht.api.Range(f"F6:F{mtm_last_row}").SpecialCells(12).Address.split(",")
+                rng_lst = mtm_sht.api.Range(f"D4:D{mtm_last_row}").SpecialCells(12).Address.split(",")
             except:
-                rng_lst = list(mtm_sht.api.Range(f"F6:F{mtm_last_row}").SpecialCells(12).Address)
+                rng_lst = list(mtm_sht.api.Range(f"D4:D{mtm_last_row}").SpecialCells(12).Address)
             # 
             for rng in rng_lst:
                 rng.split("$")[2].replace(':','')
                 for i in range(int(rng.split("$")[2].replace(':','')), int(rng.split("$")[-1])+1):
-                    if i == 6:
-                        continue
-                    if mtm_sht.range(f"I{i}").value is not None and mtm_sht.range(f"I{i}").value != 0:
+                    # if i == 6:
+                    #     continue
+                    if mtm_sht.range(f"G{i}").value is not None and mtm_sht.range(f"G{i}").value != 0: #If quantity present
                         print(i)
                         try:
-                            if mtm_sht.range(f"F{i}").value == "YGS":
-                                mtm_sht.range(f"J{i}").value = loc_dict["SORGHUM"][mtm_sht.range(f"E{i}").value]
+                            if mtm_sht.range(f"B{i}").value == "BROWNSVILL" and mtm_sht.range(f"D{i}").value == "MILO":
+                                mtm_sht.range(f"O{i}").value = loc_dict["SORGHUM"][mtm_sht.range(f"B{i}").value]
                             else:
-                                mtm_sht.range(f"J{i}").value = loc_dict[mtm_sht.range(f"F{i}").value][mtm_sht.range(f"E{i}").value]
+                                mtm_sht.range(f"O{i}").value = loc_dict[mtm_sht.range(f"D{i}").value][mtm_sht.range(f"B{i}").value]
                         except:
+                            mtm_sht.range(f"O{i}").value=0
                             pass
 
 
 
             print()
         
-        wb.save(ouput_loc)
+        wb.save(output_loc)
         wb.close()
-    mtm_sht.api.AutoFilterMode=False    
-    mtm_wb.api.ActiveSheet.PivotTables(1).PivotCache().Refresh()   
-    mtm_wb.api.ActiveSheet.PivotTables(2).PivotCache().Refresh()  
+    retry=0
+    while retry < 10:
+        try:
+            mtm_je_sht = mtm_wb.sheets["JE"]
+            break
+        except Exception as e:
+            time.sleep(2)
+            retry+=1
+            if retry ==9:
+                raise e
+    mtm_sht.api.AutoFilterMode=False
+    mtm_je_sht.activate()
+    mtm_je_sht.api.AutoFilterMode=False
+    pivotCount = mtm_wb.api.ActiveSheet.PivotTables().Count
+    for j in range(1, pivotCount+1): 
+        mtm_wb.api.ActiveSheet.PivotTables(j).PivotCache().Refresh()   
+    # mtm_wb.api.ActiveSheet.PivotTables(2).PivotCache().Refresh() 
+    mtm_sht.activate()
     mtm_wb.save(mtm_ouput_loc)
     mtm_wb.app.quit()
     print()
@@ -308,7 +363,7 @@ def fifo(input_date, output_date):
     return f"Fifo reports Genrated for {input_date}"
 
 
-input_date = "01.31.2022"
+input_date = "02.28.2022"
 output_date=None
 
 msg = fifo(input_date, output_date)
