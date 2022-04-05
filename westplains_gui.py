@@ -1477,7 +1477,7 @@ def bbr(input_date, output_date):
         retry=0
         while retry < 10:
             try:
-                wb=xw.Book(input_xl)
+                wb=xw.Book(input_xl, update_links=False)
                 break
             except Exception as e:
                 time.sleep(2)
@@ -1546,7 +1546,7 @@ def bbr(input_date, output_date):
 
             wb.app.api.CutCopyMode=False
             p_wb.app.api.CutCopyMode=False
-
+            time.sleep(1)
             wb.sheets['AR-Re-Purchase Storage Rcbl'].activate()
             wb.api.ChangeLink(Name = wb.api.LinkSources()[0], NewName=wb.fullname, Type=1)
 
@@ -1569,7 +1569,7 @@ def bbr(input_date, output_date):
 
                 wb.app.api.CutCopyMode=False
                 p_wb.app.api.CutCopyMode=False
-
+                time.sleep(1)
                 wb.sheets['AR-Re-Purchase Storage Rcbl'].activate()
                 wb.api.ChangeLink(Name = wb.api.LinkSources()[0], NewName=wb.fullname, Type=1)
             except Exception as e:
@@ -3058,7 +3058,11 @@ def open_ap(input_date, output_date):
         try:
             PivotTable.PivotFields('Journal Source').PivotItems('Accrual Invoice Matching').Visible= False
         except Exception as e:
-            pass  
+            pass
+        try:
+            PivotTable.PivotFields('Journal Source').PivotItems("A/P Invoice Entry").Visible = False
+        except Exception as e:
+            pass
         try:  
             PivotTable.PivotFields('Journal Source').PivotItems('Accrual Invoice Matching Reversal').Visible= False
         except Exception as e:
@@ -3714,12 +3718,12 @@ def bank_recons_rep(input_date,output_date):
         # job_name = "BANK_RECONS_Automation"
         output_location = r'J:\WEST PLAINS\REPORT\Bank Recons\Output Files'
         with open(pdf_input, 'rb') as f:
-                    pdf = PdfFileReader(f)
+                    pdf = PyPDF2.PdfFileReader(f)
                     number_of_pages = pdf.getNumPages()
                     print(number_of_pages) 
         i=1 
         date_area=["8.798,105.876,47.048,508.266"]
-        df=tabula.read_pdf(pdf_input,stream=True, multiple_tables=True,pages=i,area=date_area,silent=True,guess=False)
+        df=read_pdf(pdf_input,stream=True, multiple_tables=True,pages=i,area=date_area,silent=True,guess=False)
         text_value=df[0].columns[0]
         Required_date=text_value[text_value.find("To"):].split()[1]
 
@@ -3727,11 +3731,11 @@ def bank_recons_rep(input_date,output_date):
         dictJP={}
         for i in range(i,number_of_pages+1):
             test_area=["35.573,23.256,66.173,297.891"]
-            df=tabula.read_pdf(pdf_input,stream=True, multiple_tables=True,pages=i,area=test_area,silent=True,guess=False)
+            df=read_pdf(pdf_input,stream=True, multiple_tables=True,pages=i,area=test_area,silent=True,guess=False)
             Extracted_value=df[0].columns[1]
             # Extracted_value=[item.replace(':', '') for item in Extracted_value]
             column_seperator=["408,500"]
-            df=tabula.read_pdf(pdf_input,stream=True, multiple_tables=True,columns=column_seperator,pages=i,silent=True,guess=False)
+            df=read_pdf(pdf_input,stream=True, multiple_tables=True,columns=column_seperator,pages=i,silent=True,guess=False)
             df[0].drop(len(df[0])-1,inplace=True)
             if Extracted_value in str(df[0].loc[len(df[0])-1]):
                 total=df[0].iloc[-1,:][1]
@@ -3753,7 +3757,7 @@ def bank_recons_rep(input_date,output_date):
         print("extraction done") 
 
         with open(pdf_input2, 'rb') as f:
-                    pdf = PdfFileReader(f)
+                    pdf = PyPDF2.PdfFileReader(f)
                     page_object=pdf.getPage(0)
                     page_text=page_object.extractText() 
                     final_value=page_text[page_text.find("Closing Ledger Balance (015)"):].split()[4].split("€")[0]
@@ -3786,6 +3790,7 @@ def bank_recons_rep(input_date,output_date):
                 ws1.range(f"E{i}").value = float(dictBOA[((ws1.range(f'D{i}').value).split("CDA")[0].strip()).upper()].replace(',',''))
             except:
                 ws1.range(f"E{i}").value = 0
+        ws1.api.Range("B40").NumberFormat = '_("$"* #,##0.00_);_("$"* (#,##0.00);_("$"* "-"??_);_(@_)'
         save_date=datetime.strptime(Required_date,"%m/%d/%Y")
         save_date=datetime.strftime(save_date,"%m-%d-%Y")       
         wb.save(f"{output_location}\\BANK RECONS_{save_date}.xls")
