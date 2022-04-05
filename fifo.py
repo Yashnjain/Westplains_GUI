@@ -69,8 +69,8 @@ def fifo(input_date, output_date):
                 return(f"{input_xl} Excel file not present for date {input_date}")
         
         # input_mtm = r"J:\WEST PLAINS\REPORT\MOC Interest allocation\Raw Files" +f"\\Inventory MTM Excel Report {monthYear}.xlsx"
-        input_mtm = r"J:\WEST PLAINS\REPORT\FIFO reports\Raw Files" +f"\\INVENTORY MTM FIFO ACC JE_{input_date}.xlsx"
-        # input_mtm = r"C:\Users\imam.khan\OneDrive - BioUrja Trading LLC\Documents\WEST PLAINS\REPORT\FIFO reports\Raw Files" +f"\\INVENTORY MTM FIFO ACC JE_{input_date}.xlsx"
+        input_mtm = r'J:\WEST PLAINS\REPORT\Inv_MTM_Excel_Report_Summ\Output files' +f"\\Inventory MTM Excel Report {monthYear}.xlsx"
+        # input_mtm = r"C:\Users\imam.khan\OneDrive - BioUrja Trading LLC\Documents\WEST PLAINS\REPORT\FIFO reports\Output files" +f"\\Inventory MTM Excel Report {monthYear}.xlsx"
         if not os.path.exists(input_mtm):
                 return(f"{input_mtm} Excel file not present for date {input_date}")
 
@@ -222,7 +222,7 @@ def fifo(input_date, output_date):
             new_sht.api.Paste()
             new_sht.range("N1").value = "MTM Qty"
             mtm_sht.api.AutoFilterMode=False
-            mtm_last_row = mtm_sht.range(f'A'+ str(inp_sht.cells.last_cell.row)).end('up').row
+            mtm_last_row = mtm_sht.range(f'A'+ str(mtm_sht.cells.last_cell.row)).end('up').row
             # if loc  == "HRW":
             mtm_sht.activate()
             mtm_sht.api.AutoFilterMode=False
@@ -363,7 +363,7 @@ def fifo(input_date, output_date):
     return f"Fifo reports Genrated for {input_date}"
 
 
-input_date = "02.28.2022"
+input_date = "03.31.2022"
 output_date=None
 
 msg = fifo(input_date, output_date)
