@@ -64,6 +64,276 @@ class MyDateEntry(DateEntry):
         label(self._top_cal, bg='gray90', anchor='w',
                  text='Today: %s' % date.today().strftime('%x')).pack(fill='both', expand=1)
 
+
+
+
+def storage_qty(input_date,input_qty_pdf, input_qty_xl, monthYear2, qty_loc_dict):
+    try:
+        output_loc = r'J:\WEST PLAINS\REPORT\Storage Month End Report\Output Files' + f'\\STORAGE QTY {monthYear2}.xlsx'
+        page_df = read_pdf(input_qty_pdf,pages = 1,guess = False,stream = True,
+                        pandas_options={'header':0},area = ["65,630,600,735"],columns=["675"])[0]
+        page_num = int(page_df['e Types'][3][-4:])
+        
+        loc_dict = {}
+        
+            
+            # df = read_pdf(input_qty_pdf,pages = i,guess = False,stream = True,
+            #         pandas_options={'header':0},area = ["65,630,580,735"],columns=["675"])[0]
+            
+            # location_df = read_pdf(input_qty_pdf,pages = i,guess = False,stream = True,
+            #                 pandas_options={'header':0},area = ["5,15,80,300"],columns=["60"])[0]
+
+        df = read_pdf(input_qty_pdf,pages = f"1-{page_num}",guess = False,stream = True,
+                pandas_options={'header':0},area = ["65,630,580,735"],columns=["675"])
+        
+        location_df = read_pdf(input_qty_pdf,pages = f"1-{page_num}",guess = False,stream = True,
+                        pandas_options={'header':0},area = ["5,15,80,300"],columns=["60"])
+        for i in range(page_num):
+
+            # loc_lst.append(location_df['Daily Position R'][0])
+            # commodity_lst.append(location_df['Daily Position R'][1])
+            location = location_df[i]['Daily Position R'][0].split('-')[0].strip()
+            if location == "ALLIANCETE":
+                location = "ALLIANCE TERMINAL"
+            if location == "HAYSPRING":
+                location = "HAY SPRINGS"
+            if location == "BROWNSVILL":
+                location = "BROWNSVILLE"
+            if location == "WESTPLAINS":
+                location = "HAY SPRINGS"
+            if location == "NGREELEY":
+                location = "NORTH GREELEY"
+            if location == "PLAWES":
+                location = "TERMINAL"
+            commodity = location_df[i]['Daily Position R'][1].split(' ')[1].strip()
+            if commodity == 'SUNFLWR':
+                commodity = 'SUNFL'
+            # loc_dict[location_df['Daily Position R'][0]] = location_df['Daily Position R'][1]
+            value = df[i][df[i].columns[len(df[i].columns)-1]].tail(1)
+            value = list(value)[0]
+            if value == '(14)' or type(value) ==float :
+                continue
+                
+            else:
+                if location in loc_dict.keys():  
+                    if commodity in loc_dict[location].keys():
+                        
+                        loc_dict[location][commodity].append(value)
+                    else:
+                        loc_dict[location][commodity] = [value]
+
+                else:  
+                    loc_dict[location] = {}
+                    loc_dict[location][commodity] = [value]
+        
+
+        # try:
+        #     AT = loc_dict['ALLIANCETE']
+        #     del loc_dict['ALLIANCETE']
+        #     loc_dict['ALLIANCE TERMINAL'] = AT
+        # except:
+        #     pass
+        # try:
+        #     BW = loc_dict['BROWNSVILL']
+        #     del loc_dict['BROWNSVILL']
+        #     loc_dict['BROWNSVILLE'] = BW
+        # except:
+        #     pass
+        # try:
+        #     HS = loc_dict['WESTPLAINS']
+        #     del loc_dict['WESTPLAINS']
+        #     loc_dict['HAY SPRINGS'] = HS
+        # except:
+        #     pass
+        # try:
+        #     NG = loc_dict['NGREELEY']
+        #     del loc_dict['NGREELEY']
+        #     loc_dict['NORTH GREELEY'] = NG
+        # except:
+        #     pass
+
+        # try:
+        #     OMAHA = loc_dict['PLAWES']
+        #     del loc_dict['PLAWES']
+        #     loc_dict['TERMINAL'] = OMAHA
+        # except:
+        #     pass
+
+        print()
+        retry = 0
+        while retry<10:
+            try:
+                wb = xw.Book(input_qty_xl, update_links=False)
+                break
+            except:
+                time.sleep(5)
+                retry+=1
+
+        retry = 0
+        while retry<10:
+            try:
+                ws1 = wb.sheets['Storage Accrual (2)']
+                break
+            except:
+                time.sleep(5)
+                retry+=1
+        ws1.range('A3').value = input_date
+        # xl_commodity = ws1.range('C5').expand('right').value
+        last_row =  ws1.range(f'A'+ str(ws1.cells.last_cell.row)).end('up').row
+        # col_lst = ws1.range("C5").expand('right').value
+
+        for i in range(6,int(last_row)+1):
+            if ws1.range(f'A{i}').value is not None:
+                if  ws1.range(f'A{i}').value in loc_dict.keys():
+                    for j in range(len(ws1.range("C5").expand('right'))):
+                        if ws1.range(chr(ord("C")+j)+"5").value != 'TOTALS':
+                            try:
+                                ws1.range(chr(ord("C")+j)+f"{i}").value = qty_loc_dict[ws1.range(f"A{i}").value][ws1.range(chr(ord("C")+j)+"5").value]
+                            except:
+                                ws1.range(chr(ord("C")+j)+f"{i}").value = 0
+                            try:
+                                ws1.range(chr(ord("C")+j)+f"{i+1}").value = loc_dict[ws1.range(f"A{i}").value][ws1.range(chr(ord("C")+j)+"5").value]
+                                    
+                            except Exception as e:
+                                ws1.range(chr(ord("C")+j)+f"{i+1}").value = 0
+                        else:
+                            pass
+        wb.save(output_loc)
+    except Exception as e:
+        raise e
+    finally:
+        try:
+            wb.app.quit()
+        except:
+            pass
+
+
+def storage_accrual(input_date,strg_accr_inp_loc, monthYear, loc_dict):
+    try:
+        output_location = r'J:\WEST PLAINS\REPORT\Storage Month End Report\Output Files'+f"\\STORAGE ACCRUAL {monthYear}.xlsx"
+        # output_location = r'C:\Users\imam.khan\OneDrive - BioUrja Trading LLC\Documents\WEST PLAINS\REPORT\Storage Month End Report\Output Files'+f"\\{monthYear}.xlsx"
+        retry=0
+        while retry < 10:
+            try:
+                wb=xw.Book(strg_accr_inp_loc)
+                break
+            except Exception as e:
+                time.sleep(2)
+                retry+=1
+                if retry ==9:
+                    raise e
+        retry=0
+        while retry < 10:
+            try:
+                accr_sht = wb.sheets[0]
+                break
+            except Exception as e:
+                time.sleep(2)
+                retry+=1
+                if retry ==9:
+                    raise e
+        print()
+        accr_sht.range("A5").value = f"Schedule of inventory held for third parties (open storage ticket report) as of {input_date}"
+        last_row = accr_sht.range(f'A'+ str(accr_sht.cells.last_cell.row)).end('up').row
+
+        for i in range(10,last_row):
+            if accr_sht.range(f"A{i}").value is not None:
+                if accr_sht.range(f"A{i}").value in loc_dict.keys():
+                    print(accr_sht.range(f"A{i}").value)
+                    for j in range(len(accr_sht.range("C9").expand('right'))):
+                        try:
+                            accr_sht.range(chr(ord("C")+j)+f"{i}").value = loc_dict[accr_sht.range(f"A{i}").value][accr_sht.range(chr(ord("C")+j)+"9").value]
+                        except:
+                            pass
+        wb.save(output_location)
+        
+        print()
+        return f"Storage Accrual Sheet Generated for {monthYear}"
+    except Exception as e:
+        raise e
+    finally:
+        try:
+            wb.app.quit()
+        except:
+            pass
+
+def storage_je(strg_je_inp_loc, input_date, loc_dict):
+    try:
+        xl_inp_date = datetime.strftime(datetime.strptime(input_date, "%m.%d.%Y"), "%d-%m-%Y")
+        output_location = r'J:\WEST PLAINS\REPORT\Storage Month End Report\Output Files'+"\\STORAGE ACCRUAL JE_" +f"{input_date}.xlsx"
+        # output_location = r'C:\Users\imam.khan\OneDrive - BioUrja Trading LLC\Documents\WEST PLAINS\REPORT\Storage Month End Report\Output Files'+"\\STORAGE ACCRUAL JE_" +f"{input_date}.xlsx"
+        JE_dict = {'ALLIANCETE':'ALLIANCE TERMINAL','BATESLAND':'BATESLAND','CHADRON':'CHADRON','CLINTON':'CLINTON',
+                    'CRAWFORD':'CRAWFORD','GERING':'GERING','HAYSPRG':'HAY SPRINGS','JTELEV':'JOHNSTOWN',
+                    'LINGLE':'LINGLE','MITCHELL':'MITCHELL','NGREEL':'NORTH GREELEY','PLATNER':'PLATNER','YUMA':'YUMA'}
+                
+        retry=0
+        while retry < 10:
+            try:
+                wb=xw.Book(strg_je_inp_loc)
+                break
+            except Exception as e:
+                time.sleep(2)
+                retry+=1
+                if retry ==9:
+                    raise e
+        retry=0
+        while retry < 10:
+            try:
+                JE_sht = wb.sheets[0]
+                break
+            except Exception as e:
+                time.sleep(2)
+                retry+=1
+                if retry ==9:
+                    raise e
+        print()
+        JE_sht.range("A1").value = xl_inp_date
+        last_row = JE_sht.range(f'A'+ str(JE_sht.cells.last_cell.row)).end('up').row
+
+        for i in range(4,last_row+1):
+            if JE_sht.range(f"B{i}").value is not None:
+                try:
+                    JE_sht.range(f"G{i}").value = loc_dict[JE_dict[JE_sht.range(f"B{i}").value]][JE_sht.range(f"E{i}").value]
+                except:
+                    JE_sht.range(f"G{i}").value = 0
+        num_row = JE_sht.range('A3').end('down').row
+        num_col = JE_sht.range('A3').end('right').column
+       
+        retry=0
+        while retry<15:
+            try:
+                pivot_sht = wb.sheets["JE"]
+                time.sleep(5)
+                # pivot_sht.select()
+                pivot_sht.activate()
+                time.sleep(1)
+                break
+            except Exception as e:
+                time.sleep(5)
+                retry+=1
+                if retry==15:
+                    raise e
+        pivotCount = wb.api.ActiveSheet.PivotTables().Count
+         # 'INPUT DATA'!$A$3:$I$86
+        for j in range(1, pivotCount+1):
+            if wb.api.ActiveSheet.PivotTables(j).PivotCache().SourceData != f"'INPUT DATA'!R3C1:R{num_row}C{num_col}": #Updateing data source
+                wb.api.ActiveSheet.PivotTables(j).PivotCache().SourceData = f"'INPUT DATA'!R3C1:R{num_row}C{num_col}" #Updateing data source
+            wb.api.ActiveSheet.PivotTables(j).PivotCache().Refresh()
+
+        wb.save(output_location)
+       
+        print()
+        
+    except Exception as e:
+        raise e
+    finally:
+        try:
+            wb.app.quit()
+        except:
+            pass
+
+
+
 def bbr_other_tabs(input_date, wb, input_ar, input_ctm):
     try:
         # input_date = "02.07.2022"
@@ -1224,6 +1494,9 @@ def mtm_excel(input_date,input_xl,loc_dict,loc_sheet, output_location, hrw_fut, 
         # locations[locations.index('North Greeley')] = 'NGREEL'
         # locations[locations.index('North Greeley')] = 'NGREEL'
         # locations[locations.index('North Greeley')] = 'NGREEL'
+        equip_row = m_sht.range("L1").end('down').end('down').end('down').row #57
+        m_sht.range(f"P{equip_row}").value = loc_dict["EQUIP"][0].iloc[-1,-1]/loc_dict["EQUIP"][0].iloc[-1,-2] #loc_dict["HRW"][0].loc[loc_abbr[location]]["Price"]
+        m_sht.range(f"M{equip_row}").value = loc_dict["EQUIP"][0].iloc[-1,-2]
         loc_dict["HRW"][0].set_index('Location', inplace=True) #DF re_idct[loc_abbr[location]]
         i = int(hrw.replace("B", ""))
         start=int(hrw.replace("B", ""))
@@ -1433,11 +1706,13 @@ def bbr(input_date, output_date):
                 return(f"{pdf_loc} Pdf file not present for date {input_date}")
 
         bank_recons_loc = r"J:\WEST PLAINS\REPORT\BBR Reports\Raw Files\BANK RECONS_"+input_date+".xls"
+        # bank_recons_loc = r"J:\WEST PLAINS\REPORT\Bank Recons\Output Files\BANK RECONS_"+input_date+".xls"
 
         if not os.path.exists(bank_recons_loc):
                 return(f"{bank_recons_loc} Excel file not present for date {input_date}")
 
-        strg_accr_loc = r"J:\WEST PLAINS\REPORT\BBR Reports\Raw Files\STORAGE ACCRUAL "+prev_month_year+".xlsx"
+        # strg_accr_loc = r"J:\WEST PLAINS\REPORT\BBR Reports\Raw Files\STORAGE ACCRUAL "+prev_month_year+".xlsx"
+        strg_accr_loc = r"J:\WEST PLAINS\REPORT\Storage Month End Report\Output Files\STORAGE ACCRUAL "+prev_month_year+".xlsx"
 
         if not os.path.exists(strg_accr_loc):
                 return(f"{strg_accr_loc} Excel file not present for date {input_date}")
@@ -1963,6 +2238,7 @@ def cpr(input_date, output_date):
         # delete sum of total value column ("J") Positive and negative value less then 25K
         ####logger.info('Delete rows with value between -25K to 25K')
         BB_Master25_Row = BB_Master25ws.range('H9').end('down').row
+        
         # for i in range(7,BB_Master25_Row+1):
         i = 7
         while i<= BB_Master25_Row:
@@ -1978,6 +2254,12 @@ def cpr(input_date, output_date):
                 i+=1
                 
         # gt
+        time.sleep(1)
+        last_row = BB_Master25ws.range(f'H'+ str(BB_Master25ws.cells.last_cell.row)).end('up').row
+        last_column = num_to_col_letters(BB_Master25ws.range("A6").end('right').column)
+        BB_Master25ws.range(f"A6:{last_column}{last_row}").api.Sort(Key1=BB_Master25ws.range(f"H6:H{last_row}").api,Order1=2,DataOption1=0,Orientation=1)
+        # BB_Master25ws.range(f'H9:H{BB_Master25_Row}').api.NumberFormat = '_("$"* #,##0.00_);_("$"* (#,##0.00);_("$"* "-"??_);_(@_)'
+        BB_Master25ws.range(f'C:H').api.NumberFormat = '_("$"* #,##0.00_);_("$"* (#,##0.00);_("$"* "-"??_);_(@_)'
         ####logger.info('Refreshing all tab')  
         BB_wb.api.RefreshAll()
         BB_wb.sheets[2].select()
@@ -1991,6 +2273,7 @@ def cpr(input_date, output_date):
         BB_wb.sheets[6].select()
         BB_wb.api.ActiveSheet.PivotTables("PivotTable7").PivotFields('Cust Type').CurrentPage = "T"
         print()
+        BB_Master25ws.activate()
         wb.save(output_cpr)
         BB_wb.save(output_cpr_copy)
 
@@ -3619,90 +3902,90 @@ def bbr_monthEnd(input_date, output_date):
 
 
 
-def month_end_storage_accrual(input_date, output_date):
-    try:
-        monthYear = datetime.strftime(datetime.strptime(input_date, "%m.%d.%Y"), "%b%Y").upper()
+# def month_end_storage_accrual(input_date, output_date):
+#     try:
+#         monthYear = datetime.strftime(datetime.strptime(input_date, "%m.%d.%Y"), "%b%Y").upper()
         
-        pdf_loc = r'J:\WEST PLAINS\REPORT\Storage Month End Report\Raw Files'+f"\\{monthYear}\\PDF"
-        if not os.path.exists(pdf_loc):
-            return(f"{pdf_loc} Excel file not present for date {input_date}")
-        template_loc = r'J:\WEST PLAINS\REPORT\Storage Month End Report\Raw Files\template\STORAGE ACCRUAL.xlsx'
-        if not os.path.exists(template_loc):
-                    return(f"{template_loc} Excel file not present for date {input_date}")
-        output_location = r'J:\WEST PLAINS\REPORT\Storage Month End Report\Output Files'+f"\\{monthYear}.xlsx"
-        loc_dict = {}
-        # comm_dict = {}
-        # # location_lst = []
-        # commodity_lst = []
-        # values_lst = []
-        for loc in glob.glob(pdf_loc+"\\*.pdf"):
-            # loc =  r'J:\WEST PLAINS\REPORT\Storage Month End Report\Raw Files\FEB2022\DailyPositionRecordForm2539A.pdf'
-            df = read_pdf(loc, pages = 'all', guess = False, stream = True,
-                                            pandas_options={'header':0}, area = ["65,630,590,735"], columns=["680"])
-            df = pd.concat(df, ignore_index=True)
-            location = loc.split("\\")[-1].split(".")[0]
-            if location == "ALLIANCET":
-                location = "ALLIANCE TERMINAL"
-            if location == "HAYSPRING":
-                location = "HAY SPRINGS"
+#         pdf_loc = r'J:\WEST PLAINS\REPORT\Storage Month End Report\Raw Files'+f"\\{monthYear}\\PDF"
+#         if not os.path.exists(pdf_loc):
+#             return(f"{pdf_loc} Excel file not present for date {input_date}")
+#         template_loc = r'J:\WEST PLAINS\REPORT\Storage Month End Report\Raw Files\template\STORAGE ACCRUAL.xlsx'
+#         if not os.path.exists(template_loc):
+#                     return(f"{template_loc} Excel file not present for date {input_date}")
+#         output_location = r'J:\WEST PLAINS\REPORT\Storage Month End Report\Output Files'+f"\\{monthYear}.xlsx"
+#         loc_dict = {}
+#         # comm_dict = {}
+#         # # location_lst = []
+#         # commodity_lst = []
+#         # values_lst = []
+#         for loc in glob.glob(pdf_loc+"\\*.pdf"):
+#             # loc =  r'J:\WEST PLAINS\REPORT\Storage Month End Report\Raw Files\FEB2022\DailyPositionRecordForm2539A.pdf'
+#             df = read_pdf(loc, pages = 'all', guess = False, stream = True,
+#                                             pandas_options={'header':0}, area = ["65,630,590,735"], columns=["680"])
+#             df = pd.concat(df, ignore_index=True)
+#             location = loc.split("\\")[-1].split(".")[0]
+#             if location == "ALLIANCET":
+#                 location = "ALLIANCE TERMINAL"
+#             if location == "HAYSPRING":
+#                 location = "HAY SPRINGS"
             
-            commodity = loc.split("\\")[-1].split(".")[1]
-            value = float(df.iloc[-1][-1].replace(",",""))
+#             commodity = loc.split("\\")[-1].split(".")[1]
+#             value = float(df.iloc[-1][-1].replace(",",""))
 
-            # location_lst.append(loc.split("\\")[-1].split(".")[0])
-            # commodity_lst.append(loc.split("\\")[-1].split(".")[1])
-            # values_lst.append(float(df.iloc[-1][-1].replace(",","")))
+#             # location_lst.append(loc.split("\\")[-1].split(".")[0])
+#             # commodity_lst.append(loc.split("\\")[-1].split(".")[1])
+#             # values_lst.append(float(df.iloc[-1][-1].replace(",","")))
 
-            if location in loc_dict.keys():  
-                if commodity in loc_dict[location].keys():
-                    loc_dict[location][commodity].append(value)
-                else:
-                    loc_dict[location][commodity] = [value]
-            else:  
-                loc_dict[location] = {}
-                loc_dict[location][commodity] = [value]
+#             if location in loc_dict.keys():  
+#                 if commodity in loc_dict[location].keys():
+#                     loc_dict[location][commodity].append(value)
+#                 else:
+#                     loc_dict[location][commodity] = [value]
+#             else:  
+#                 loc_dict[location] = {}
+#                 loc_dict[location][commodity] = [value]
                 
-        retry=0
-        while retry < 10:
-            try:
-                wb=xw.Book(template_loc)
-                break
-            except Exception as e:
-                time.sleep(2)
-                retry+=1
-                if retry ==9:
-                    raise e
-        retry=0
-        while retry < 10:
-            try:
-                accr_sht = wb.sheets[0]
-                break
-            except Exception as e:
-                time.sleep(2)
-                retry+=1
-                if retry ==9:
-                    raise e
-        print()
-        accr_sht.range("A5").value = f"Schedule of inventory held for third parties (open storage ticket report) as of {input_date}"
-        last_row = accr_sht.range(f'A'+ str(accr_sht.cells.last_cell.row)).end('up').row
+#         retry=0
+#         while retry < 10:
+#             try:
+#                 wb=xw.Book(template_loc)
+#                 break
+#             except Exception as e:
+#                 time.sleep(2)
+#                 retry+=1
+#                 if retry ==9:
+#                     raise e
+#         retry=0
+#         while retry < 10:
+#             try:
+#                 accr_sht = wb.sheets[0]
+#                 break
+#             except Exception as e:
+#                 time.sleep(2)
+#                 retry+=1
+#                 if retry ==9:
+#                     raise e
+#         print()
+#         accr_sht.range("A5").value = f"Schedule of inventory held for third parties (open storage ticket report) as of {input_date}"
+#         last_row = accr_sht.range(f'A'+ str(accr_sht.cells.last_cell.row)).end('up').row
 
-        for i in range(10,last_row):
-            if accr_sht.range(f"A{i}").value is not None:
-                if accr_sht.range(f"A{i}").value in loc_dict.keys():
-                    print(accr_sht.range(f"A{i}").value)
-                    for j in range(len(accr_sht.range("C9").expand('right'))):
-                        try:
-                            accr_sht.range(chr(ord("C")+j)+f"{i}").value = loc_dict[accr_sht.range(f"A{i}").value][accr_sht.range(chr(ord("C")+j)+"9").value]
-                        except:
-                            pass
-        wb.save(output_location)
+#         for i in range(10,last_row):
+#             if accr_sht.range(f"A{i}").value is not None:
+#                 if accr_sht.range(f"A{i}").value in loc_dict.keys():
+#                     print(accr_sht.range(f"A{i}").value)
+#                     for j in range(len(accr_sht.range("C9").expand('right'))):
+#                         try:
+#                             accr_sht.range(chr(ord("C")+j)+f"{i}").value = loc_dict[accr_sht.range(f"A{i}").value][accr_sht.range(chr(ord("C")+j)+"9").value]
+#                         except:
+#                             pass
+#         wb.save(output_location)
        
-        print()
-        return f"Storage Accrual Sheet Generated for {monthYear}"
-    except Exception as e:
-        raise e
-    finally:
-        wb.app.quit()
+#         print()
+#         return f"Storage Accrual Sheet Generated for {monthYear}"
+#     except Exception as e:
+#         raise e
+#     finally:
+#         wb.app.quit()
     
 def bank_recons_rep(input_date,output_date):
     try:
@@ -3792,7 +4075,7 @@ def bank_recons_rep(input_date,output_date):
                 ws1.range(f"E{i}").value = 0
         ws1.api.Range("B40").NumberFormat = '_("$"* #,##0.00_);_("$"* (#,##0.00);_("$"* "-"??_);_(@_)'
         save_date=datetime.strptime(Required_date,"%m/%d/%Y")
-        save_date=datetime.strftime(save_date,"%m-%d-%Y")       
+        save_date=datetime.strftime(save_date,"%m.%d.%Y")       
         wb.save(f"{output_location}\\BANK RECONS_{save_date}.xls")
         return f"Bank Recons Report Generated for {save_date}"
     except Exception as e:
@@ -3802,6 +4085,85 @@ def bank_recons_rep(input_date,output_date):
             wb.app.quit()
         except:
             pass
+
+
+def strg_month_end_report(input_date, output_date):
+    try:
+        monthYear = datetime.strftime(datetime.strptime(input_date, "%m.%d.%Y"), "%b%Y").upper()
+        monthYear2 = datetime.strftime(datetime.strptime(input_date, "%m.%d.%Y"), "%b %Y").upper()
+        
+        pdf_loc = r'J:\WEST PLAINS\REPORT\Storage Month End Report\Raw Files'+f"\\{monthYear}\\PDF"
+        # pdf_loc = r'C:\Users\imam.khan\OneDrive - BioUrja Trading LLC\Documents\WEST PLAINS\REPORT\Storage Month End Report\Raw Files'+f"\\{monthYear}\\PDF"
+        if not os.path.exists(pdf_loc):
+            return(f"{pdf_loc} Excel file not present for date {input_date}")
+        strg_accr_inp_loc = r'J:\WEST PLAINS\REPORT\Storage Month End Report\Raw Files\STORAGE ACCRUAL.xlsx'
+        # strg_accr_inp_loc = r'C:\Users\imam.khan\OneDrive - BioUrja Trading LLC\Documents\WEST PLAINS\REPORT\Storage Month End Report\Raw Files\STORAGE ACCRUAL.xlsx'
+        if not os.path.exists(strg_accr_inp_loc):
+            return(f"{strg_accr_inp_loc} Excel file not present for date {input_date}")
+        strg_je_inp_loc = r'J:\WEST PLAINS\REPORT\Storage Month End Report\Raw Files\STORAGE ACCRUAL JE.xlsx'
+        # strg_je_inp_loc = r'C:\Users\imam.khan\OneDrive - BioUrja Trading LLC\Documents\WEST PLAINS\REPORT\Storage Month End Report\Raw Files\STORAGE ACCRUAL JE.xlsx'
+        if not os.path.exists(strg_je_inp_loc):
+            return(f"{strg_je_inp_loc} Excel file not present for date {input_date}")
+
+        input_qty_xl = r'J:\WEST PLAINS\REPORT\Storage Month End Report\Raw Files\STORAGE QTY.xlsx'
+        # input_qty_xl = r'C:\Users\imam.khan\OneDrive - BioUrja Trading LLC\Documents\WEST PLAINS\REPORT\Storage Month End Report\Raw Files\STORAGE QTY.xlsx'
+
+        input_qty_pdf = r'J:\WEST PLAINS\REPORT\Storage Month End Report\Raw Files'f'\\{monthYear}\\DailyPositionRecordForm2539A.pdf'
+        # input_qty_pdf = r'C:\Users\imam.khan\OneDrive - BioUrja Trading LLC\Documents\WEST PLAINS\REPORT\Storage Month End Report\Raw Files'f'\\{monthYear}\\DailyPositionRecordForm2539A.pdf'
+        
+        loc_dict = {}
+        qty_loc_dict = {}
+
+        for loc in glob.glob(pdf_loc+"\\*.pdf"):
+            # loc =  r'J:\WEST PLAINS\REPORT\Storage Month End Report\Raw Files\FEB2022\DailyPositionRecordForm2539A.pdf'
+            # df = read_pdf(loc, pages = 'all', guess = False, stream = True,
+            #                                 pandas_options={'header':0}, area = ["65,630,590,735"], columns=["680"])
+            df = read_pdf(loc, pages = 'all', guess = False, stream = True,
+                                            pandas_options={'header':0}, area = ["65,320,590,735"], columns=["450,520,680"])
+
+            df = pd.concat(df, ignore_index=True)
+            location = loc.split("\\")[-1].split(".")[0]
+            if location == "ALLIANCET":
+                location = "ALLIANCE TERMINAL"
+            if location == "HAYSPRING":
+                location = "HAY SPRINGS"
+            
+            commodity = loc.split("\\")[-1].split(".")[1]
+            value = float(df.iloc[-1][-1].replace(",",""))
+            qty_value = float(df.iloc[-1][0].replace(",",""))
+
+            # location_lst.append(loc.split("\\")[-1].split(".")[0])
+            # commodity_lst.append(loc.split("\\")[-1].split(".")[1])
+            # values_lst.append(float(df.iloc[-1][-1].replace(",","")))
+
+            if location in loc_dict.keys():  
+                if commodity in loc_dict[location].keys():
+                    loc_dict[location][commodity].append(value)
+                else:
+                    loc_dict[location][commodity] = [value]
+            else:  
+                loc_dict[location] = {}
+                loc_dict[location][commodity] = [value]
+
+
+            if location in qty_loc_dict.keys():  
+                if commodity in qty_loc_dict[location].keys():
+                    qty_loc_dict[location][commodity].append(qty_value)
+                else:
+                    qty_loc_dict[location][commodity] = [qty_value]
+            else:  
+                qty_loc_dict[location] = {}
+                qty_loc_dict[location][commodity] = [qty_value]
+
+
+        storage_accrual(input_date,strg_accr_inp_loc, monthYear, loc_dict)
+        storage_je(strg_je_inp_loc, input_date, loc_dict)
+        storage_qty(input_date,input_qty_pdf, input_qty_xl, monthYear2, qty_loc_dict)
+
+        return f"Storage Month End Report Generated for {input_date}"
+    except Exception as e:
+        raise e
+
 
 
 def main():
@@ -3878,7 +4240,7 @@ def main():
     frame_options.grid(row=1,column=0, pady=30, padx=35, columnspan=2, rowspan=3)
     wp_job_ids = {'ABS':1,'BBR':bbr,'CPR Report':cpr, 'Freight analysis':freight_analysis, 'CTM combined':ctm,'Inventory MTM excel report summary':inv_mtm,
                     'MOC Interest Allocation':moc_interest_alloc,'Open AR':open_ar,'Open AP':open_ap, 'Unsettled Payable Report':unsetteled_payables,'Unsettled Receivable Report':unsetteled_receivables,
-                    'Storage Month End Report':month_end_storage_accrual, "Month End BBr":bbr_monthEnd, "Bank Recons Report":bank_recons_rep}
+                    'Storage Month End Report':strg_month_end_report, "Month End BBr":bbr_monthEnd, "Bank Recons Report":bank_recons_rep}
     # department_ids = {'Select \t\t\t\t\t\t\t\t\t': 9, 'Ethanol\t\t\t\t\t\t\t\t': 1, 'WestPlains': 8}
     Rep_variable = StringVar()
     doc_type_variable = StringVar()
