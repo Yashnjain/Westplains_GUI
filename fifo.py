@@ -294,17 +294,7 @@ def fifo(input_date, output_date):
                 mtm_sht.api.Range(f"O4:O{mtm_last_row}").SpecialCells(12).Select()
                 mtm_wb.app.selection.value = new_sht.range(f"R{i}").value
 
-                # mtm_sht.activate()
-                # mtm_sht.api.AutoFilterMode=False
-                # # mtm_last_row = mtm_sht.range("F6").end("down").row
-                # mtm_sht.api.Range(f"F6").AutoFilter(Field:=6,Criteria1:=loc, Operator:=7)
-                # columns_1[key]=columns_1[key].replace("NGREEL","NORTH GREELEY")
-                # columns_1[key]=columns_1[key].replace("BROWNSVILL","BROWNSVILLE")
                 
-                # mtm_sht.api.Range(f"E6").AutoFilter(Field:=5,Criteria1:=columns_1[key].split(','), Operator:=7)
-
-                # mtm_sht.api.Range(f"G8:G{mtm_last_row}").SpecialCells(12).Select()
-                # mtm_wb.app.selection.value = new_sht.range(f"R{i}").value
             if loc == "HRW":
                 mtm_sht.api.AutoFilterMode=False
                 mtm_sht.api.Range(f"D3").AutoFilter(Field:=4,Criteria1:='<>HRW', Operator:=1, Criteria2:='<>YC')
@@ -330,10 +320,6 @@ def fifo(input_date, output_date):
                                 mtm_sht.range(f"O{i}").value=0
                                 pass
 
-
-
-                print()
-            
             wb.save(output_loc)
             wb.close()
         retry=0
@@ -356,10 +342,6 @@ def fifo(input_date, output_date):
         mtm_sht.activate()
         mtm_wb.save(mtm_ouput_loc)
         # mtm_wb.app.quit()
-        print()
-
-        
-
         
         return f"Fifo reports Genrated for {input_date}"
     except Exception as e:
