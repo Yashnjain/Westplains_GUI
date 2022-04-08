@@ -1,4 +1,5 @@
 
+from regex import E
 import xlwings.constants as win32c
 from datetime import datetime
 import time
@@ -21,42 +22,42 @@ def num_to_col_letters(num):
 
 
 def other_loc_extractor(input_pdf):
-    df = read_pdf(input_pdf, pages = 'all', guess = False, stream = True,
-                                            pandas_options={'header':0}, area = ["50,200,580,740"], columns = ["290, 340, 490,590,640"])
-    df = pd.concat(df, ignore_index=True)
-    print(df)
-    df = df[['Location','Product', 'Unit Cost']]
-    df.set_index(['Location'])["Product"].to_dict()
-    loc_dict = {}
-    product=None
-    for i in range(len(df)):
-        
-        
-        if not pd.isnull(df.loc[:,'Location'][i]):
-            location = df['Location'][i]
-            # if location == "NGREEL":
-            #     location = "NORTH GREELEY"
-            if location == "OMA COMM":
-                location = "TERMINAL"
-            # if location == "BROWNSVILL":
-            #     location = "BROWNSVILLE"
-        product = df['Product'][i]
-        value = df['Unit Cost'][i]
-        if product in loc_dict.keys():  
-                if location in loc_dict[product].keys():
-                    loc_dict[product][location].append(value)
-                else:
-                    loc_dict[product][location] = [value]
-        else:  
-            loc_dict[product] = {}
-            loc_dict[product][location] = [value]
+    try:
+        df = read_pdf(input_pdf, pages = 'all', guess = False, stream = True,
+                                                pandas_options={'header':0}, area = ["50,200,580,740"], columns = ["290, 340, 490,590,640"])
+        df = pd.concat(df, ignore_index=True)
+        print(df)
+        df = df[['Location','Product', 'Unit Cost']]
+        df.set_index(['Location'])["Product"].to_dict()
+        loc_dict = {}
+        product=None
+        for i in range(len(df)):
+            
+            
+            if not pd.isnull(df.loc[:,'Location'][i]):
+                location = df['Location'][i]
+                # if location == "NGREEL":
+                #     location = "NORTH GREELEY"
+                if location == "OMA COMM":
+                    location = "TERMINAL"
+                # if location == "BROWNSVILL":
+                #     location = "BROWNSVILLE"
+            product = df['Product'][i]
+            value = df['Unit Cost'][i]
+            if product in loc_dict.keys():  
+                    if location in loc_dict[product].keys():
+                        loc_dict[product][location].append(value)
+                    else:
+                        loc_dict[product][location] = [value]
+            else:  
+                loc_dict[product] = {}
+                loc_dict[product][location] = [value]
 
-    print()
-    return loc_dict
-    # for row in df.iterrows():
-    #     print(row)
-
-    print()
+        print()
+        return loc_dict
+    except Exception as e:
+        raise e
+    
 
 def fifo(input_date, output_date):
     try:
