@@ -7,7 +7,7 @@ from collections import defaultdict
 
 
 
-def mtm_pdf_data_extractor(input_date, f, hrw_pdf_loc=None, yc_pdf_loc=None, mtm_report=False):
+def inv_mtm_pdf_data_extractor(input_date, f, hrw_pdf_loc=None, yc_pdf_loc=None, mtm_report=False):
     try:
         hrw_fut = None
         yc_fut = None
@@ -120,7 +120,7 @@ def mtm_pdf_data_extractor(input_date, f, hrw_pdf_loc=None, yc_pdf_loc=None, mtm
 
 
 
-def mtm_excel_summ(input_date, output_date):
+def inv_mtm_excel_summ(input_date, output_date):
     try:
         monthYear = datetime.strftime(datetime.strptime(input_date, "%m.%d.%Y"), "%B %Y")
         pdf_loc = r'J:\WEST PLAINS\REPORT\MTM reports\Raw Files\Inventory Market Valuation _'+input_date+'.pdf'
@@ -137,7 +137,7 @@ def mtm_excel_summ(input_date, output_date):
 
 
 
-        loc_dict = mtm_pdf_data_extractor(input_date,pdf_loc)
+        loc_dict = inv_mtm_pdf_data_extractor(input_date,pdf_loc)
 
         retry=0
         while retry < 10:
@@ -221,6 +221,6 @@ def mtm_excel_summ(input_date, output_date):
 input_date = "03.31.2022"
 output_date=None
 
-msg = mtm_excel_summ(input_date, output_date)
+msg = inv_mtm_excel_summ(input_date, output_date)
 print(msg)
 print()
