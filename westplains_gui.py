@@ -4238,16 +4238,21 @@ def fifo(input_date, output_date):
             inp_sht.api.AutoFilterMode=False
             inp_sht.api.Range(f"{cust_name_col}2").AutoFilter(Field:=cust_name_col_num,Criteria1:="INTER-COMPANY PURCH/SALES")
             l_row = inp_sht.range(f"{quantityCol}2").end('down').row
-            # rng = inp_sht.api.Range(f"{quantityCol}2:{quantityCol}{l_row}").SpecialCells(12).Address.split(",")[1:]
+            
+            # inp_sht.api.Range(f"{quantityCol}3:{quantityCol}{l_row}").SpecialCells(12).Select()
+            inp_sht.api.Range(f"3:{l_row}").SpecialCells(12).Select()
+            # wb.app.selection.value = 0
+            wb.app.selection.delete()
+            inp_sht.api.AutoFilterMode=False
+           
+            if loc == "HRW":
+                inp_sht.api.Range(f"{unit_cost_col}2").AutoFilter(Field:=unit_cost_col_num,Criteria1:="<=1.7")
+            else:
+                inp_sht.api.Range(f"{unit_cost_col}2").AutoFilter(Field:=unit_cost_col_num,Criteria1:="<=1")
+            l_row = inp_sht.range(f"{quantityCol}2").end('down').row
             inp_sht.api.Range(f"{quantityCol}3:{quantityCol}{l_row}").SpecialCells(12).Select()
             wb.app.selection.value = 0
-       
-
-            inp_sht.api.Range(f"{unit_cost_col}2").AutoFilter(Field:=unit_cost_col_num,Criteria1:=">=1", Operator:=2,Criteria2:="0")
-            l_row = inp_sht.range(f"{invValCol}2").end('down').row
-            inp_sht.api.Range(f"{invValCol}3:{invValCol}{l_row}").SpecialCells(12).Select()
-            wb.app.selection.value = 0
-     
+        
             
             inp_sht.api.AutoFilterMode=False
 
@@ -4313,9 +4318,13 @@ def fifo(input_date, output_date):
                         qty_sum+=float(mtm_sht.range(rng).value)
                         price_sum+=float(mtm_sht.range(rng.replace("G","K")).value)
 
+
+
+                            
+                
                 new_sht.range("O1").value = qty_sum
                 new_sht.range("P1").value = price_sum
-              
+                
                 
                 new_sht.range("Q1").value = "MTM Price"
                 new_sht.range("R1").formula = "=P1/O1"
@@ -4325,7 +4334,8 @@ def fifo(input_date, output_date):
                 i=2
                 while summ<=new_sht.range("O1").value:
                     i+=1
-                   
+                    # print(i)
+                    # print(new_sht.range(f"M{i}").value)
                     summ+=new_sht.range(f"M{i}").value
                     summ2+=new_sht.range(f"O{i}").value
                 
@@ -4334,7 +4344,7 @@ def fifo(input_date, output_date):
                 new_sht.range(f"Q{i}").value = summ2
                 new_sht.range(f"Q{i}").color = "#FFFF00"
                 new_sht.range(f"R{i}").color = "#FFFF00"
-              
+                # new_sht.range(f"R{i}").value = summ2
                 
                 
                 new_sht.range(f"R{i}").formula = f"=Q{i}/P{i}"
