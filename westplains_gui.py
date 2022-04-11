@@ -1297,7 +1297,7 @@ def moc_get_df_from_input_excel(mtm_file, open_ap_file, open_ar_file,unsettled_p
         
         """"This is the code for Open AP files"""
         try:
-            inner_keys = ['Alliance/Hay Springs','Gering','Omaha','Johnstown','KC','BROWNSVILL']
+            inner_keys = ['Alliance/Hay Springs','Gering','Omaha','Johnstown','KC','West Coast','BROWNSVILL']
             inner_dict = {}.fromkeys(inner_keys)
             # df_ap = pd.read_excel(open_ap_file,sheet_name='For allocation entry',usecols="A,B", skiprows=2)
             df_ap = pd.read_excel(open_ap_file,sheet_name = 0, usecols="A,B", skiprows=2)
@@ -1308,6 +1308,10 @@ def moc_get_df_from_input_excel(mtm_file, open_ap_file, open_ar_file,unsettled_p
             inner_dict['Omaha'] = new_dict.get('TERMINAL')
             inner_dict['Johnstown'] = new_dict.get('OMA COMM') + new_dict.get('JTELEV')
             inner_dict['KC'] = new_dict.get('KANSAS CTY')
+            try:
+                inner_dict['West Coast'] = new_dict.get('WEST COAST')
+            except:
+                inner_dict["West Coast"] = None
             inner_dict['BROWNSVILL'] = new_dict.get('BROWNSVILL')
             req_dict['Accounts Payable'] = inner_dict
         except Exception as e:
@@ -1316,7 +1320,7 @@ def moc_get_df_from_input_excel(mtm_file, open_ap_file, open_ar_file,unsettled_p
         
         """"This is the code for Open AR files"""
         try:
-            inner_keys = ['Alliance/Hay Springs','Gering','Omaha','Johnstown','KC','BROWNSVILL']
+            inner_keys = ['Alliance/Hay Springs','Gering','Omaha','Johnstown','KC','West Coast','BROWNSVILL']
             inner_dict = {}.fromkeys(inner_keys)
             # df_ar = pd.read_excel(open_ar_file, sheet_name='For allocation entry',usecols="A,B", skiprows=2)
             df_ar = pd.read_excel(open_ar_file, sheet_name = 0, usecols="A,B", skiprows=2)
@@ -1326,6 +1330,10 @@ def moc_get_df_from_input_excel(mtm_file, open_ap_file, open_ar_file,unsettled_p
             inner_dict['Omaha'] = new_dict.get('TERMINAL')
             inner_dict['Johnstown'] = new_dict.get('OMA COMM') + new_dict.get('JTELEV')
             inner_dict['KC'] = new_dict.get('KANSAS CTY')
+            try:
+                inner_dict['West Coast'] = new_dict.get('WEST COAST')
+            except:
+                inner_dict["West Coast"] = None
             inner_dict['BROWNSVILL'] = new_dict.get('BROWNSVILL')
             req_dict['Open A/R'] = inner_dict
         except Exception as e:
@@ -1334,7 +1342,7 @@ def moc_get_df_from_input_excel(mtm_file, open_ap_file, open_ar_file,unsettled_p
         
         """This is the code for Unsettled Payables files"""
         try:
-            inner_keys = ['Alliance/Hay Springs','Gering','Omaha','Johnstown','KC','BROWNSVILL']
+            inner_keys = ['Alliance/Hay Springs','Gering','Omaha','Johnstown','KC','West Coast','BROWNSVILL']
             inner_dict = {}.fromkeys(inner_keys)
             # df_pay = pd.read_excel(unsettled_pay_file, sheet_name = 'For allocation entry', usecols="A,B", skiprows=2)
             df_pay = pd.read_excel(unsettled_pay_file, sheet_name = 0, usecols="A,B", skiprows=2)
@@ -1344,6 +1352,10 @@ def moc_get_df_from_input_excel(mtm_file, open_ap_file, open_ar_file,unsettled_p
             inner_dict['Omaha'] = new_dict.get('OMAHA TERMINAL ELEVATOR - WEST PLAINS, LLC')
             inner_dict['Johnstown'] = new_dict.get('OMAHA COMM - WEST PLAINS, LLC') + new_dict.get('JOHNSTOWN - WEST PLAINS, LLC')
             inner_dict['KC'] = new_dict.get('KANSAS CTY')
+            try:
+                inner_dict['West Coast'] = new_dict.get('WEST COAST')
+            except:
+                inner_dict["West Coast"] = None
             inner_dict['BROWNSVILL'] = new_dict.get('BROWNSVILLE - WEST PLAINS, LLC')
             req_dict['Unsettled A/P'] = inner_dict
         except Exception as e:
@@ -1352,7 +1364,7 @@ def moc_get_df_from_input_excel(mtm_file, open_ap_file, open_ar_file,unsettled_p
             
         """This is the code for Unsettled Receivables"""
         try:
-            inner_keys = ['Alliance/Hay Springs','Gering','Omaha','Johnstown','KC','BROWNSVILL']
+            inner_keys = ['Alliance/Hay Springs','Gering','Omaha','Johnstown','KC','West Coast','BROWNSVILL']
             inner_dict = {}.fromkeys(inner_keys)
             # df_recev = pd.read_excel(unsettled_recev_file, sheet_name = 'For allocation entry', usecols="A,B", skiprows=2)
             df_recev = pd.read_excel(unsettled_recev_file, sheet_name = 0, usecols="A,B", skiprows=2)
@@ -1362,6 +1374,10 @@ def moc_get_df_from_input_excel(mtm_file, open_ap_file, open_ar_file,unsettled_p
             inner_dict['Omaha'] = new_dict.get('OMAHA TERMINAL ELEVATOR - WEST PLAINS, LLC')
             inner_dict['Johnstown'] = new_dict.get('OMAHA COMM - WEST PLAINS, LLC') + new_dict.get('JOHNSTOWN - WEST PLAINS, LLC')
             inner_dict['KC'] = new_dict.get('KANSAS CTY')
+            try:
+                inner_dict['West Coast'] = new_dict.get('WEST COAST')
+            except:
+                inner_dict["West Coast"] = None
             inner_dict['BROWNSVILL'] = new_dict.get('BROWNSVILLE - WEST PLAINS, LLC')
             req_dict['Unsettled A/R'] = inner_dict
         except Exception as e:
@@ -1373,7 +1389,7 @@ def moc_get_df_from_input_excel(mtm_file, open_ap_file, open_ar_file,unsettled_p
         print("Main dataframe created")
         return main_df
     except Exception as e:
-        print(e)
+        raise e
     finally:
         pass
 
@@ -1392,9 +1408,10 @@ def update_moc_excel(main_df,template_dir,output_dir, input_date):
                 ws_alloc.range('G9:G15').options(transpose=True).value = main_df.values[2]
                 ws_alloc.range('I9:I15').options(transpose=True).value = main_df.values[3]
                 ws_alloc.range('J9:J15').options(transpose=True).value = main_df.values[4]
-                ws_alloc.range('P9:P15').options(transpose=True).value = main_df.values[5]
+                ws_alloc.range('M9:M15').options(transpose=True).value = main_df.values[5]
+                ws_alloc.range('P9:P15').options(transpose=True).value = main_df.values[6]
 
-                ws_alloc.range('E9:p15').api.NumberFormat = '_("$"* #,##0_);_("$"* (#,##0);_("$"* "-"??_);_(@_)'
+                ws_alloc.range('E9:P15').api.NumberFormat = '_("$"* #,##0_);_("$"* (#,##0);_("$"* "-"??_);_(@_)'
 
                 # ws_alloc.range('E17:p17').formula = '=+E9+E10+E11-E12-E13-E14-E15'
                 # ws_alloc.range('E19:p19').formula = '=E17/$Q$17'
@@ -1416,26 +1433,29 @@ def update_moc_excel(main_df,template_dir,output_dir, input_date):
                             ws_alloc.range('I29:I35').options(transpose=True).value = main_df.values[3]
                         elif key == 'J17':
                             ws_alloc.range('J29:J35').options(transpose=True).value = main_df.values[4]
+                        elif key == 'M17':
+                            ws_alloc.range('M29:M35').options(transpose=True).value = main_df.values[5]
                         elif key == 'P17':
-                            ws_alloc.range('P29:P35').options(transpose=True).value = main_df.values[5]
+                            ws_alloc.range('P29:P35').options(transpose=True).value = main_df.values[6]
                 else:        
                     ws_alloc.range('E29:E35').options(transpose=True).value = main_df.values[0]
                     ws_alloc.range('F29:F35').options(transpose=True).value = main_df.values[1]
                     ws_alloc.range('G29:G35').options(transpose=True).value = main_df.values[2]
                     ws_alloc.range('I29:I35').options(transpose=True).value = main_df.values[3]
                     ws_alloc.range('J29:J35').options(transpose=True).value = main_df.values[4]
-                    ws_alloc.range('P29:P35').options(transpose=True).value = main_df.values[5]
+                    ws_alloc.range('M29:M35').options(transpose=True).value = main_df.values[5]
+                    ws_alloc.range('P29:P35').options(transpose=True).value = main_df.values[6]
 
                 # ws_alloc.range('E37:p37').formula = '=+E29+E30+E31-E32-E33-E34-E35'
                 # ws_alloc.range('E39:p39').formula = '=E37/$Q$37'
                 # ws_alloc.range('E40:p40').formula = '=E39*$E$62'
 
-                ws_alloc.range('E29:p35').api.NumberFormat = '_("$"* #,##0_);_("$"* (#,##0);_("$"* "-"??_);_(@_)'
+                ws_alloc.range('E29:P35').api.NumberFormat = '_("$"* #,##0_);_("$"* (#,##0);_("$"* "-"??_);_(@_)'
                 wb_alloc.save(output_dir + '\\' + file.replace(file.split('_')[1],input_date) + '.xls')                
                 print(f"MOC Allocment file generated for {input_date}")
     except Exception as e:
         print("Template file was not found or some other issue occured")
-        print(e)
+        raise e
     finally:
         try:
             wb_alloc.app.quit()
@@ -4668,7 +4688,10 @@ def main():
     # input_date=None
     # output_date = None
     frame_options.grid(row=1,column=0, pady=30, padx=35, columnspan=2, rowspan=3)
-    wp_job_ids = {'ABS':1,'BBR':bbr,'CPR Report':cpr, 'Freight analysis':freight_analysis, 'CTM combined':ctm,'FIFO Report':fifo,'MTM Report':mtm_report,'Inventory MTM excel report summary':inv_mtm_excel_summ,
+    # wp_job_ids = {'ABS':1,'BBR':bbr,'CPR Report':cpr, 'Freight analysis':freight_analysis, 'CTM combined':ctm,'FIFO Report':fifo,'MTM Report':mtm_report,'Inventory MTM excel report summary':inv_mtm_excel_summ,
+    #                 'MOC Interest Allocation':moc_interest_alloc,'Open AR':open_ar,'Open AP':open_ap, 'Unsettled Payable Report':unsetteled_payables,'Unsettled Receivable Report':unsetteled_receivables,
+    #                 'Storage Month End Report':strg_month_end_report, "Month End BBR":bbr_monthEnd, "Bank Recons Report":bank_recons_rep}
+    wp_job_ids = {'ABS':1,'BBR':bbr,'CPR Report':cpr, 'Freight analysis':freight_analysis, 'CTM combined':ctm,'MTM Report':mtm_report,
                     'MOC Interest Allocation':moc_interest_alloc,'Open AR':open_ar,'Open AP':open_ap, 'Unsettled Payable Report':unsetteled_payables,'Unsettled Receivable Report':unsetteled_receivables,
                     'Storage Month End Report':strg_month_end_report, "Month End BBR":bbr_monthEnd, "Bank Recons Report":bank_recons_rep}
     # department_ids = {'Select \t\t\t\t\t\t\t\t\t': 9, 'Ethanol\t\t\t\t\t\t\t\t': 1, 'WestPlains': 8}
