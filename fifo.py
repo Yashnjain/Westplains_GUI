@@ -159,27 +159,21 @@ def fifo(input_date, output_date):
             inp_sht.api.AutoFilterMode=False
             inp_sht.api.Range(f"{cust_name_col}2").AutoFilter(Field:=cust_name_col_num,Criteria1:="INTER-COMPANY PURCH/SALES")
             l_row = inp_sht.range(f"{quantityCol}2").end('down').row
-            # rng = inp_sht.api.Range(f"{quantityCol}2:{quantityCol}{l_row}").SpecialCells(12).Address.split(",")[1:]
+            
+            # inp_sht.api.Range(f"{quantityCol}3:{quantityCol}{l_row}").SpecialCells(12).Select()
+            inp_sht.api.Range(f"3:{l_row}").SpecialCells(12).Select()
+            # wb.app.selection.value = 0
+            wb.app.selection.delete()
+            inp_sht.api.AutoFilterMode=False
+           
+            if loc == "HRW":
+                inp_sht.api.Range(f"{unit_cost_col}2").AutoFilter(Field:=unit_cost_col_num,Criteria1:="<=1.7")
+            else:
+                inp_sht.api.Range(f"{unit_cost_col}2").AutoFilter(Field:=unit_cost_col_num,Criteria1:="<=1")
+            l_row = inp_sht.range(f"{quantityCol}2").end('down').row
             inp_sht.api.Range(f"{quantityCol}3:{quantityCol}{l_row}").SpecialCells(12).Select()
             wb.app.selection.value = 0
-            # inp_sht.range(f"{quantityCol}2").value = 0
-            # inp_sht.range(f"{quantityCol}2").copy()
-            # inp_sht.range(f"{quantityCol}2").expand("down").select()
-            # wb.app.selection.paste()
-            
-            # inp_sht.range(f"{quantityCol}2").value = "Quantity"
-
-            inp_sht.api.Range(f"{unit_cost_col}2").AutoFilter(Field:=unit_cost_col_num,Criteria1:=">=1", Operator:=2,Criteria2:="0")
-            l_row = inp_sht.range(f"{invValCol}2").end('down').row
-            inp_sht.api.Range(f"{invValCol}3:{invValCol}{l_row}").SpecialCells(12).Select()
-            wb.app.selection.value = 0
-            # wb.app.selection.value = 0
-            # inp_sht.range(f"{invValCol}2").value = 0
-            # inp_sht.range(f"{invValCol}").copy()
-            # inp_sht.range(f"{invValCol}2").expand("down").select()
-            # wb.app.selection.paste()
-            
-            # inp_sht.range(f"{invValCol}2").value = "Inventory Value"
+        
             
             inp_sht.api.AutoFilterMode=False
 
@@ -248,19 +242,10 @@ def fifo(input_date, output_date):
 
 
                             
-                    # sub_loc = mtm_sht.range("B116:B119").value
-                    # for s_loc in range(len(sub_loc)):
-                    #     if sub_loc[s_loc] == columns_2[key]:
-                    #         new_sht.range("O1").value = mtm_sht.range(f"E{s_loc+116}").value
-                    #         new_sht.range("P1").value = mtm_sht.range(f"F{s_loc+116}").value
+                
                 new_sht.range("O1").value = qty_sum
                 new_sht.range("P1").value = price_sum
-                # else:
-                #     sub_loc = mtm_sht.range("B121:B124").value
-                #     for s_loc in range(len(sub_loc)):
-                #         if sub_loc[s_loc] == columns_2[key]:
-                #             new_sht.range("O1").value = mtm_sht.range(f"E{s_loc+121}").value
-                #             new_sht.range("P1").value = mtm_sht.range(f"F{s_loc+121}").value
+                
                 
                 new_sht.range("Q1").value = "MTM Price"
                 new_sht.range("R1").formula = "=P1/O1"
@@ -355,7 +340,7 @@ def fifo(input_date, output_date):
 
 
 
-input_date = "03.31.2022"
+input_date = "02.28.2022"
 output_date=None
 
 msg = fifo(input_date, output_date)
