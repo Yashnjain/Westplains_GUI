@@ -126,6 +126,8 @@ def fifo(input_date, output_date):
             inp_sht.api.AutoFilterMode=False
 
             last_column = num_to_col_letters(inp_sht.range("A2").end('right').column)
+            if inp_sht.range("A2").value == None:
+                inp_sht.range("2:2").delete()
             col_headers = inp_sht.range("A2").expand("right").value
             for col in range(len(col_headers)):
                 if col_headers[col] == "Trans  Date":
@@ -219,6 +221,9 @@ def fifo(input_date, output_date):
                 new_sht.range("N1").value = "MTM Qty"
                 mtm_sht.api.AutoFilterMode=False
                 mtm_last_row = mtm_sht.range(f'A'+ str(mtm_sht.cells.last_cell.row)).end('up').row
+                #Freezing top 2 columns
+                new_sht.api.Range("A3").Select()
+                wb.app.api.ActiveWindow.FreezePanes = True
                 # if loc  == "HRW":
                 mtm_sht.activate()
                 mtm_sht.api.AutoFilterMode=False
@@ -340,7 +345,7 @@ def fifo(input_date, output_date):
 
 
 
-input_date = "02.28.2022"
+input_date = "03.31.2022"
 output_date=None
 
 msg = fifo(input_date, output_date)
