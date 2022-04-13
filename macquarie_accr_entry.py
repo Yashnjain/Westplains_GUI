@@ -34,7 +34,7 @@ def mac_accr_pdf(input_pdf):
             #     if str(prev_acc_no) in input_pdf:
             df2 = None
             df = read_pdf(input_pdf, pages = page+1, guess = False, stream = True ,
-                        pandas_options={'header':0}, area = ["70,10,725,850"], columns=["195,280,430"])
+                        pandas_options={'header':0}, area = ["50,10,725,850"], columns=["195,280,430"])
             df = pd.concat(df, ignore_index=True)
             print(df)
 
@@ -47,7 +47,7 @@ def mac_accr_pdf(input_pdf):
                     j+=1
             except Exception as e:
                 df2=read_pdf(input_pdf, pages = page+2, guess = False, stream = True ,
-                         area = ["70,10,725,850"], columns=["195,280,430"])
+                         area = ["50,10,725,850"], columns=["195,280,430"])
                 df2 = pd.concat(df2, ignore_index=True)
                 print(df2)
                 k=0
@@ -57,7 +57,7 @@ def mac_accr_pdf(input_pdf):
                 except Exception as e:
                     raise e
 
-            if df2 is None:    
+            if df2 is None or df2.iloc[0,0] == "TOTALS":    
                 df = df.iloc[i+3:j-1,:]
             else:
                 df.columns = df2.columns
@@ -65,16 +65,17 @@ def mac_accr_pdf(input_pdf):
 
             
             for i in range(len(df)):
-                commodity = df.iloc[i,0]
-                # price = df.iloc[i,2]
-                valuation = df.iloc[i,3]
-                if acc_no in acc_dict.keys():  
-                    
-                    acc_dict[acc_no][commodity]= float(valuation.replace(',',''))
-                    
-                else:  
-                    acc_dict[acc_no] = {}
-                    acc_dict[acc_no][commodity]= float(valuation.replace(',',''))
+                if df.iloc[i,3] != "Profit/Loss":
+                    commodity = df.iloc[i,0]
+                    # price = df.iloc[i,2]
+                    valuation = df.iloc[i,3]
+                    if acc_no in acc_dict.keys():  
+                        
+                        acc_dict[acc_no][commodity]= float(valuation.replace(',',''))
+                        
+                    else:  
+                        acc_dict[acc_no] = {}
+                        acc_dict[acc_no][commodity]= float(valuation.replace(',',''))
                     
 
 
@@ -156,7 +157,7 @@ def macq_accr_entry(input_date, output_date):
                 except:
                     inp_sht.range(f"C{i}").value = 0
 
-
+        inp_sht.activate()
         wb.save(output_loc)
         return f"Macquarie Accrual Report for {input_date} generated succesfully"
     except Exception as e:
@@ -168,7 +169,7 @@ def macq_accr_entry(input_date, output_date):
             pass
 
 
-input_date = '02.28.2022'
+input_date = '01.31.2022'
 msg = macq_accr_entry(input_date, output_date=None)
 print(msg)
 print()
