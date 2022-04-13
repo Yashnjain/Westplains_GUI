@@ -405,7 +405,7 @@ def storage_accrual(input_date,strg_accr_inp_loc, monthYear, loc_dict):
 
 def storage_je(strg_je_inp_loc, input_date, loc_dict):
     try:
-        xl_inp_date = datetime.strftime(datetime.strptime(input_date, "%m.%d.%Y"), "%d-%m-%Y")
+        xl_inp_date = datetime.strftime(datetime.strptime(input_date, "%m.%d.%Y"), "%m/%d/%Y")
         output_location = r'J:\WEST PLAINS\REPORT\Storage Month End Report\Output Files'+"\\STORAGE ACCRUAL JE_" +f"{input_date}.xlsx"
         # output_location = r'C:\Users\imam.khan\OneDrive - BioUrja Trading LLC\Documents\WEST PLAINS\REPORT\Storage Month End Report\Output Files'+"\\STORAGE ACCRUAL JE_" +f"{input_date}.xlsx"
         JE_dict = {'ALLIANCETE':'ALLIANCE TERMINAL','BATESLAND':'BATESLAND','CHADRON':'CHADRON','CLINTON':'CLINTON',
