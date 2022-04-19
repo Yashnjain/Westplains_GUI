@@ -10,7 +10,7 @@ from tkinter import Label as label
 from tkcalendar import DateEntry
 from tkinter import messagebox
 # from typing import Text
-
+import traceback
 from pandas.core import frame 
 import requests, json
 from datetime import date, datetime, timedelta
@@ -101,11 +101,117 @@ def other_loc_extractor(input_pdf):
                 loc_dict[product] = {}
                 loc_dict[product][location] = [value]
 
-        
+        print()
         return loc_dict
     except Exception as e:
         raise e
 
+
+# def inv_mtm_pdf_data_extractor(input_date, f, hrw_pdf_loc=None, yc_pdf_loc=None, mtm_report=False):
+#     try:
+#         hrw_fut = None
+#         yc_fut = None
+#         # reader = PyPDF2.PdfFileReader(open(f, mode='rb' ))
+#         # n = reader.getNumPages() 
+#         inp_month_year = datetime.strptime(input_date,"%m.%d.%Y").replace(day=1)
+#         # data_list = []
+#         if mtm_report:
+#             for loc in [hrw_pdf_loc, yc_pdf_loc]:
+#                 df = read_pdf(loc, pages = 1, guess = False, stream = True ,
+#                                         pandas_options={'header':0}, area = ["700,70,1000,1200"], columns=['150','480','550','650', '700','800','900'])
+#                 df = pd.concat(df, ignore_index=True)
+#                 df = df[["MONTH","SETTLE"]]
+#                 form_dict = {"'6":"75", "'4":"50", "'2":"25", "'0":"0"}
+#                 for month in range(len(df)):
+#                     if "JLY" in df["MONTH"][month]:
+#                         df["MONTH"][month] = df["MONTH"][month].replace("JLY","JUL")
+#                     if inp_month_year == datetime.strptime(df["MONTH"][month], "%b %y"):
+#                         settle_price = df.loc[:,'SETTLE'][month+1]
+#                         for key in form_dict:
+#                             if key in settle_price:
+#                                 if 'HRW' in loc.upper():
+#                                     hrw_fut = int(settle_price.replace(key,form_dict[key]))/10000  
+#                                 elif 'YC' in loc.upper():
+#                                     yc_fut =  int(settle_price.replace(key,form_dict[key]))/10000
+#                                 break
+#                         break
+#                     elif inp_month_year < datetime.strptime(df["MONTH"][month], "%b %y"):
+#                         settle_price = df.loc[:,'SETTLE'][month]
+#                         for key in form_dict:
+#                             if key in settle_price:
+#                                 if 'HRW' in loc.upper():
+#                                     hrw_fut = int(settle_price.replace(key,form_dict[key]))/10000  
+#                                 elif 'YC' in loc.upper():
+#                                     yc_fut =  int(settle_price.replace(key,form_dict[key]))/10000
+#                                 break
+#                         break
+                
+                
+
+#         date_df = read_pdf(f, pages = 1, guess = False, stream = True ,
+#                         pandas_options={'header':None}, area = ["20,40,40,800"])
+#         print(date_df)
+#         # pdf_date = date_df[0][0][0].split()[-1]
+
+#         com_loc  = read_pdf(f, pages = 'all', guess = False, stream = True ,
+#                         pandas_options={'header':None}, area = ["30,15,50,120"])
+#         com_loc = pd.concat(com_loc, ignore_index=True)
+
+#         com_loc = list(com_loc[0].str.split('Commodity: ',expand=True)[1])
+#         # loc_dict = dict(zip(com_loc, [[]]*len(com_loc)))
+#         loc_dict = defaultdict(list)
+#         for page in range(1,len(com_loc)+1):
+#             df = read_pdf(f, pages = page, guess = False, stream = True ,
+#                             pandas_options={'header':0}, area = ["75,10,580,850"], columns=["65,85, 180,225, 260, 280,300,360,400,430,480,525,570,620,665,720"])
+#             df = pd.concat(df, ignore_index=True)
+#             ########logger.info("Filtering only required columns")
+#             df = df.iloc[:,[0,1,2,3,-2,-1]]
+#             # df = df[df['Offsite Name Cont. No.'].str.contains("Company Owned Risk:"),df['Offsite Name Cont. No.'].str.contains("Unpriced Sales:")]
+#             df = df[(df['Offsite Name Cont. No.'].str.contains("Company Owned Risk:")) | (df['Offsite Name Cont. No.'].str.contains("priced Sales:"))]
+#             # for i in df.loc[:,"Offsite Name Cont. No."]:
+
+#             df["Quantity.5"].fillna(0, inplace=True)
+#             df["Value.5"].fillna(0, inplace=True)
+
+#             df["Quantity.5"] = df["Quantity.5"].astype(str).str.replace("(","-").str.replace(",","").str.replace(")","").astype(float)
+#             df["Value.5"] = df["Value.5"].astype(str).str.replace("(","-").str.replace(",","").str.replace(")","").astype(float)
+
+#             for i in range(len(df)):
+#                 print(df.iloc[i,2]) #2 for "Offsite Name Cont. No."
+#                 if "priced Sales" in df.iloc[i,2]:
+#                     print("Unprised Value found")
+#                     if df.iloc[-2,2] == 'Unpriced Sales:' and df.iloc[-2,-2]==0: #pd.isna(df.iloc[-2,-1]):
+#                         pass
+#                     else:
+#                         df.iloc[i+1,-2] = df.iloc[i+1,-2] - df.iloc[i,-2]
+#                         df.iloc[i+1,-1] = df.iloc[i+1,-1] - df.iloc[i,-1]
+
+#             # n_df[n_df.iloc[:,2].str.contains("Company Owned Risk:")] #Another way
+            
+            
+            
+#             loc_dict[com_loc[page-1]].append(df)
+            
+
+#             # print(df)
+
+#             ########logger.info("keeping online required columns")
+#         repl = {"(":"-",")":"",",":""}
+#         for key, value in loc_dict.items():
+#             if len(value)>1:
+#                 print(key)
+#                 key_value = []
+#                 key_value.append(pd.concat(value, ignore_index=True))
+#                 loc_dict[key] = key_value
+#                 # print(len(value))
+#                 # print()
+        
+#         if mtm_report:
+#             return loc_dict, hrw_fut, yc_fut
+#         else:
+#             return loc_dict
+#     except Exception as e:
+#         raise e
 
 def inv_mtm_pdf_data_extractor(input_date, f, hrw_pdf_loc=None, yc_pdf_loc=None, mtm_report=False):
     try:
@@ -1164,14 +1270,19 @@ def payables(input_date,wb, bbr_mapping_loc, open_ap_loc,unset_pay_loc):
 
         i=10
         for loc in open_ap_loc_lst:
-            if inv_dict[loc] not in bbr_loc:
-                bbr_payab_sht.range(f"A{new_loc}").value = inv_dict[loc]
-                bbr_payab_sht.range(f"C{int(new_loc)+1}").formula = f"=+SUM(C10:C{new_loc})"
-                bbr_payab_sht.range(f"D{int(new_loc)+1}").formula = f"=+SUM(D10:D{new_loc})"
-                bbr_payab_sht.range(f"E{int(new_loc)+1}").formula = f"=+SUM(E10:E{new_loc})"
-                bbr_payab_sht.range(f"F{int(new_loc)+1}").formula = f"=+SUM(F10:F{new_loc})"
-                bbr_payab_sht.range(f"F{int(new_loc)}").formula = f"=C{int(new_loc)}-D{int(new_loc)}-E{int(new_loc)}"
-                
+            try:
+                if inv_dict[loc] not in bbr_loc:
+                    bbr_payab_sht.range(f"A{new_loc}").value = inv_dict[loc]
+                    bbr_payab_sht.range(f"C{int(new_loc)+1}").formula = f"=+SUM(C10:C{new_loc})"
+                    bbr_payab_sht.range(f"D{int(new_loc)+1}").formula = f"=+SUM(D10:D{new_loc})"
+                    bbr_payab_sht.range(f"E{int(new_loc)+1}").formula = f"=+SUM(E10:E{new_loc})"
+                    bbr_payab_sht.range(f"F{int(new_loc)+1}").formula = f"=+SUM(F10:F{new_loc})"
+                    bbr_payab_sht.range(f"F{int(new_loc)}").formula = f"=C{int(new_loc)}-D{int(new_loc)}-E{int(new_loc)}"
+            except:
+                pass
+        first_loc = bbr_payab_sht.range("A3").end("down").row+1
+        bbr_o_ap_last_row = bbr_payab_sht.range(f"A{first_loc}").end("down").row
+        for i in range(first_loc,bbr_o_ap_last_row+1):      
             # if new_dict[loc] == bbr_payab_sht.range(f"A{i}").value:
                 # bbr_payab_sht.range(f"A{i}").value = new_dict[loc]
             try:
@@ -1182,7 +1293,7 @@ def payables(input_date,wb, bbr_mapping_loc, open_ap_loc,unset_pay_loc):
                 bbr_payab_sht.range(f"E{i}").value = dict_2[new_dict[bbr_payab_sht.range(f"A{i}").value]]
             except:
                 bbr_payab_sht.range(f"E{i}").value = 0
-            i+=1
+            # i+=1
             # elif bbr_payab_sht.range(f"A{i}").value is None:
             #     bbr_payab_sht.range(f"A{i}").value = new_dict[loc]
             #     try:
@@ -1214,8 +1325,8 @@ def payables(input_date,wb, bbr_mapping_loc, open_ap_loc,unset_pay_loc):
 
         dict_3 = dict(zip(payab_loc_lst,total_col))
 
-        payb_loc = bbr_payab_sht.range(f"A{i}").end("down").end("down").row
-        payb_last_loc = bbr_payab_sht.range(f"A{i}").end("down").end("down").end("down").row
+        payb_loc = bbr_payab_sht.range(f"A{bbr_o_ap_last_row}").end("down").end("down").row
+        payb_last_loc = bbr_payab_sht.range(f"A{bbr_o_ap_last_row}").end("down").end("down").end("down").row
         bbr_payb_loc = bbr_payab_sht.range(f"A{payb_loc}:A{int(payb_last_loc)-1}").expand('down').value
 
         bbr_payb_loc_lst = bbr_payab_sht.range(f"A{payb_loc}").expand("down").value
@@ -1232,20 +1343,23 @@ def payables(input_date,wb, bbr_mapping_loc, open_ap_loc,unset_pay_loc):
         else:
             pass
         for loc in payab_loc_lst:
-            if payab_dict[loc] not in bbr_payb_loc:
-                bbr_payab_sht.range(f"A{new_loc}").value = inv_dict[loc]
-                bbr_payab_sht.range(f"C{int(new_loc)+1}").formula = f"=+SUM(C10:C{new_loc})"
-                bbr_payab_sht.range(f"D{int(new_loc)+1}").formula = f"=+SUM(D10:D{new_loc})"
-                bbr_payab_sht.range(f"E{int(new_loc)+1}").formula = f"=+SUM(E10:E{new_loc})"
-                
-                bbr_payab_sht.range(f"F{int(new_loc)+1}").formula = f"=C{new_loc}-D{new_loc}-E{new_loc}"
-
+            try:
+                if payab_dict[loc] not in bbr_payb_loc:
+                    bbr_payab_sht.range(f"A{new_loc}").value = inv_dict[loc]
+                    bbr_payab_sht.range(f"C{int(new_loc)+1}").formula = f"=+SUM(C10:C{new_loc})"
+                    bbr_payab_sht.range(f"D{int(new_loc)+1}").formula = f"=+SUM(D10:D{new_loc})"
+                    bbr_payab_sht.range(f"E{int(new_loc)+1}").formula = f"=+SUM(E10:E{new_loc})"
+                    
+                    bbr_payab_sht.range(f"F{int(new_loc)+1}").formula = f"=C{new_loc}-D{new_loc}-E{new_loc}"
+            except:
+                pass
+        for i in range(payb_loc, payb_last_loc):
             # bbr_payab_sht.range(f"A{i}").value = payab_dict[loc]
             try:
-                bbr_payab_sht.range(f"C{payb_loc}").value = dict_3[inv_payab_dict[bbr_payab_sht.range(f"A{payb_loc}").value]]
+                bbr_payab_sht.range(f"C{i}").value = dict_3[inv_payab_dict[bbr_payab_sht.range(f"A{i}").value]]
             except:
-                bbr_payab_sht.range(f"C{payb_loc}").value = 0
-            payb_loc+=1
+                bbr_payab_sht.range(f"C{i}").value = 0
+            # payb_loc+=1
         bbr_payab_sht.range("A3").formula = "='Cash Collateral'!A3"
         bbr_payab_sht.api.Range("A3").NumberFormat = 'mm/dd/yyyy'
         bbr_payab_sht.api.Range("C:F").NumberFormat = "_($* #,##0.00_);_($* (#,##0.00);_($* ""-""??_);_(@_)"
@@ -1255,6 +1369,7 @@ def payables(input_date,wb, bbr_mapping_loc, open_ap_loc,unset_pay_loc):
         
         print()
     except Exception as e:
+        traceback.print_exc()
         raise e
 
 
@@ -1498,7 +1613,7 @@ def mtm_pdf_data_extractor(input_date, f, hrw_pdf_loc, yc_pdf_loc):
                                     pandas_options={'header':0}, area = ["700,70,1000,1200"], columns=['150','480','550','650', '700','800','900'])
             df = pd.concat(df, ignore_index=True)
             df = df[["MONTH","SETTLE"]]
-            form_dict = {"'6":"75", "'4":"50", "'2":"25", "'0":"0"}
+            form_dict = {"'6":"75", "'4":"50", "'2":"25", "'0":"00"}
             for month in range(len(df)):
                 if "JLY" in df["MONTH"][month]:
                     df["MONTH"][month] = df["MONTH"][month].replace("JLY","JUL")
@@ -4116,19 +4231,26 @@ def inv_mtm_excel_summ(input_date, output_date):
             #Updating HRW and YC Quantity and Values
             loc_dict[loc][0].set_index('Location Zone', inplace=True)
             loc_dict[loc][0].rename(index={'ALLIANCETE': 'ALLIANCE'}, inplace=True)
+            loc_dict[loc][0].rename(index={'LISCO - WE': 'LISCO'}, inplace=True)
             mtm_sht.api.Range(f"G4:G{mtm_last_row}").SpecialCells(12).Select()
             for rng in mtm_wb.app.selection.address.split(','):
                 for i in range(int(rng.split(":")[0].split("$")[-1]),int(rng.split(":")[-1].split("$")[-1])+1):
-                    mtm_sht.range(f"G{i}").value = float(loc_dict[loc][0].loc[mtm_sht.range(f"B{i}").value]["Quantity.5"])
-                    mtm_sht.range(f"K{i}").value = float(loc_dict[loc][0].loc[mtm_sht.range(f"B{i}").value]["Value.5"]) #/float(loc_dict[loc][0].loc[mtm_sht.range(f"B{i}").value]["Quantity.5"])
+                    try:
+                        mtm_sht.range(f"G{i}").value = float(loc_dict[loc][0].loc[mtm_sht.range(f"B{i}").value]["Quantity.5"])
+                        mtm_sht.range(f"K{i}").value = float(loc_dict[loc][0].loc[mtm_sht.range(f"B{i}").value]["Value.5"]) #/float(loc_dict[loc][0].loc[mtm_sht.range(f"B{i}").value]["Quantity.5"])
+                    except:
+                        mtm_sht.range(f"G{i}").value = 0
+                        mtm_sht.range(f"K{i}").value = 0
             
         mtm_sht.api.AutoFilterMode=False
         mtm_sht.api.Range(f"D3").AutoFilter(Field:=4,Criteria1:='<>HRW', Operator:=1, Criteria2:='<>YC')
         mtm_sht.api.Range(f"G4:G{mtm_last_row}").SpecialCells(12).Select()
         for rng in mtm_wb.app.selection.address.split(','):
             for i in range(int(rng.split(":")[0].split("$")[-1]),int(rng.split(":")[-1].split("$")[-1])+1):
-                
-                loc_dict[mtm_sht.range(f"D{i}").value][0].rename(index={'OMA COMM': 'TERMINAL'}, inplace=True)
+                try:
+                    loc_dict[mtm_sht.range(f"D{i}").value][0].rename(index={'OMA COMM': 'TERMINAL'}, inplace=True)
+                except:
+                    pass
                 if mtm_sht.range(f"B{i}").value == "BROWNSVILL" and mtm_sht.range(f"D{i}").value == "MILO":
                     try:
                         loc_dict["SORGHUM"][0].set_index('Location Zone', inplace=True)
@@ -4141,11 +4263,17 @@ def inv_mtm_excel_summ(input_date, output_date):
                         loc_dict[mtm_sht.range(f"D{i}").value][0].set_index('Location Zone', inplace=True)
                     except:
                         pass
-                    mtm_sht.range(f"G{i}").value = float(loc_dict[mtm_sht.range(f"D{i}").value][0].loc[mtm_sht.range(f"B{i}").value]["Quantity.5"]) #Quantity
-                    if float(loc_dict[mtm_sht.range(f"D{i}").value][0].loc[mtm_sht.range(f"B{i}").value]["Quantity.5"]) == 0 and float(loc_dict[mtm_sht.range(f"D{i}").value][0].loc[mtm_sht.range(f"B{i}").value]["Value.5"]) == 0:
-                        mtm_sht.range(f"K{i}").value = 0
-                    else:
-                        mtm_sht.range(f"K{i}").value = float(loc_dict[mtm_sht.range(f"D{i}").value][0].loc[mtm_sht.range(f"B{i}").value]["Value.5"]) #/float(loc_dict[mtm_sht.range(f"D{i}").value][0].loc[mtm_sht.range(f"B{i}").value]["Quantity.5"])
+                    try:
+                        mtm_sht.range(f"G{i}").value = float(loc_dict[mtm_sht.range(f"D{i}").value][0].loc[mtm_sht.range(f"B{i}").value]["Quantity.5"]) #Quantity
+                    except:
+                        pass
+                    try:
+                        if float(loc_dict[mtm_sht.range(f"D{i}").value][0].loc[mtm_sht.range(f"B{i}").value]["Quantity.5"]) == 0 and float(loc_dict[mtm_sht.range(f"D{i}").value][0].loc[mtm_sht.range(f"B{i}").value]["Value.5"]) == 0:
+                            mtm_sht.range(f"K{i}").value = 0
+                        else:
+                            mtm_sht.range(f"K{i}").value = float(loc_dict[mtm_sht.range(f"D{i}").value][0].loc[mtm_sht.range(f"B{i}").value]["Value.5"]) #/float(loc_dict[mtm_sht.range(f"D{i}").value][0].loc[mtm_sht.range(f"B{i}").value]["Quantity.5"])
+                    except:
+                        pass
 
         mtm_wb.save(output_loc)
 
@@ -4157,6 +4285,97 @@ def inv_mtm_excel_summ(input_date, output_date):
             mtm_wb.app.quit()
         except:
             pass
+# def inv_mtm_excel_summ(input_date, output_date):
+#     try:
+#         monthYear = datetime.strftime(datetime.strptime(input_date, "%m.%d.%Y"), "%B %Y")
+#         pdf_loc = r'J:\WEST PLAINS\REPORT\MTM reports\Raw Files\Inventory Market Valuation _'+input_date+'.pdf'
+#         # pdf_loc = r'C:\Users\imam.khan\OneDrive - BioUrja Trading LLC\Documents\WEST PLAINS\REPORT\MTM reports\Raw Files\Inventory Market Valuation _'+input_date+'.pdf'
+#         if not os.path.exists(pdf_loc):
+#             return(f"{pdf_loc} Pdf file not present for date {input_date}")
+#         input_xl = r'J:\WEST PLAINS\REPORT\Inv_MTM_Excel_Report_Summ\Raw Files\Inventory_MTMExcel_SummTemplate.xlsx'
+#         # input_xl = r'C:\Users\imam.khan\OneDrive - BioUrja Trading LLC\Documents\WEST PLAINS\REPORT\Inv_MTM_Excel_Report_Summ\Raw Files\Inventory_MTMExcel_SummTemplate.xlsx'
+#         if not os.path.exists(input_xl):
+#             return(f"{input_xl} Excel file not present for date {input_date}")
+
+#         # output_loc = r"C:\Users\imam.khan\OneDrive - BioUrja Trading LLC\Documents\WEST PLAINS\REPORT\FIFO reports\Output files" +f"\\Inventory MTM Excel Report {monthYear}.xlsx"
+#         output_loc = r'J:\WEST PLAINS\REPORT\Inv_MTM_Excel_Report_Summ\Output files' +f"\\Inventory MTM Excel Report {monthYear}.xlsx"
+
+
+
+#         loc_dict = inv_mtm_pdf_data_extractor(input_date,pdf_loc)
+
+#         retry=0
+#         while retry < 10:
+#             try:
+#                 mtm_wb=xw.Book(input_xl)
+#                 break
+#             except Exception as e:
+#                 time.sleep(2)
+#                 retry+=1
+#                 if retry ==9:
+#                     raise e
+#         retry=0
+#         while retry < 10:
+#             try:
+#                 mtm_sht = mtm_wb.sheets["INPUT DATA"]
+#                 break
+#             except Exception as e:
+#                 time.sleep(2)
+#                 retry+=1
+#                 if retry ==9:
+#                     raise e
+#         mtm_sht.api.AutoFilterMode=False
+#         mtm_sht.range("A1").value = input_date.replace(".","-")
+#         mtm_last_row = mtm_sht.range(f'A'+ str(mtm_sht.cells.last_cell.row)).end('up').row
+#         for loc in ["HRW", "YC"]:
+#             mtm_sht.activate()
+#             mtm_sht.api.AutoFilterMode=False
+#             mtm_sht.api.Range(f"D3").AutoFilter(Field:=4,Criteria1:=loc, Operator:=7)
+
+#             #Updating HRW and YC Quantity and Values
+#             loc_dict[loc][0].set_index('Location Zone', inplace=True)
+#             loc_dict[loc][0].rename(index={'ALLIANCETE': 'ALLIANCE'}, inplace=True)
+#             mtm_sht.api.Range(f"G4:G{mtm_last_row}").SpecialCells(12).Select()
+#             for rng in mtm_wb.app.selection.address.split(','):
+#                 for i in range(int(rng.split(":")[0].split("$")[-1]),int(rng.split(":")[-1].split("$")[-1])+1):
+#                     mtm_sht.range(f"G{i}").value = float(loc_dict[loc][0].loc[mtm_sht.range(f"B{i}").value]["Quantity.5"])
+#                     mtm_sht.range(f"K{i}").value = float(loc_dict[loc][0].loc[mtm_sht.range(f"B{i}").value]["Value.5"]) #/float(loc_dict[loc][0].loc[mtm_sht.range(f"B{i}").value]["Quantity.5"])
+            
+#         mtm_sht.api.AutoFilterMode=False
+#         mtm_sht.api.Range(f"D3").AutoFilter(Field:=4,Criteria1:='<>HRW', Operator:=1, Criteria2:='<>YC')
+#         mtm_sht.api.Range(f"G4:G{mtm_last_row}").SpecialCells(12).Select()
+#         for rng in mtm_wb.app.selection.address.split(','):
+#             for i in range(int(rng.split(":")[0].split("$")[-1]),int(rng.split(":")[-1].split("$")[-1])+1):
+                
+#                 loc_dict[mtm_sht.range(f"D{i}").value][0].rename(index={'OMA COMM': 'TERMINAL'}, inplace=True)
+#                 if mtm_sht.range(f"B{i}").value == "BROWNSVILL" and mtm_sht.range(f"D{i}").value == "MILO":
+#                     try:
+#                         loc_dict["SORGHUM"][0].set_index('Location Zone', inplace=True)
+#                     except:
+#                         pass
+#                     mtm_sht.range(f"G{i}").value = float(loc_dict["SORGHUM"][0].loc[mtm_sht.range(f"B{i}").value]["Quantity.5"])
+#                     mtm_sht.range(f"K{i}").value = float(loc_dict["SORGHUM"][0].loc[mtm_sht.range(f"B{i}").value]["Value.5"]) #/float(loc_dict["SORGHUM"][0].loc[mtm_sht.range(f"B{i}").value]["Quantity.5"])
+#                 else:
+#                     try:
+#                         loc_dict[mtm_sht.range(f"D{i}").value][0].set_index('Location Zone', inplace=True)
+#                     except:
+#                         pass
+#                     mtm_sht.range(f"G{i}").value = float(loc_dict[mtm_sht.range(f"D{i}").value][0].loc[mtm_sht.range(f"B{i}").value]["Quantity.5"]) #Quantity
+#                     if float(loc_dict[mtm_sht.range(f"D{i}").value][0].loc[mtm_sht.range(f"B{i}").value]["Quantity.5"]) == 0 and float(loc_dict[mtm_sht.range(f"D{i}").value][0].loc[mtm_sht.range(f"B{i}").value]["Value.5"]) == 0:
+#                         mtm_sht.range(f"K{i}").value = 0
+#                     else:
+#                         mtm_sht.range(f"K{i}").value = float(loc_dict[mtm_sht.range(f"D{i}").value][0].loc[mtm_sht.range(f"B{i}").value]["Value.5"]) #/float(loc_dict[mtm_sht.range(f"D{i}").value][0].loc[mtm_sht.range(f"B{i}").value]["Quantity.5"])
+
+#         mtm_wb.save(output_loc)
+
+#         return f"MTM report Generated for {input_date}"
+#     except Exception as e:
+#         raise e
+#     finally:
+#         try:
+#             mtm_wb.app.quit()
+#         except:
+#             pass
 
 def fifo(input_date, output_date):
     try:
@@ -4225,6 +4444,8 @@ def fifo(input_date, output_date):
             inp_sht.api.AutoFilterMode=False
 
             last_column = num_to_col_letters(inp_sht.range("A2").end('right').column)
+            if inp_sht.range("A2").value == None:
+                inp_sht.range("2:2").delete()
             col_headers = inp_sht.range("A2").expand("right").value
             for col in range(len(col_headers)):
                 if col_headers[col] == "Trans  Date":
@@ -4299,6 +4520,16 @@ def fifo(input_date, output_date):
                         retry+=1
                         if retry ==9:
                             raise e
+                retry=0
+                while retry < 10:
+                    try:
+                        je_sht = mtm_wb.sheets["JE"]
+                        break
+                    except Exception as e:
+                        time.sleep(2)
+                        retry+=1
+                        if retry ==9:
+                            raise e
 
             df = pd.read_excel(input_mapping, sheet_name=loc)
 
@@ -4318,6 +4549,9 @@ def fifo(input_date, output_date):
                 new_sht.range("N1").value = "MTM Qty"
                 mtm_sht.api.AutoFilterMode=False
                 mtm_last_row = mtm_sht.range(f'A'+ str(mtm_sht.cells.last_cell.row)).end('up').row
+                #Freezing top 2 columns
+                new_sht.api.Range("A3").Select()
+                wb.app.api.ActiveWindow.FreezePanes = True
                 # if loc  == "HRW":
                 mtm_sht.activate()
                 mtm_sht.api.AutoFilterMode=False
@@ -4325,18 +4559,21 @@ def fifo(input_date, output_date):
                 time.sleep(1)
                 if key == 'HaySprings':
                     columns_1[key] = columns_1[key].replace("ALLIANCETE", "ALLIANCE")
-                mtm_sht.api.Range(f"B3").AutoFilter(Field:=2,Criteria1:=columns_1[key].split(','), Operator:=7)
+                    columns_1[key] = columns_1[key].replace("LISCO - WE", "LISCO")
+                # mtm_sht.api.Range(f"B3").AutoFilter(Field:=2,Criteria1:=columns_1[key].split(','), Operator:=7)
+                mtm_sht.api.Range(f"C3").AutoFilter(Field:=3,Criteria1:=columns_2[key], Operator:=7)
                 mtm_sht.api.Range(f"G4:G{mtm_last_row}").SpecialCells(12).Select()
                 qty_sum=0
                 price_sum = 0
+                je_sht.range(f'A'+ str(je_sht.cells.last_cell.row)).end('up').end('up').row
                 for rng in mtm_wb.app.selection.address.split(','):
                     # if rng != '$G$3':
                     if type(mtm_sht.range(rng).value) is list:
                         qty_sum+=float(sum(mtm_sht.range(rng).value))
-                        price_sum+=float(sum(mtm_sht.range(rng.replace("G","K")).value))
+                        price_sum+=float(sum(mtm_sht.range(rng.replace("G","M")).value))
                     else:
                         qty_sum+=float(mtm_sht.range(rng).value)
-                        price_sum+=float(mtm_sht.range(rng.replace("G","K")).value)
+                        price_sum+=float(mtm_sht.range(rng.replace("G","M")).value)
 
 
 
@@ -4399,6 +4636,7 @@ def fifo(input_date, output_date):
                             try:
                                 if mtm_sht.range(f"B{i}").value == "BROWNSVILL" and mtm_sht.range(f"D{i}").value == "MILO":
                                     mtm_sht.range(f"O{i}").value = loc_dict["SORGHUM"][mtm_sht.range(f"B{i}").value]
+                                
                                 else:
                                     mtm_sht.range(f"O{i}").value = loc_dict[mtm_sht.range(f"D{i}").value][mtm_sht.range(f"B{i}").value]
                             except:
@@ -4425,6 +4663,7 @@ def fifo(input_date, output_date):
             mtm_wb.api.ActiveSheet.PivotTables(j).PivotCache().Refresh()   
         # mtm_wb.api.ActiveSheet.PivotTables(2).PivotCache().Refresh() 
         mtm_sht.activate()
+        mtm_sht.api.AutoFilterMode=False
         mtm_wb.save(mtm_ouput_loc)
         # mtm_wb.app.quit()
         
@@ -4614,6 +4853,390 @@ def strg_month_end_report(input_date, output_date):
     except Exception as e:
         raise e
 
+def payables_gl_entry_monthly(input_date, output_date):
+    try:
+        job_name = "Payables_GL_Entry_Monthly"
+        input_sheet = r'J:\WEST PLAINS\REPORT\Unsettled Payables\Output files'+f'\\Unsettled Payables _{input_date}.xlsx' 
+        if not os.path.exists(input_sheet):
+            return(f"{input_sheet} Excel file not present for date {input_date}")
+        template_file=r'J:\WEST PLAINS\REPORT\Month End GL Entries\Raw Files\template'+f'\\template2.xlsx'
+        if not os.path.exists(template_file):
+            return(f"{template_file} Excel file not present for date {input_date}")
+        
+        output_location = r'J:\WEST PLAINS\REPORT\Month End GL Entries\Output Files'
+        xw.App.display_alerts = False
+        retry=0
+        while retry < 10:
+            try:
+                wb=xw.Book(input_sheet)
+                break
+            except Exception as e:
+                time.sleep(5)
+                retry+=1
+                if retry ==10:
+                    raise e 
+        ws4=wb.sheets["Pivot BB"]            
+        print('sbb') 
+        retry=0
+        while retry < 10:
+            try:
+                # app = xw.App(add_book=False)
+                # app.display_alerts = False
+                # previous_wb = app.books.api.Open(template_file, UpdateLinks=False)
+                previous_wb = xw.Book(template_file,update_links=False)
+                break
+            except Exception as e:
+                time.sleep(5)
+                retry+=1
+                if retry ==10:
+                    raise e     
+        # previous_wb = xw.Book(template_file,update_links=True)
+        CTM_JE_sht = previous_wb.sheets("JE")
+        CTM_JE_sht.api.Copy(None, After=ws4.api)
+        time.sleep(2)
+        GL_Look_up_sht = previous_wb.sheets("GL Lookup Table")
+        GL_Look_up_sht.api.Copy(None, After=ws4.api)       
+        previous_wb.close()
+        ws1=wb.sheets[f"Unsettled Payables _{input_date}"]
+        ws1.activate()        
+        column_list = ws1.range("A1").expand('right').value
+        Location_letter_column = num_to_col_letters(column_list.index('Location Name')+1)
+        Commodity_Id_letter_column = num_to_col_letters(column_list.index('Commodity Id')+1)    
+        last_column = ws1.range('A1').end('right').last_cell.column
+        concatenate_cl1=num_to_col_letters(last_column+1)
+        concatenate_cl2=num_to_col_letters(last_column+2)
+        list1=["Loc","Comm","GL COGS Entry Debit Acct","GL BS Credit Entry"]
+        list2=[f"=VLOOKUP({Location_letter_column}2,'GL Lookup Table'!A:B,2,0)",f"=VLOOKUP({Commodity_Id_letter_column}2,'GL Lookup Table'!A:B,2,0)",f'=CONCATENATE({concatenate_cl1}2,"-",{concatenate_cl2}2,"-",1000)',"0010000-2260-1000"] 
+        last_column+=1
+        i=0
+        last_row = ws1.range(f'A'+ str(ws1.cells.last_cell.row)).end('up').row
+        for values in list1:
+            last_column_letter=num_to_col_letters(last_column)
+            ws1.range(f"{last_column_letter}1").value = values
+            ws1.range(f"{last_column_letter}1").api.Font.Bold = True
+            ws1.range(f"{last_column_letter}2").value = list2[i]
+            time.sleep(1)
+            ws1.range(f"{last_column_letter}2").copy(ws1.range(f"{last_column_letter}2:{last_column_letter}{last_row}"))
+            i+=1
+            last_column+=1
+        last_column = ws1.range('A1').end('right').last_cell.column  
+        last_row = ws1.range(f'A'+ str(ws1.cells.last_cell.row)).end('up').row  
+        ws6=wb.sheets["JE"]
+        ws6.activate()
+        wb.api.ActiveSheet.PivotTables(1).PivotCache().SourceData =f"Unsettled Payables _{input_date}!R1C1:R{last_row}C{last_column}"           #f'Details!R1C1:R{len(new_rows)+1}C18' #Updateing data source
+        wb.api.ActiveSheet.PivotTables(1).PivotCache().Refresh() 
+        # try:
+        #     wb.api.ActiveSheet.PivotTables(1).PivotFields("GL COGS Entry Debit Acct").Orientation = win32c.PivotFieldOrientation.xlHidden
+        #     wb.api.ActiveSheet.PivotTables(1).PivotFields("GL BS Credit Entry").Orientation = win32c.PivotFieldOrientation.xlHidden
+        # except Exception as e:
+        #     print("Columns not found from previous pivot")
+        #     pass
+        # wb.api.ActiveSheet.PivotTables(1).PivotFields("GL CTM BS Entry").Orientation = win32c.PivotFieldOrientation.xlRowField
+        # wb.api.ActiveSheet.PivotTables(1).PivotFields("GL CTM BS Entry").Position = 1
+        # wb.api.ActiveSheet.PivotTables(1).PivotFields("GL CTM COGS Entry").Orientation = win32c.PivotFieldOrientation.xlRowField
+        # wb.api.ActiveSheet.PivotTables(1).PivotFields("GL CTM COGS Entry").Position = 2
+        wb.api.ActiveSheet.PivotTables(1).PivotFields("Customer/Vendor Name").CurrentPage = "(All)"
+        wb.api.ActiveSheet.PivotTables(1).PivotFields("Customer/Vendor Name").EnableMultiplePageItems = True
+        try:
+            wb.api.ActiveSheet.PivotTables(1).PivotFields("Customer/Vendor Name").PivotItems("INTER-COMPANY PURCH/SALES").Visible = False
+        except Exception as e:
+            pass   
+        try:
+            wb.api.ActiveSheet.PivotTables(1).PivotFields("Customer/Vendor Name").PivotItems("MACQUARIE COMMODITIES (USA) INC.").Visible = False
+        except Exception as e:
+            pass 
+        wb.api.ActiveSheet.PivotTables(1).PivotFields("Location Name").EnableMultiplePageItems = True
+        try:
+            wb.api.ActiveSheet.PivotTables(1).PivotFields("Location Name").PivotItems("WEST PLAINS MEXICO").Visible = False
+        except Exception as e:
+            pass
+        last_row = ws6.range(f'A'+ str(ws1.cells.last_cell.row)).end('up').row
+        E_last_row = ws6.range(f'E'+ str(ws1.cells.last_cell.row)).end('up').row
+        if last_row!=E_last_row:
+            if E_last_row<last_row:
+                ws6.range(f"E{E_last_row}:S{E_last_row}").copy(ws6.range(f"E{E_last_row}:S{last_row}"))
+            else:
+                last_row+=1
+                ws6.range(f'E{last_row}:S{E_last_row}').api.Delete(win32c.DeleteShiftDirection.xlShiftUp)                       
+        else:
+            pass
+        last_row = ws6.range(f'A'+ str(ws1.cells.last_cell.row)).end('up').row
+        E_last_row = ws6.range(f'E'+ str(ws1.cells.last_cell.row)).end('up').row                     
+        Acc_Date=datetime.strptime(input_date,"%m.%d.%Y")
+        Acc_Date_input=datetime.strftime(Acc_Date,"%Y%m%d") 
+        Rev_Date=Acc_Date + timedelta(days=1)
+        Rev_Date_input=datetime.strftime(Rev_Date,"%Y%m%d")
+        ws6.range("C1").value=Acc_Date_input
+        ws6.range("C2").value=Rev_Date_input
+        wb.save(f"{output_location}\\Unsettled Payables _{input_date} JE.xlsx")
+        #CTM Combined _03.31.2022 JE
+        wb.app.quit()
+        return f"{job_name} Report for {input_date} generated succesfully"
+    except Exception as e:
+        raise e
+    finally:
+        try:
+            wb.app.quit()
+        except:
+            pass
+
+def receivables_gl_entry_monthly(input_date, output_date):
+    job_name = "Receivables_GL_Entry_Monthly"
+    try:    
+        input_sheet = r'J:\WEST PLAINS\REPORT\Unsettled Receivables\Output files'+f'\\Unsettled Receivables _{input_date}.xlsx' 
+        if not os.path.exists(input_sheet):
+            return(f"{input_sheet} Excel file not present for date {input_date}")
+        template_file=r'J:\WEST PLAINS\REPORT\Month End GL Entries\Raw Files\template'+f'\\template3.xlsx'
+        if not os.path.exists(template_file):
+            return(f"{template_file} Excel file not present for date {input_date}")
+        output_location = r'J:\WEST PLAINS\REPORT\Month End GL Entries\Output Files'
+        xw.App.display_alerts = False
+        retry=0
+        while retry < 10:
+            try:
+                wb=xw.Book(input_sheet,update_links=False)
+                break
+            except Exception as e:
+                time.sleep(5)
+                retry+=1
+                if retry ==10:
+                    raise e 
+        ws4=wb.sheets["Pivot BB"]            
+        print('sbb') 
+        retry=0
+        while retry < 10:
+            try:
+                # app = xw.App(add_book=False)
+                # app.display_alerts = False
+                # previous_wb = app.books.api.Open(template_file, UpdateLinks=False)
+                previous_wb = xw.Book(template_file,update_links=False)
+                break
+            except Exception as e:
+                time.sleep(5)
+                retry+=1
+                if retry ==10:
+                    raise e     
+        # previous_wb = xw.Book(template_file,update_links=True)
+        JE_sht = previous_wb.sheets("JE")
+        JE_sht.api.Copy(None, After=ws4.api)
+        time.sleep(2)
+        GL_Look_up_sht = previous_wb.sheets("GL Lookup Table")
+        GL_Look_up_sht.api.Copy(None, After=ws4.api)       
+        previous_wb.close()
+        sheet_name=f"Unsettled Receivables _{input_date}"
+        ws1=wb.sheets[sheet_name[:31]]
+        ws1.activate()        
+        column_list = ws1.range("A1").expand('right').value
+        Location_letter_column = num_to_col_letters(column_list.index('Location Name')+1)
+        Commodity_Id_letter_column = num_to_col_letters(column_list.index('Commodity Id')+1)    
+        last_column = ws1.range('A1').end('right').last_cell.column
+        concatenate_cl1=num_to_col_letters(last_column+1)
+        concatenate_cl2=num_to_col_letters(last_column+2)
+        list1=["Loc","Comm","Debit GL Balance Sheet Entry (Single Posting)","Credit Entries Income Stmt Accounts"]
+        list2=[f"=VLOOKUP({Location_letter_column}2,'GL Lookup Table'!A:B,2,0)",f"=VLOOKUP({Commodity_Id_letter_column}2,'GL Lookup Table'!A:B,2,0)","0010000-1120-1000",f'=CONCATENATE({concatenate_cl1}2,"-",{concatenate_cl2}2,"-",1000)'] 
+        last_column+=1
+        i=0
+        last_row = ws1.range(f'A'+ str(ws1.cells.last_cell.row)).end('up').row
+        for values in list1:
+            last_column_letter=num_to_col_letters(last_column)
+            ws1.range(f"{last_column_letter}1").value = values
+            ws1.range(f"{last_column_letter}1").api.Font.Bold = True
+            ws1.range(f"{last_column_letter}2").value = list2[i]
+            time.sleep(1)
+            ws1.range(f"{last_column_letter}2").copy(ws1.range(f"{last_column_letter}2:{last_column_letter}{last_row}"))
+            i+=1
+            last_column+=1
+        last_column = ws1.range('A1').end('right').last_cell.column  
+        last_row = ws1.range(f'A'+ str(ws1.cells.last_cell.row)).end('up').row  
+        ws6=wb.sheets["JE"]
+        ws6.activate()
+        wb.api.ActiveSheet.PivotTables(1).PivotCache().SourceData =f"{sheet_name[:31]}!R1C1:R{last_row}C{last_column}"           #f'Details!R1C1:R{len(new_rows)+1}C18' #Updateing data source
+        wb.api.ActiveSheet.PivotTables(1).PivotCache().Refresh() 
+        wb.api.ActiveSheet.PivotTables(1).PivotFields("Customer/Vendor Name").CurrentPage = "(All)"
+        wb.api.ActiveSheet.PivotTables(1).PivotFields("Customer/Vendor Name").EnableMultiplePageItems = True
+        try:
+            wb.api.ActiveSheet.PivotTables(1).PivotFields("Customer/Vendor Name").PivotItems("INTER-COMPANY PURCH/SALES").Visible = False
+        except Exception as e:
+            pass   
+        try:
+            wb.api.ActiveSheet.PivotTables(1).PivotFields("Customer/Vendor Name").PivotItems("MACQUARIE COMMODITIES (USA) INC.").Visible = False
+        except Exception as e:
+            pass 
+        wb.api.ActiveSheet.PivotTables(1).PivotFields("Location Name").EnableMultiplePageItems = True
+        try:
+            wb.api.ActiveSheet.PivotTables(1).PivotFields("Location Name").PivotItems("WEST PLAINS MEXICO").Visible = False
+        except Exception as e:
+            pass
+        last_row = ws6.range(f'A'+ str(ws1.cells.last_cell.row)).end('up').row
+        E_last_row = ws6.range(f'E'+ str(ws1.cells.last_cell.row)).end('up').row
+        if last_row!=E_last_row:
+            if E_last_row<last_row:
+                ws6.range(f"E{E_last_row}:S{E_last_row}").copy(ws6.range(f"E{E_last_row}:S{last_row}"))
+            else:
+                last_row+=1
+                ws6.range(f'E{last_row}:S{E_last_row}').api.Delete(win32c.DeleteShiftDirection.xlShiftUp)                       
+        else:
+            pass
+        last_row = ws6.range(f'A'+ str(ws1.cells.last_cell.row)).end('up').row
+        E_last_row = ws6.range(f'E'+ str(ws1.cells.last_cell.row)).end('up').row                      
+        Acc_Date=datetime.strptime(input_date,"%m.%d.%Y")
+        Acc_Date_input=datetime.strftime(Acc_Date,"%Y%m%d") 
+        Rev_Date=Acc_Date + timedelta(days=1)
+        Rev_Date_input=datetime.strftime(Rev_Date,"%Y%m%d")
+        ws6.range("C1").value=Acc_Date_input
+        ws6.range("C2").value=Rev_Date_input
+        wb.save(f"{output_location}\\Unsettled Receivables _{input_date} JE.xlsx")
+        #Unsettled Receivables _03.31.2022 JE
+        wb.app.quit()
+        return f"{job_name} Report for {input_date} generated succesfully"
+    except Exception as e:
+        raise e
+    finally:
+        try:
+            wb.app.quit()
+        except:
+            pass
+
+
+def ctm_gl_entry_monthly(input_date, output_date):
+    try:    
+        job_name = "CTM_GL_Entry_Monthly"
+        input_sheet = r'J:\WEST PLAINS\REPORT\CTM Combined report\Output files'+f'\\CTM Combined _{input_date}.xlsx' 
+        if not os.path.exists(input_sheet):
+            return(f"{input_sheet} Excel file not present for date {input_date}")
+        template_file=r'J:\WEST PLAINS\REPORT\Month End GL Entries\Raw Files\template'+f'\\template.xlsx'
+        if not os.path.exists(template_file):
+            return(f"{template_file} Excel file not present for date {input_date}")
+        output_location = r'J:\WEST PLAINS\REPORT\Month End GL Entries\Output Files'
+        xw.App.display_alerts = False
+        retry=0
+        while retry < 10:
+            try:
+                wb=xw.Book(input_sheet)
+                break
+            except Exception as e:
+                time.sleep(5)
+                retry+=1
+                if retry ==10:
+                    raise e 
+        ws4=wb.sheets["Pivot BB"]            
+        print('sbb') 
+        retry=0
+        while retry < 10:
+            try:
+                # app = xw.App(add_book=False)
+                # app.display_alerts = False
+                # previous_wb = app.books.api.Open(template_file, UpdateLinks=False)
+                previous_wb = xw.Book(template_file,update_links=False)
+                break
+            except Exception as e:
+                time.sleep(5)
+                retry+=1
+                if retry ==10:
+                    raise e     
+        # previous_wb = xw.Book(template_file,update_links=True)
+        CTM_JE_sht = previous_wb.sheets("CTM JE")
+        CTM_JE_sht.api.Copy(None, After=ws4.api)
+        time.sleep(2)
+        LOOKUP_sht = previous_wb.sheets("LOOKUP")
+        LOOKUP_sht.api.Copy(None, After=ws4.api)
+        time.sleep(2)
+        GL_Look_up_sht = previous_wb.sheets("GL Look up Table CTM")
+        GL_Look_up_sht.api.Copy(None, After=ws4.api)       
+        previous_wb.close()
+        ws1=wb.sheets[f"CTM Combined _{input_date}"]
+        ws1.activate()      
+        column_list = ws1.range("A1").expand('right').value
+        Location_Id_letter_column = num_to_col_letters(column_list.index('Location Id')+1)
+        Location_no_column=column_list.index('Location')+1
+        Location_letter_column = num_to_col_letters(column_list.index('Location')+1)
+        MTM_Commodity_letter_column = num_to_col_letters(column_list.index('MTM Commodity')+1)
+        try:
+            last_row = ws1.range(f'A'+ str(ws1.cells.last_cell.row)).end('up').row
+            last_row+=1
+            for i in range(2,int(f'{last_row}')):               
+                if ws1.range(f"{Location_letter_column}{i}").value=="WEST PLAINS, LLC":
+                    print(i)
+                    if  ws1.range(f"{Location_Id_letter_column}{i}").value=="WEST COAST":
+                        ws1.range(f"{Location_letter_column}{i}").value='WEST COAST- WEST PLAINS, LLC'
+                    elif ws1.range(f"{Location_Id_letter_column}{i}").value=="WPGKC":
+                        ws1.range(f"{Location_letter_column}{i}").value='KANSAS CITY - WEST PLAINS, LLC'
+                    else:
+                        print("new location found")  
+        except Exception as e:
+                print("failed in changing location name")
+                raise e                  
+        last_column = ws1.range('A1').end('right').last_cell.column
+        concatenate_cl1=num_to_col_letters(last_column+1)
+        concatenate_cl2=num_to_col_letters(last_column+2)
+        list1=["Loc","Comm","GL CTM COGS Entry","GL CTM BS Entry"]
+        list2=[f"=VLOOKUP({Location_letter_column}2,'GL Look up Table CTM'!A:B,2,0)",f"=VLOOKUP({MTM_Commodity_letter_column}2,'GL Look up Table CTM'!A:B,2,0)",f'=CONCATENATE({concatenate_cl1}2,"-",{concatenate_cl2}2,"-",3000)',f"=VLOOKUP({MTM_Commodity_letter_column}2,'GL Look up Table CTM'!A:C,3,0)"] 
+        last_column+=1
+        i=0
+        last_row = ws1.range(f'A'+ str(ws1.cells.last_cell.row)).end('up').row
+        for values in list1:
+            last_column_letter=num_to_col_letters(last_column)
+            ws1.range(f"{last_column_letter}1").value = values
+            ws1.range(f"{last_column_letter}1").api.Font.Bold = True
+            ws1.range(f"{last_column_letter}2").value = list2[i]
+            time.sleep(1)
+            ws1.range(f"{last_column_letter}2").copy(ws1.range(f"{last_column_letter}2:{last_column_letter}{last_row}"))
+            i+=1
+            last_column+=1
+        last_column = ws1.range('A1').end('right').last_cell.column  
+        last_row = ws1.range(f'A'+ str(ws1.cells.last_cell.row)).end('up').row  
+        ws6=wb.sheets["CTM JE"]
+        ws6.activate()
+        wb.api.ActiveSheet.PivotTables(1).PivotCache().SourceData =f"CTM Combined _{input_date}!R1C1:R{last_row}C{last_column}"           #f'Details!R1C1:R{len(new_rows)+1}C18' #Updateing data source
+        wb.api.ActiveSheet.PivotTables(1).PivotCache().Refresh() 
+        wb.api.ActiveSheet.PivotTables(1).PivotFields("Customer").CurrentPage = "(All)"
+        try:
+            wb.api.ActiveSheet.PivotTables(1).PivotFields("Customer").PivotItems("INTER-COMPANY PURCH/SALES").Visible = False
+        except Exception as e:
+            pass   
+        try:
+            wb.api.ActiveSheet.PivotTables(1).PivotFields("Customer").PivotItems("MACQUARIE COMMODITIES (USA) INC.").Visible = False
+        except Exception as e:
+            pass 
+        try:
+            wb.api.ActiveSheet.PivotTables(1).PivotFields("Location").PivotItems("WPMEXICO").Visible = False
+        except Exception as e:
+            pass
+        last_row = ws6.range(f'A'+ str(ws1.cells.last_cell.row)).end('up').row
+        E_last_row = ws6.range(f'E'+ str(ws1.cells.last_cell.row)).end('up').row
+        if last_row!=E_last_row:
+            if E_last_row<last_row:
+                ws6.range(f"E{E_last_row}:S{E_last_row}").copy(ws6.range(f"E{E_last_row}:S{last_row}"))
+            else:
+                ws6.range(f'{last_row}:{E_last_row}').api.Delete(win32c.DeleteShiftDirection.xlShiftUp)     
+        else:
+            pass
+        last_row = ws6.range(f'A'+ str(ws1.cells.last_cell.row)).end('up').row
+        E_last_row = ws6.range(f'E'+ str(ws1.cells.last_cell.row)).end('up').row  
+        if last_row==E_last_row:
+            ws6.range(f'E{last_row}:S{E_last_row}').api.Delete(win32c.DeleteShiftDirection.xlShiftUp) 
+        Acc_Date=datetime.strptime(input_date,"%m.%d.%Y")
+        Acc_Date_input=datetime.strftime(Acc_Date,"%Y%m%d") 
+        Rev_Date=Acc_Date + timedelta(days=1)
+        Rev_Date_input=datetime.strftime(Rev_Date,"%Y%m%d")
+        ws6.range("C1").value=Acc_Date_input
+        ws6.range("C2").value=Rev_Date_input
+        wb.save(f"{output_location}\\CTM Combined _{input_date} JE.xlsx")
+        #CTM Combined _03.31.2022 JE
+        wb.app.quit()
+        return f"{job_name} Report for {input_date} generated succesfully"
+    except Exception as e:
+        raise e
+    finally:
+        try:
+            wb.app.quit()
+        except:
+            pass
+
+
+
+
+
 
 
 def main():
@@ -4688,12 +5311,13 @@ def main():
     # input_date=None
     # output_date = None
     frame_options.grid(row=1,column=0, pady=30, padx=35, columnspan=2, rowspan=3)
-    # wp_job_ids = {'ABS':1,'BBR':bbr,'CPR Report':cpr, 'Freight analysis':freight_analysis, 'CTM combined':ctm,'FIFO Report':fifo,'MTM Report':mtm_report,'Inventory MTM excel report summary':inv_mtm_excel_summ,
+    wp_job_ids = {'ABS':1,'BBR':bbr,'CPR Report':cpr, 'Freight analysis':freight_analysis, 'CTM combined':ctm,'FIFO Report':fifo,'MTM Report':mtm_report,'Inventory MTM excel report summary':inv_mtm_excel_summ,
+                    'MOC Interest Allocation':moc_interest_alloc,'Open AR':open_ar,'Open AP':open_ap, 'Unsettled Payable Report':unsetteled_payables,'Unsettled Receivable Report':unsetteled_receivables,
+                    'Storage Month End Report':strg_month_end_report, "Month End BBR":bbr_monthEnd, "Bank Recons Report":bank_recons_rep, "Payables_GL_Entry_Monthly":payables_gl_entry_monthly,
+                    "Receivables_GL_Entry_Monthly":receivables_gl_entry_monthly,"CTM_GL_Entry_Monthly":ctm_gl_entry_monthly}
+    # wp_job_ids = {'ABS':1,'BBR':bbr,'CPR Report':cpr, 'Freight analysis':freight_analysis, 'CTM combined':ctm,'MTM Report':mtm_report,
     #                 'MOC Interest Allocation':moc_interest_alloc,'Open AR':open_ar,'Open AP':open_ap, 'Unsettled Payable Report':unsetteled_payables,'Unsettled Receivable Report':unsetteled_receivables,
     #                 'Storage Month End Report':strg_month_end_report, "Month End BBR":bbr_monthEnd, "Bank Recons Report":bank_recons_rep}
-    wp_job_ids = {'ABS':1,'BBR':bbr,'CPR Report':cpr, 'Freight analysis':freight_analysis, 'CTM combined':ctm,'MTM Report':mtm_report,
-                    'MOC Interest Allocation':moc_interest_alloc,'Open AR':open_ar,'Open AP':open_ap, 'Unsettled Payable Report':unsetteled_payables,'Unsettled Receivable Report':unsetteled_receivables,
-                    'Storage Month End Report':strg_month_end_report, "Month End BBR":bbr_monthEnd, "Bank Recons Report":bank_recons_rep}
     # department_ids = {'Select \t\t\t\t\t\t\t\t\t': 9, 'Ethanol\t\t\t\t\t\t\t\t': 1, 'WestPlains': 8}
     Rep_variable = StringVar()
     doc_type_variable = StringVar()
