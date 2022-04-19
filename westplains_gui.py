@@ -747,10 +747,12 @@ def bbr_other_tabs(input_date, wb, input_ar, input_ctm):
         # ws3.delete()
         # ws4.name="AR-Trade By Tier - Ineligible"
         # ws5=wb.sheets['Detail CTM Non MCUI']
+        ar_re_last_row = wb.sheets['AR-Re-Purchase Storage Rcbl'].range(f'I' + str(wb.sheets['AR-Re-Purchase Storage Rcbl'].cells.last_cell.row)).end('up').row
         wb.sheets["Account Receivable Summary"].range("C8").formula = '=+GETPIVOTDATA("Sum of  1 - 10",\'AR-Trade By Tier - Eligible\'!$A$7,"Tier","Tier I")'
         wb.sheets["Account Receivable Summary"].range("E8").formula = '=+GETPIVOTDATA("Sum of  1 - 10",\'AR-Trade By Tier - Eligible\'!$A$7,"Tier","Tier II")'
         wb.sheets["Account Receivable Summary"].formula = "='Cash Collateral'!A3"
         wb.sheets["Account Receivable Summary"].api.Range("A3").NumberFormat = 'mm/dd/yyyy'
+        wb.sheets["Account Receivable Summary"].range("C11").formula = f'=\'AR-Re-Purchase Storage Rcbl\'!I{ar_re_last_row}'
         retry=0
         while retry < 10:
             try:
