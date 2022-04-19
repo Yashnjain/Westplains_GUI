@@ -202,6 +202,16 @@ def fifo(input_date, output_date):
                         retry+=1
                         if retry ==9:
                             raise e
+                retry=0
+                while retry < 10:
+                    try:
+                        je_sht = mtm_wb.sheets["JE"]
+                        break
+                    except Exception as e:
+                        time.sleep(2)
+                        retry+=1
+                        if retry ==9:
+                            raise e
 
             df = pd.read_excel(input_mapping, sheet_name=loc)
 
@@ -231,18 +241,21 @@ def fifo(input_date, output_date):
                 time.sleep(1)
                 if key == 'HaySprings':
                     columns_1[key] = columns_1[key].replace("ALLIANCETE", "ALLIANCE")
-                mtm_sht.api.Range(f"B3").AutoFilter(Field:=2,Criteria1:=columns_1[key].split(','), Operator:=7)
+                    columns_1[key] = columns_1[key].replace("LISCO - WE", "LISCO")
+                # mtm_sht.api.Range(f"B3").AutoFilter(Field:=2,Criteria1:=columns_1[key].split(','), Operator:=7)
+                mtm_sht.api.Range(f"C3").AutoFilter(Field:=3,Criteria1:=columns_2[key], Operator:=7)
                 mtm_sht.api.Range(f"G4:G{mtm_last_row}").SpecialCells(12).Select()
                 qty_sum=0
                 price_sum = 0
+                je_sht.range(f'A'+ str(je_sht.cells.last_cell.row)).end('up').end('up').row
                 for rng in mtm_wb.app.selection.address.split(','):
                     # if rng != '$G$3':
                     if type(mtm_sht.range(rng).value) is list:
                         qty_sum+=float(sum(mtm_sht.range(rng).value))
-                        price_sum+=float(sum(mtm_sht.range(rng.replace("G","K")).value))
+                        price_sum+=float(sum(mtm_sht.range(rng.replace("G","M")).value))
                     else:
                         qty_sum+=float(mtm_sht.range(rng).value)
-                        price_sum+=float(mtm_sht.range(rng.replace("G","K")).value)
+                        price_sum+=float(mtm_sht.range(rng.replace("G","M")).value)
 
 
 
@@ -305,6 +318,7 @@ def fifo(input_date, output_date):
                             try:
                                 if mtm_sht.range(f"B{i}").value == "BROWNSVILL" and mtm_sht.range(f"D{i}").value == "MILO":
                                     mtm_sht.range(f"O{i}").value = loc_dict["SORGHUM"][mtm_sht.range(f"B{i}").value]
+                                
                                 else:
                                     mtm_sht.range(f"O{i}").value = loc_dict[mtm_sht.range(f"D{i}").value][mtm_sht.range(f"B{i}").value]
                             except:
@@ -331,6 +345,7 @@ def fifo(input_date, output_date):
             mtm_wb.api.ActiveSheet.PivotTables(j).PivotCache().Refresh()   
         # mtm_wb.api.ActiveSheet.PivotTables(2).PivotCache().Refresh() 
         mtm_sht.activate()
+        mtm_sht.api.AutoFilterMode=False
         mtm_wb.save(mtm_ouput_loc)
         # mtm_wb.app.quit()
         
