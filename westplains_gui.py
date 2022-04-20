@@ -4504,6 +4504,8 @@ def fifo(input_date, output_date):
                 mtm_sht.api.Range(f"D3").AutoFilter(Field:=4,Criteria1:=loc, Operator:=7)
                 time.sleep(1)
                 mtm_sht.api.Range(f"B3").AutoFilter(Field:=2,Criteria1:=columns_1[key].split(','), Operator:=7)
+                time.sleep(1)
+                mtm_sht.api.Range(f"G3").AutoFilter(Field:=7,Criteria1:='<>0', Operator:=1, Criteria2:='<>')
                 mtm_sht.api.Range(f"O4:O{mtm_last_row}").SpecialCells(12).Select()
                 mtm_wb.app.selection.value = new_sht.range(f"R{i}").value
 
