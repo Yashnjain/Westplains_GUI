@@ -77,11 +77,11 @@ def payroll_pdf_extractor(input_pdf, input_datetime, monthYear):
                     benefits = 0     #Benefits         Value Not Received Till Now ( Blank )
                     med_dent_vis = 0 # Med/Dent/Vis	   Total Value of Cafeteria 125 Deds
                     volutary = 0 #Voluntary            Sum of All Misc. Expenses with no Parent Name (Deduction Analysis )
-                    garnish_chldi = 0 #Garnishment     Deduction Analysis – CHLDI
-                    ee_401k = 0 #EE 401k                 Deduction Analysis 401K
-                    er_401k = 0 #ER401k	               Deduction Analysis 4ROTH
-                    ee_roth = 0 #EE Roth 	          Value Not Received Till Now ( Blank )
-                    kln_401 = 0 #401KLN	                Deduction Analysis 401L1
+                    garnish_chldi = 0 #Garnishment     Deduction Analysis – CHLD1+GARN1
+                    ee_401k = 0 #EE 401k               Deduction Analysis 401K
+                    er_401k = 0 #ER401k	               Deduction Analysis  401L1   4ROTH
+                    ee_roth = 0 #EE Roth 	           Deduction Analysis  4ROTH   Value Not Received Till Now ( Blank )
+                    kln_401 = 0 #401KLN	               Deduction Analysis  401L2        401L1
                 
                     for col in range(len(state_fed_df)):
                         if state_fed_df[state_fed_df.columns[0]][col] == "Medicare-ER":
@@ -123,26 +123,31 @@ def payroll_pdf_extractor(input_pdf, input_datetime, monthYear):
                                     med_dent_vis = float(deduc_ana_df[deduc_ana_df.columns[-1]][col].replace(",",""))*-1
                                 break
                         
-                        elif deduc_ana_df[deduc_ana_df.columns[0]][col] == "CHLD1":
+                        elif deduc_ana_df[deduc_ana_df.columns[0]][col] == "CHLD1" or deduc_ana_df[deduc_ana_df.columns[0]][col] == "GARN1":
                             if "("  in deduc_ana_df[deduc_ana_df.columns[-1]][col] and ")" in deduc_ana_df[deduc_ana_df.columns[-1]][col]:
-                                garnish_chldi = float(deduc_ana_df[deduc_ana_df.columns[-1]][col].replace(",","").replace("(","").replace(")",""))
+                                garnish_chldi += float(deduc_ana_df[deduc_ana_df.columns[-1]][col].replace(",","").replace("(","").replace(")",""))
                             else:
-                                garnish_chldi = float(deduc_ana_df[deduc_ana_df.columns[-1]][col].replace(",",""))*-1
+                                garnish_chldi += float(deduc_ana_df[deduc_ana_df.columns[-1]][col].replace(",",""))*-1
                         elif deduc_ana_df[deduc_ana_df.columns[0]][col] == "401K":
                             if "("  in deduc_ana_df[deduc_ana_df.columns[-1]][col] and ")" in deduc_ana_df[deduc_ana_df.columns[-1]][col]:
                                 ee_401k = float(deduc_ana_df[deduc_ana_df.columns[-1]][col].replace(",","").replace("(","").replace(")",""))
                             else:
                                 ee_401k = float(deduc_ana_df[deduc_ana_df.columns[-1]][col].replace(",",""))*-1
-                        elif deduc_ana_df[deduc_ana_df.columns[0]][col] == "4ROTH":
+                        elif deduc_ana_df[deduc_ana_df.columns[0]][col] == "401L1":
                             if "("  in deduc_ana_df[deduc_ana_df.columns[-1]][col] and ")" in deduc_ana_df[deduc_ana_df.columns[-1]][col]:
                                 er_401k = float(deduc_ana_df[deduc_ana_df.columns[-1]][col].replace(",","").replace("(","").replace(")",""))
                             else:
                                 er_401k = float(deduc_ana_df[deduc_ana_df.columns[-1]][col].replace(",",""))*-1
-                        elif deduc_ana_df[deduc_ana_df.columns[0]][col] == "401L1":
+                        elif deduc_ana_df[deduc_ana_df.columns[0]][col] == "401L2":
                             if "("  in deduc_ana_df[deduc_ana_df.columns[-1]][col] and ")" in deduc_ana_df[deduc_ana_df.columns[-1]][col]:
                                 kln_401 = float(deduc_ana_df[deduc_ana_df.columns[-1]][col].replace(",","").replace("(","").replace(")",""))
                             else:
                                 kln_401 = float(deduc_ana_df[deduc_ana_df.columns[-1]][col].replace(",",""))*-1
+                        elif deduc_ana_df[deduc_ana_df.columns[0]][col] == "4ROTH":
+                            if "("  in deduc_ana_df[deduc_ana_df.columns[-1]][col] and ")" in deduc_ana_df[deduc_ana_df.columns[-1]][col]:
+                                ee_roth = float(deduc_ana_df[deduc_ana_df.columns[-1]][col].replace(",","").replace("(","").replace(")",""))
+                            else:
+                                ee_roth = float(deduc_ana_df[deduc_ana_df.columns[-1]][col].replace(",",""))*-1
                         else:
                             if deduc_ana_df[deduc_ana_df.columns[0]][col] != "Total":
                                 if "("  in deduc_ana_df[deduc_ana_df.columns[-1]][col] and ")" in deduc_ana_df[deduc_ana_df.columns[-1]][col]:
@@ -227,7 +232,7 @@ def payroll_summ(input_date, output_date):
             retry+=1
             if retry ==9:
                 raise e
-
+    inp_sht.range("F4:T4").expand("down").expand("down").delete()
     inp_sht.range("A4:T4").expand("down").expand("down").delete()
     last_row=4
     first_row = 4
@@ -245,9 +250,11 @@ def payroll_summ(input_date, output_date):
                     inp_sht.range(f"{chr(ord(init_chr)+col)}{row}").value = data[list(data.keys())[pdf_data]][inp_sht.range(f"A{row}").value][inp_sht.range(f"{chr(ord(init_chr)+col)}3").value]
                 except:
                     inp_sht.range(f"{chr(ord(init_chr)+col)}{row}").value = 0
+                if row == last_row and pdf_data == 0:
+                    inp_sht.range(f"{chr(ord(init_chr)+col)}{row+2}").formula = f'=SUM({chr(ord(init_chr)+col)}4:{chr(ord(init_chr)+col)}{row})'
             #updating first row as last row
         first_row = last_row+1
-    
+    inp_sht.range(f"F4:{chr(ord(init_chr)+last_column)}{row+2}").api.NumberFormat = '_(* #,##0.00_);_(* (#,##0.00);_(* "-"??_);_(@_)' #Standard format
     #Pivot part starts
     retry=0
     while retry < 10:
