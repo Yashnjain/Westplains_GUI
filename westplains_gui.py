@@ -1536,11 +1536,11 @@ def moc_get_df_from_input_excel(mtm_file, open_ap_file, open_ar_file,unsettled_p
             inner_keys = ['Alliance/Hay Springs','Gering','Omaha','Johnstown','KC','BROWNSVILL']
             inner_dict = {}.fromkeys(inner_keys)
             wb_mtm = xw.Book(mtm_file,update_links=False)
-            ws_mtm = wb_mtm.sheets['MTM Excel Summary']
+            ws_mtm = wb_mtm.sheets['JE']
             last_row = ws_mtm.range(f'A'+ str(ws_mtm.cells.last_cell.row)).end('up').row
             first_row  = ws_mtm.range(f"A{last_row}").end('up').last_cell.row
             req_index = first_row + 1
-            df_mtm = pd.read_excel(mtm_file,sheet_name='MTM Excel Summary', usecols="A,B", skiprows=req_index)   
+            df_mtm = pd.read_excel(mtm_file,sheet_name='JE', usecols="A,B", skiprows=req_index)   
             new_dict = dict(zip(df_mtm.iloc[:,0],df_mtm.iloc[:,1]))
             inner_dict['Alliance/Hay Springs'] = new_dict['HS']
             inner_dict['Gering'] = new_dict.get('GER')
@@ -1552,6 +1552,7 @@ def moc_get_df_from_input_excel(mtm_file, open_ap_file, open_ar_file,unsettled_p
         except Exception as e:
             print(e)
             print("The format of input file is wrong for MTM inventory or the file does not exist. Please enter the correct format")
+            raise e
         finally:
             try:
                 wb_mtm.app.quit()
