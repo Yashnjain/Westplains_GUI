@@ -179,7 +179,7 @@ def tkt_n_settlement_summ(input_date, output_date):
         pivotCount = wb.api.ActiveSheet.PivotTables().Count
             
         for j in range(1, pivotCount+1):
-            wb.api.ActiveSheet.PivotTables(j).PivotCache().SourceData == f"'{tkt_ent_sht.name}'!R1C1:R{tkt_last_row}C14" #14 for N col
+            wb.api.ActiveSheet.PivotTables(j).PivotCache().SourceData = f"'{tkt_ent_sht.name}'!R1C1:R{tkt_last_row}C14" #14 for N col
             wb.api.ActiveSheet.PivotTables(j).PivotCache().Refresh()
 
         #Refreshing Pivots
@@ -346,8 +346,8 @@ def tkt_n_settlement_summ(input_date, output_date):
         set_borders(border_range)
 
         #Saving workbooks
-        wb.save(output_file)
-        new_wb.save(det_output_file)
+        wb.save(det_output_file)
+        new_wb.save(output_file)
 
         wb.app.quit()
 

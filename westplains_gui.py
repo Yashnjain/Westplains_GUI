@@ -24,8 +24,12 @@ from tabula import read_pdf
 # import PyPDF2
 from collections import defaultdict
 import xlwings.constants as win32c
-import threading, sys
+import sys
 import PyPDF2
+from collections import OrderedDict
+import calendar
+from dateutil.relativedelta import relativedelta
+
 
 
 
@@ -70,6 +74,165 @@ def set_borders(border_range):
         border_range.api.Borders(border_id).Weight=2
 
 
+
+
+def insert_all_borders(cellrange:str,working_sheet,working_workbook):
+        working_sheet.api.Range(cellrange).Select()
+        working_workbook.app.selection.api.Borders(win32c.BordersIndex.xlDiagonalDown).LineStyle = win32c.Constants.xlNone
+        working_workbook.app.selection.api.Borders(win32c.BordersIndex.xlDiagonalUp).LineStyle = win32c.Constants.xlNone
+        linestylevalues=[win32c.BordersIndex.xlEdgeLeft,win32c.BordersIndex.xlEdgeTop,win32c.BordersIndex.xlEdgeBottom,win32c.BordersIndex.xlEdgeRight,win32c.BordersIndex.xlInsideVertical,win32c.BordersIndex.xlInsideHorizontal]
+        for values in linestylevalues:
+            a=working_workbook.app.selection.api.Borders(values)
+            a.LineStyle = win32c.LineStyle.xlContinuous
+            a.ColorIndex = 0
+            a.TintAndShade = 0
+            a.Weight = win32c.BorderWeight.xlThin
+
+def payroll_pdf_extractor(input_pdf, input_datetime, monthYear):
+    try:
+        main_dict = {}
+    
+        for loc in glob.glob(input_pdf):       #add month difference if ==2 then not consider that file
+            file_date = loc.split()[-1].split(".pdf")[0].replace(".","-")
+            file_datetime = datetime.strptime(loc.split()[-1].split(".pdf")[0],"%m.%d.%Y")
+            file_date = datetime.strftime(file_datetime, "%d-%m-%Y")
+            diff = relativedelta(input_datetime.replace(day=1),file_datetime.replace(day=1))
+            diff = diff.months*(diff.years+1)
+            if diff == 0 or diff == 1 or diff==-1:
+                date_df = read_pdf(loc, pages = 1, guess = False, stream = True ,
+                                    pandas_options={'header':0}, area = ["30,290,120,415"], columns=["320"])[0]
+                dates = date_df.iloc[0,1].split("to")
+                monthYear1 = datetime.strftime(datetime.strptime(dates[0].strip(), "%m/%d/%Y"), "%b %y")
+                monthYear2 = datetime.strftime(datetime.strptime(dates[1].strip(), "%m/%d/%Y"), "%b %y")
+                if monthYear1 == monthYear or monthYear2 == monthYear:
+                    pdfReader = PyPDF2.PdfFileReader(loc)
+                    
+                    
+                    for page in range(pdfReader.numPages - 1):
+                        
+                        pageObj = pdfReader.getPage(page)
+                        a=pageObj.extractText()
+                        
+                        ada_group = int(a.split('Totals for Department: ')[1].split("-")[0].strip())
+                        
+                        
+                        df = read_pdf(loc, pages = page+1, guess = False, stream = True ,
+                                            pandas_options={'header':0}, area = ["150,5,560,850"], columns=["65,120,145,200,330,380,430,470,700,750"])[0]
+                        # print(df)
+                        gross_df = read_pdf(loc, pages = page+1, guess = False, stream = True ,
+                                            pandas_options={'header':0}, area = ["60,300,190,400"])[0]
+                        # print(gross_df)
+                        gross_value = float(gross_df.iloc[-1,-1].replace(",",""))
+                        state_fed_df = df.iloc[:,:4]
+                        state_fed_df = state_fed_df[state_fed_df[state_fed_df.columns[0]].notna()].reset_index(drop=True)
+                        state_taxable_df = df.iloc[:,4:8]
+                        state_taxable_df = state_taxable_df[state_taxable_df[state_taxable_df.columns[0]].notna()].reset_index(drop=True)
+                        deduc_ana_df = df.iloc[:,8:]
+                        deduc_ana_df = deduc_ana_df[deduc_ana_df[deduc_ana_df.columns[0]].notna()].reset_index(drop=True)
+                        deduc_ana_df = deduc_ana_df[deduc_ana_df[deduc_ana_df.columns[-1]].notna()].reset_index(drop=True)
+
+                        medicare_ee = 0  #ER-Med	      Medicare -EE R
+                        soc_sec_er = 0   #ER-SS           Social Security - ER
+                        futa_nesui = 0   #FUTA             NESUI
+                        suta_cosui = 0   #SUTA             COSUI
+                        suta_wysui = 0   #SUTA             WYSUI
+                        ffcra = 0        #FFCRA            Value Not Received Till Now ( Blank )
+                        benefits = 0     #Benefits         Value Not Received Till Now ( Blank )
+                        med_dent_vis = 0 # Med/Dent/Vis	   Total Value of Cafeteria 125 Deds
+                        volutary = 0 #Voluntary            Sum of All Misc. Expenses with no Parent Name (Deduction Analysis )
+                        garnish_chldi = 0 #Garnishment     Deduction Analysis – CHLD1+GARN1
+                        ee_401k = 0 #EE 401k               Deduction Analysis 401K
+                        er_401k = 0 #ER401k	               Deduction Analysis  401L1   4ROTH
+                        ee_roth = 0 #EE Roth 	           Deduction Analysis  4ROTH   Value Not Received Till Now ( Blank )
+                        kln_401 = 0 #401KLN	               Deduction Analysis  401L2        401L1
+                    
+                        for col in range(len(state_fed_df)):
+                            if state_fed_df[state_fed_df.columns[0]][col] == "Medicare-ER":
+                                if "("  in state_fed_df[state_fed_df.columns[-1]][col] and ")" in state_fed_df[state_fed_df.columns[-1]][col]:
+                                    medicare_ee = float(state_fed_df[state_fed_df.columns[-1]][col].replace(",","").replace("(","").replace(")",""))*-1
+                                else:
+                                    medicare_ee = float(state_fed_df[state_fed_df.columns[-1]][col].replace(",",""))
+                            elif state_fed_df[state_fed_df.columns[0]][col] == "Social Security-" and state_fed_df[state_fed_df.columns[0]][col+1] == "ER":
+                                if "("  in state_fed_df[state_fed_df.columns[-1]][col] and ")" in state_fed_df[state_fed_df.columns[-1]][col]:
+                                    soc_sec_er = float(state_fed_df[state_fed_df.columns[-1]][col].replace(",","").replace("(","").replace(")",""))*-1
+                                else:
+                                    soc_sec_er = float(state_fed_df[state_fed_df.columns[-1]][col].replace(",",""))
+                        
+                        for col in range(len(state_taxable_df)):
+                            if state_taxable_df[state_taxable_df.columns[0]][col] == "NESUI":
+                                if "("  in state_taxable_df[state_taxable_df.columns[-1]][col] and ")" in state_taxable_df[state_taxable_df.columns[-1]][col]:
+                                    futa_nesui = float(state_taxable_df[state_taxable_df.columns[-1]][col].replace(",","").replace("(","").replace(")",""))*-1
+                                else:
+                                    futa_nesui = float(state_taxable_df[state_taxable_df.columns[-1]][col].replace(",",""))
+                            elif state_taxable_df[state_taxable_df.columns[0]][col] == "COSUI":
+                                if "("  in state_taxable_df[state_taxable_df.columns[-1]][col] and ")" in state_taxable_df[state_taxable_df.columns[-1]][col]:
+                                    suta_cosui = float(state_taxable_df[state_taxable_df.columns[-1]][col].replace(",","").replace("(","").replace(")",""))*-1
+                                else:
+                                    suta_cosui = float(state_taxable_df[state_taxable_df.columns[-1]][col].replace(",",""))
+                            elif state_taxable_df[state_taxable_df.columns[0]][col] == "WYSUI":
+                                if "("  in state_taxable_df[state_taxable_df.columns[-1]][col] and ")" in state_taxable_df[state_taxable_df.columns[-1]][col]:
+                                    suta_wysui = float(state_taxable_df[state_taxable_df.columns[-1]][col].replace(",","").replace("(","").replace(")",""))*-1
+                                else:
+                                    suta_wysui = float(state_taxable_df[state_taxable_df.columns[-1]][col].replace(",",""))
+                    
+                        for col in range(len(deduc_ana_df)):
+                            if deduc_ana_df[deduc_ana_df.columns[0]][col] == "Cafeteria 125":
+                                if deduc_ana_df.iloc[-1,0]!="Cafeteria 125":
+                                    while deduc_ana_df[deduc_ana_df.columns[0]][col] !="Total":
+                                        col+=1
+                                    if "("  in deduc_ana_df[deduc_ana_df.columns[-1]][col] and ")" in deduc_ana_df[deduc_ana_df.columns[-1]][col]:
+                                        med_dent_vis = float(deduc_ana_df[deduc_ana_df.columns[-1]][col].replace(",","").replace("(","").replace(")",""))
+                                    else:    
+                                        med_dent_vis = float(deduc_ana_df[deduc_ana_df.columns[-1]][col].replace(",",""))*-1
+                                    break
+                            
+                            elif deduc_ana_df[deduc_ana_df.columns[0]][col] == "CHLD1" or deduc_ana_df[deduc_ana_df.columns[0]][col] == "GARN1":
+                                if "("  in deduc_ana_df[deduc_ana_df.columns[-1]][col] and ")" in deduc_ana_df[deduc_ana_df.columns[-1]][col]:
+                                    garnish_chldi += float(deduc_ana_df[deduc_ana_df.columns[-1]][col].replace(",","").replace("(","").replace(")",""))
+                                else:
+                                    garnish_chldi += float(deduc_ana_df[deduc_ana_df.columns[-1]][col].replace(",",""))*-1
+                            elif deduc_ana_df[deduc_ana_df.columns[0]][col] == "401K":
+                                if "("  in deduc_ana_df[deduc_ana_df.columns[-1]][col] and ")" in deduc_ana_df[deduc_ana_df.columns[-1]][col]:
+                                    ee_401k = float(deduc_ana_df[deduc_ana_df.columns[-1]][col].replace(",","").replace("(","").replace(")",""))
+                                else:
+                                    ee_401k = float(deduc_ana_df[deduc_ana_df.columns[-1]][col].replace(",",""))*-1
+                            elif deduc_ana_df[deduc_ana_df.columns[0]][col] == "401L1":
+                                if "("  in deduc_ana_df[deduc_ana_df.columns[-1]][col] and ")" in deduc_ana_df[deduc_ana_df.columns[-1]][col]:
+                                    er_401k = float(deduc_ana_df[deduc_ana_df.columns[-1]][col].replace(",","").replace("(","").replace(")",""))
+                                else:
+                                    er_401k = float(deduc_ana_df[deduc_ana_df.columns[-1]][col].replace(",",""))*-1
+                            elif deduc_ana_df[deduc_ana_df.columns[0]][col] == "401L2":
+                                if "("  in deduc_ana_df[deduc_ana_df.columns[-1]][col] and ")" in deduc_ana_df[deduc_ana_df.columns[-1]][col]:
+                                    kln_401 = float(deduc_ana_df[deduc_ana_df.columns[-1]][col].replace(",","").replace("(","").replace(")",""))
+                                else:
+                                    kln_401 = float(deduc_ana_df[deduc_ana_df.columns[-1]][col].replace(",",""))*-1
+                            elif deduc_ana_df[deduc_ana_df.columns[0]][col] == "4ROTH":
+                                if "("  in deduc_ana_df[deduc_ana_df.columns[-1]][col] and ")" in deduc_ana_df[deduc_ana_df.columns[-1]][col]:
+                                    ee_roth = float(deduc_ana_df[deduc_ana_df.columns[-1]][col].replace(",","").replace("(","").replace(")",""))
+                                else:
+                                    ee_roth = float(deduc_ana_df[deduc_ana_df.columns[-1]][col].replace(",",""))*-1
+                            else:
+                                if deduc_ana_df[deduc_ana_df.columns[0]][col] != "Total":
+                                    if "("  in deduc_ana_df[deduc_ana_df.columns[-1]][col] and ")" in deduc_ana_df[deduc_ana_df.columns[-1]][col]:
+                                        volutary += float(deduc_ana_df[deduc_ana_df.columns[-1]][col].replace(",","").replace("(","").replace(")",""))
+                                    else:
+                                        volutary += float(deduc_ana_df[deduc_ana_df.columns[-1]][col].replace(",",""))*-1
+                        if file_date in main_dict.keys():  
+                            
+                            main_dict[file_date][ada_group] = {"Gross":gross_value, "ER- SS":soc_sec_er, "ER - Med":medicare_ee, "FUTA":futa_nesui, "SUTA":suta_cosui+suta_wysui, "FFCRA": ffcra,
+                                "Benefits":benefits, "Med/Dent/Vis":med_dent_vis, "Voluntary ":volutary, "Garnishment":garnish_chldi, "EE 401k ":ee_401k, "ER 401K":er_401k,
+                                "EE Roth":ee_roth, "401KLN":kln_401}
+                        else:  
+                            main_dict[file_date] = {}
+                            main_dict[file_date][ada_group] = {"Gross":gross_value, "ER- SS":soc_sec_er, "ER - Med":medicare_ee, "FUTA":futa_nesui, "SUTA":suta_cosui+suta_wysui, "FFCRA": ffcra,
+                                    "Benefits":benefits, "Med/Dent/Vis":med_dent_vis, "Voluntary ":volutary, "Garnishment":garnish_chldi, "EE 401k ":ee_401k, "ER 401K":er_401k,
+                                    "EE Roth":ee_roth, "401KLN":kln_401}
+                        
+                        
+            
+        return main_dict
+    except Exception as e:
+        raise e
 
 
 def other_loc_extractor(input_pdf):
@@ -5219,11 +5382,17 @@ def tkt_n_settlement_summ(input_date, output_date):
 
 
         template_xl = r"J:\WEST PLAINS\REPORT\Ticket And Settlement Summary\Raw Files\Ticket Query monYearTemplate.xlsx"
+        # template_xl = r"J:\WEST PLAINS\REPORT\Ticket And Settlement Summary\Raw Files\Test.xlsx"
         if not os.path.exists(template_xl):
             return(f"{template_xl} Excel file not present")
 
-        output_file =  r"J:\WEST PLAINS\REPORT\Ticket And Settlement Summary\Output Files"+f"\\Tickets and Settlement {monthYear}"
-        det_output_file = r"J:\WEST PLAINS\REPORT\Ticket And Settlement Summary\Output Files"+f"\\Ticket Query {monthYear} Details"
+        final_input = r"J:\WEST PLAINS\REPORT\Ticket And Settlement Summary\Output Files\Tickets and Settlement.xlsx"
+        # template_xl = r"J:\WEST PLAINS\REPORT\Ticket And Settlement Summary\Raw Files\Test.xlsx"
+        if not os.path.exists(final_input):
+            return(f"{final_input} Excel file not present")
+
+        output_file =  r"J:\WEST PLAINS\REPORT\Ticket And Settlement Summary\Output Files"+f"\\Tickets and Settlement {monthYear}.xlsx"
+        det_output_file = r"J:\WEST PLAINS\REPORT\Ticket And Settlement Summary\Output Files"+f"\\Ticket Query {monthYear} Details.xlsx"
 
 
         #getting data from ticket query file till M column
@@ -5277,13 +5446,23 @@ def tkt_n_settlement_summ(input_date, output_date):
         tkt_ent_sht.range("A1").paste(paste="values_and_number_formats") #pasting only values
         tkt_last_row = tkt_ent_sht.range(f'A'+ str(tkt_ent_sht.cells.last_cell.row)).end('up').row
         
-        #adding Add by column by copy pasting add_by column already present in column K
-        i=0
-        while tkt_ent_sht.range(chr(ord("M")-i)+"1").value != "add_by":
-            i+=1
-        add_by_col = chr(ord("M")-i)
+        # #adding Add by column by copy pasting add_by column already present in column K
+        # i=0
+        # while tkt_ent_sht.range(chr(ord("M")-i)+"1").value != "add_by":
+        #     i+=1
+        # add_by_col = chr(ord("M")-i)
+        # country_col = chr(ord("M")-i+1)
+        # tkt_ent_sht.range(f"{add_by_col}1").value = "Add By"
+        # tkt_ent_sht.range(f"{add_by_col}2").expand("down").copy(tkt_ent_sht.range("N2"))
+
+
         tkt_ent_sht.range("N1").value = "Add By"
-        tkt_ent_sht.range(f"{add_by_col}2").expand("down").copy(tkt_ent_sht.range("N2"))
+        tkt_ent_sht.range("N2").formula = "=VLOOKUP(K2,'Name (2)'!A:B,2,0)"
+        tkt_ent_sht.range("N2").copy(tkt_ent_sht.range(f"N3:N{tkt_last_row}"))
+
+        tkt_ent_sht.range("O1").value = "Team"
+        tkt_ent_sht.range("O2").formula = "=VLOOKUP(K2,'Name (2)'!A:C,3,0)"
+        tkt_ent_sht.range("O2").copy(tkt_ent_sht.range(f"O3:O{tkt_last_row}"))
         tkt_wb.close()
 
         #Now getting settlemt data same as above
@@ -5340,6 +5519,10 @@ def tkt_n_settlement_summ(input_date, output_date):
         inp_set_sht.range("L2").formula = "=+VLOOKUP(@H:H,'Name (2)'!A:B,2,FALSE)"
         inp_set_sht.range("L2").copy(inp_set_sht.range(f"L3:L{inp_set_last_row}"))
 
+        inp_set_sht.range("M1").value = "Team"
+        inp_set_sht.range("M2").formula = "=VLOOKUP(H2,'Name (2)'!A:C,3,0)"
+        inp_set_sht.range("M2").copy(inp_set_sht.range(f"M3:M{inp_set_last_row}"))
+
         #Refreshing Pivots
         while retry < 10:
             try:
@@ -5351,12 +5534,43 @@ def tkt_n_settlement_summ(input_date, output_date):
                 if retry ==9:
                     raise e
         tkt_p_sht.activate()
+        tkt_p_sht.range("A:E").clear()
+        tkt_p_sht.range("A1").select()
+        #First pivot
+        PivotCache=wb.api.PivotCaches().Create(SourceType=win32c.PivotTableSourceType.xlDatabase, SourceData=f"'{tkt_ent_sht.name}'!R1C1:R{tkt_last_row}C15", Version=win32c.PivotTableVersionList.xlPivotTableVersion14)
+        PivotTable = PivotCache.CreatePivotTable(TableDestination=f"'Ticket Summary (2)'!R1C1", TableName="PivotTable1", DefaultVersion=win32c.PivotTableVersionList.xlPivotTableVersion14)        ###logger.info("Adding particular Row in Pivot Table")
+        PivotTable.PivotFields('Team').Orientation = win32c.PivotFieldOrientation.xlRowField
+        PivotTable.PivotFields('Team').Position = 1
+        PivotTable.PivotFields('Add By').Orientation = win32c.PivotFieldOrientation.xlRowField
+        PivotTable.PivotFields('Commodity').Orientation = win32c.PivotFieldOrientation.xlDataField
+        PivotTable.TableStyle2 = "PivotStyleMedium13"
+        PivotTable.RowAxisLayout(1)
+        wb.api.ActiveSheet.PivotTables("PivotTable1").InGridDropZones = True
+        last_row = tkt_p_sht.range(f'A'+ str(set_sht.cells.last_cell.row)).end('up').row
 
-        pivotCount = wb.api.ActiveSheet.PivotTables().Count
+        tkt_p_sht.range(f"A{last_row+5}").select()
+        #Second pivot
+        PivotCache=wb.api.PivotCaches().Create(SourceType=win32c.PivotTableSourceType.xlDatabase, SourceData=f"'{tkt_ent_sht.name}'!R1C1:R{tkt_last_row}C15", Version=win32c.PivotTableVersionList.xlPivotTableVersion14)
+        PivotTable = PivotCache.CreatePivotTable(TableDestination=f"'Ticket Summary (2)'!R{last_row+11}C1", TableName="PivotTable2", DefaultVersion=win32c.PivotTableVersionList.xlPivotTableVersion14)        ###logger.info("Adding particular Row in Pivot Table")
+        PivotTable.PivotFields('Mode').Orientation = win32c.PivotFieldOrientation.xlRowField
+        PivotTable.PivotFields('Mode').Position = 1
+        PivotTable.PivotFields('Team').Orientation = win32c.PivotFieldOrientation.xlRowField
+        PivotTable.PivotFields('Add By').Orientation = win32c.PivotFieldOrientation.xlRowField
+        PivotTable.PivotFields('Commodity').Orientation = win32c.PivotFieldOrientation.xlDataField
+        PivotTable.TableStyle2 = "PivotStyleMedium13"
+        PivotTable.RowAxisLayout(1)
+        wb.api.ActiveSheet.PivotTables("PivotTable2").InGridDropZones = True
+
+        #Updating Railtickets
+        tkt_p_sht.range("G7").formula = f'=+GETPIVOTDATA("Commodity",$A${last_row+11},"Mode","R","Team","USA")+GETPIVOTDATA("Commodity",$A${last_row+11},"Mode","R","Team","VERTICAL")'
+
+        # pivotCount = wb.api.ActiveSheet.PivotTables().Count
             
-        for j in range(1, pivotCount+1):
-            wb.api.ActiveSheet.PivotTables(j).PivotCache().SourceData == f"'{tkt_ent_sht.name}'!R1C1:R{tkt_last_row}C14" #14 for N col
-            wb.api.ActiveSheet.PivotTables(j).PivotCache().Refresh()
+        # for j in range(1, pivotCount+1):
+        #     wb.api.ActiveSheet.PivotTables(j).PivotCache().SourceData = f"'{tkt_ent_sht.name}'!R1C1:R{tkt_last_row}C15" #15 for O col
+        #     wb.api.ActiveSheet.PivotTables(j).PivotCache().Refresh()
+
+        
 
         #Refreshing Pivots
         while retry < 10:
@@ -5373,24 +5587,29 @@ def tkt_n_settlement_summ(input_date, output_date):
         pivotCount = wb.api.ActiveSheet.PivotTables().Count
             
         for j in range(1, pivotCount+1):
-            wb.api.ActiveSheet.PivotTables(j).PivotCache().SourceData = f"'{inp_set_sht.name}'!R1C1:R{inp_set_last_row}C12" #12 for L col
+            wb.api.ActiveSheet.PivotTables(j).PivotCache().SourceData = f"'{inp_set_sht.name}'!R1C1:R{inp_set_last_row}C13" #13 for M col
             wb.api.ActiveSheet.PivotTables(j).PivotCache().Refresh()
 
         #Combining data for summary tab
-        left_df = tkt_p_sht.range('A2:B2').options(pd.DataFrame, 
+        left_df = tkt_p_sht.range(f"B2:C{tkt_p_sht.range('C2').end('down').row}").options(pd.DataFrame, 
                                 header=1,
-                                index=False, 
-                                expand='down').value[:-1]
+                                index=False 
+                                ).value[:-1]
         left_df.columns = ["Row Labels", "Tickets"]
-        right_df = set_p_sht.range('A1:B1').options(pd.DataFrame, 
+        left_df.replace(to_replace='None', value=np.nan).dropna(inplace=True)
+        left_df.dropna(inplace=True)
+        right_df = set_p_sht.range(f"B2:C{set_p_sht.range('C2').end('down').row}").options(pd.DataFrame, 
                                 header=1,
-                                index=False, 
-                                expand='down').value[:-1]
+                                index=False
+                                ).value[:-1]
         right_df.columns = ["Row Labels", "Settlements"]
+        right_df.replace(to_replace='None', value=np.nan).dropna(inplace=True)
+        right_df.dropna(inplace=True)
 
         merged_df = left_df.merge(right_df, on='Row Labels', how='outer')
 
         #inserting merged data in sheet 1
+        wb.sheets["Sheet1"].clear()
         wb.sheets["Sheet1"].range("A1").options(pd.DataFrame, header=1, index=False, expand='table').value = merged_df
 
 
@@ -5415,97 +5634,149 @@ def tkt_n_settlement_summ(input_date, output_date):
     
         
 
-        new_wb = xw.Book()
+        new_wb = xw.Book(final_input)
+        try: 
+            current_month_sht = new_wb.sheets[monthYear]
+            current_month_sht.clear()
+        except:
+            new_wb.sheets.add(monthYear,after=new_wb.sheets[-1])
+            current_month_sht = new_wb.sheets[monthYear]
         time.sleep(1)
-        new_wb.sheets[0].name = "Ticket Summary"
+        # new_wb.sheets[0].name = monthYear
         tkt_p_sht.activate()
         # tkt_p_sht.api.Range(tkt_p_sht.api.Cells.SpecialCells(12).Address).Copy()
         # new_wb.activate()
-        # new_wb.sheets['Ticket Summary'].activate()
-        # new_wb.sheets['Ticket Summary'].api.Range("A1").Select()
-        # new_wb.sheets['Ticket Summary'].range("A1").api.Range("A1").PasteSpecial(Paste=	-4163)    #xlPasteValues
-        # new_wb.sheets['Ticket Summary'].autofit(axis="columns")
+        # current_month_sht.activate()
+        # current_month_sht.api.Range("A1").Select()
+        # current_month_sht.range("A1").api.Range("A1").PasteSpecial(Paste=	-4163)    #xlPasteValues
+        # current_month_sht.autofit(axis="columns")
 
         #Generating data for final file
         #Ticket Summary Data sheets
-        tkt_df1 = tkt_p_sht.range('A2').options(pd.DataFrame, 
+        tkt_df1 = tkt_p_sht.range(f"A2:C{tkt_p_sht.range('C2').end('down').row}").options(pd.DataFrame, 
                                 header=1,
-                                index=False, 
-                                expand='table').value
-        tkt_df1.columns = ["Add By", "Total"]
+                                index=False 
+                                ).value
+        # tkt_df1.columns = ["Add By", "Total"]
+        # tkt_df1.replace(to_replace='None', value=np.nan).dropna(inplace=True)
 
-        next_table_row = tkt_p_sht.range("A2").end("down").end("down").row+1
-        last_row = tkt_p_sht.range(f'A'+ str(tkt_p_sht.cells.last_cell.row)).end('up').row
-        tkt_df2 = tkt_p_sht.range(f"A{next_table_row}:A{last_row}").options(pd.DataFrame, 
+        # next_table_row = tkt_p_sht.range("A2").end("down").end("down").row+1
+        next_table_row = tkt_p_sht.range('C2').end('down').end('down').row
+        last_row = tkt_p_sht.range(f'D'+ str(tkt_p_sht.cells.last_cell.row)).end('up').row
+        tkt_df2 = tkt_p_sht.range(f"A{next_table_row}:D{last_row}").options(pd.DataFrame, 
                                 header=1,
-                                index=False, 
-                                expand='right').value
-        table3_col = num_to_col_letters(tkt_p_sht.range("B2").end("right").column)
+                                index=False
+                                ).value
+        # tkt_df2.columns = ["Add By", "Settlements"]
+        # tkt_df2.replace(to_replace='None', value=np.nan).dropna(inplace=True)
+        table3_col = num_to_col_letters(tkt_p_sht.range("C2").end("right").column)
         last_row = tkt_p_sht.range(f'F'+ str(tkt_p_sht.cells.last_cell.row)).end('up').row
-        tkt_df3 = tkt_p_sht.range(f"{table3_col}2:{table3_col}{last_row}").options(pd.DataFrame, 
+        tkt_df3 = tkt_p_sht.range(f"{table3_col}1:{table3_col}{last_row}").options(pd.DataFrame, 
                                 header=1,
                                 index=False, 
                                 expand='right').value
         
         #pasting data in final workbook Ticket Summary Sheet
-        
-        new_wb.sheets['Ticket Summary'].range("A1").options(pd.DataFrame, header=1, index=False, expand='table').value = tkt_df1
-        new_wb.sheets['Ticket Summary'].range(f"A{len(tkt_df1)+6}").options(pd.DataFrame, header=1, index=False, expand='table').value = tkt_df2
-        new_wb.sheets['Ticket Summary'].range(f"{table3_col}1").options(pd.DataFrame, header=1, index=False, expand='table').value = tkt_df3
-        new_wb.sheets['Ticket Summary'].autofit(axis="columns")
+        new_wb.activate()
+        current_month_sht.activate()
+        current_month_sht.range("A1").value = "Ticket Summary"
+        current_month_sht.range("A1").api.Font.Bold = True
+        current_month_sht.range("A1").color = "#FFFF00"
+        current_month_sht.range("A1:B1").merge()
+        current_month_sht.range("A1:B1").api.HorizontalAlignment = win32c.HAlign.xlHAlignCenter
+        current_month_sht.range("A3").options(pd.DataFrame, header=1, index=False, expand='table').value = tkt_df1
+        current_month_sht.range("A3").expand('right').api.Font.Bold = True
+        # new_wb.app.selection.api.Font.Bold = True
+        current_month_sht.range(f"A{len(tkt_df1)+8}").options(pd.DataFrame, header=1, index=False, expand='table').value = tkt_df2
+        current_month_sht.range(f"A{len(tkt_df1)+8}").expand('right').select()
+        new_wb.app.selection.api.Font.Bold = True
+        current_month_sht.range(f"{table3_col}3").options(pd.DataFrame, header=1, index=False, expand='table').value = tkt_df3
+        current_month_sht.range(f"{table3_col}3").expand('right').select()
+        new_wb.app.selection.api.Font.Bold = True
+        table3_last_col = num_to_col_letters(current_month_sht.range(f"{table3_col}3").end("right").column)
+        table3_last_row = current_month_sht.range(table3_last_col+ str(current_month_sht.cells.last_cell.row)).end('up').row
+        current_month_sht.range(f"{table3_last_col}2:{table3_last_col}{table3_last_row}").api.NumberFormat = "0%"
+        current_month_sht.autofit(axis="columns")
 
         #setting Borders for 1st table
-        border_range = new_wb.sheets['Settlement Summary'].range("A1").expand("table")
+        border_range = current_month_sht.range(f"A3:A{len(tkt_df1)+3}").expand("right")
         set_borders(border_range)
 
         #setting Borders for 2nd table
-        border_range = new_wb.sheets['Settlement Summary'].range(f"A{len(tkt_df1)+6}").expand("table")
+        border_range = current_month_sht.range(f"A{len(tkt_df1)+8}:A{len(tkt_df1)+8+len(tkt_df2)}").expand("right")
         set_borders(border_range)
 
         #setting Borders for 3rd table
-        border_range = new_wb.sheets['Settlement Summary'].range(f"{table3_col}1").expand("table")
+        table3_last_row = current_month_sht.range(f'F'+ str(current_month_sht.cells.last_cell.row)).end('up').row
+        border_range = current_month_sht.range(f"{table3_col}3:{table3_col}{table3_last_row}").expand("right")
         set_borders(border_range)
 
 
 
 
         #Settlement Summary Data sheets
-        new_wb.sheets.add("Settlement Summary",after=new_wb.sheets[f"Ticket Summary"]) 
+        settlement_row =  current_month_sht.range(f'D'+ str(current_month_sht.cells.last_cell.row)).end('up').row+5
+        # 
+        current_month_sht.range(f"A{settlement_row}").value = "Settlement Summary"
+        current_month_sht.range(f"A{settlement_row}").api.Font.Bold = True
+        current_month_sht.range(f"A{settlement_row}").color = "#FFFF00"
+        current_month_sht.range(f"A{settlement_row}:B{settlement_row}").merge()
+        current_month_sht.range(f"A{settlement_row}:B{settlement_row}").api.HorizontalAlignment = win32c.HAlign.xlHAlignCenter
 
 
-
-        set_df1 = set_p_sht.range('A2').options(pd.DataFrame, 
-                                header=False,
-                                index=False,
-                                expand='table').value
+        set_df1 = set_p_sht.range(f"A1:C{set_p_sht.range('C2').end('down').row}").options(pd.DataFrame, 
+                                header=1,
+                                index=False
+                                ).value
         
 
         
-        table2_col = num_to_col_letters(set_p_sht.range("B2").end("right").column)
+        table2_col = num_to_col_letters(set_p_sht.range("C2").end("right").column)
         last_row = set_p_sht.range(chr(ord(table2_col)+1)+ str(set_p_sht.cells.last_cell.row)).end('up').row
         set_df2 = set_p_sht.range(f"{table2_col}2:{table2_col}{last_row}").options(pd.DataFrame, 
                                 header=False,
                                 index=False, 
                                 expand='right').value
+
+        set_df2.columns = [["Profit Center","Count","Percentage"]]
         
         #pasting data in final workbook Settlement Summary Sheet
         
-        new_wb.sheets['Settlement Summary'].range("A2").options(pd.DataFrame, header=False, index=False, expand='table').value = set_df1
-        new_wb.sheets['Settlement Summary'].range(f"A{len(set_df1)+5}").options(pd.DataFrame, header=False, index=False, expand='table').value = set_df2
+        current_month_sht.range(f"A{settlement_row+3}").options(pd.DataFrame, header=1, index=False, expand='table').value = set_df1
+        current_month_sht.range(f"A{settlement_row+3}").expand('right').select()
+        new_wb.app.selection.api.Font.Bold = True
+        # current_month_sht.range(f"A{settlement_row+3}").expand("right").api.Font.Bold = True
+        current_month_sht.range(f"A{settlement_row+3+len(set_df1)+5}").options(pd.DataFrame, header=1, index=False, expand='table').value = set_df2
+        current_month_sht.range(f"A{settlement_row+3+len(set_df1)+5}").expand('right').select()
+        new_wb.app.selection.api.Font.Bold = True
+        # current_month_sht.range(f"A{settlement_row+3+len(set_df1)+5}").expand("right").api.Font.Bold = True
+
+        table2_last_col = num_to_col_letters(current_month_sht.range(f"A{settlement_row+3+len(set_df1)+5}").end("right").column)
+        table2_last_row = current_month_sht.range(table2_last_col+ str(current_month_sht.cells.last_cell.row)).end('up').row
+        current_month_sht.range(f"{table2_last_col}{settlement_row+3+len(set_df1)+5}:{table2_last_col}{table2_last_row}").api.NumberFormat = "0%"
+        current_month_sht.autofit(axis="columns")
         
-        new_wb.sheets['Settlement Summary'].autofit(axis="columns")
+        
+        # new_wb.sheets['Settlement Summary'].autofit(axis="columns")
 
         #setting Borders for 1st table
-        border_range = new_wb.sheets['Settlement Summary'].range("A2").expand("table")
+        border_range = current_month_sht.range(f"A{settlement_row+3}:A{settlement_row+3+len(set_df1)}").expand("right")
         set_borders(border_range)
 
         #setting Borders for 2nd table
-        border_range = new_wb.sheets['Settlement Summary'].range(f"A{len(set_df1)+5}").expand("table")
+        border_range = current_month_sht.range(f"A{settlement_row+3+len(set_df1)+5}:A{settlement_row+3+len(set_df1)+5+len(set_df2)}").expand("right")
         set_borders(border_range)
         
 
         #Settlement Summary Data sheets
-        new_wb.sheets.add("Consolidated Summary",after=new_wb.sheets[f"Settlement Summary"]) 
+        # new_wb.sheets.add("Consolidated Summary",after=new_wb.sheets[f"Settlement Summary"]) 
+        summ_row =  current_month_sht.range(f'B'+ str(current_month_sht.cells.last_cell.row)).end('up').row +5
+        # new_wb.sheets.add("Settlement Summary",after=new_wb.sheets[f"Ticket Summary"])
+        current_month_sht.range(f"A{summ_row}").value = "Consolidated Summary"
+        current_month_sht.range(f"A{summ_row}").api.Font.Bold = True
+        current_month_sht.range(f"A{summ_row}").color = "#FFFF00"
+        current_month_sht.range(f"A{summ_row}:B{summ_row}").merge()
+        current_month_sht.range(f"A{summ_row}:B{summ_row}").api.HorizontalAlignment = win32c.HAlign.xlHAlignCenter
 
 
 
@@ -5515,15 +5786,17 @@ def tkt_n_settlement_summ(input_date, output_date):
                                 expand='table').value
         summ_df.columns = ['User', 'Sum of Tickets', 'Sum of Settlements']
 
-        new_wb.sheets['Consolidated Summary'].range("A1").options(pd.DataFrame, header=1, index=False, expand='table').value = summ_df
-        new_wb.sheets['Consolidated Summary'].autofit(axis="columns")
+        current_month_sht.range(f"A{summ_row+3}").options(pd.DataFrame, header=1, index=False, expand='table').value = summ_df
+        current_month_sht.range(f"A{summ_row+3}").expand('right').select()
+        new_wb.app.selection.api.Font.Bold = True
+        current_month_sht.autofit(axis="columns")
         #setting Borders
-        border_range = new_wb.sheets['Consolidated Summary'].range("A1").expand("table")
+        border_range = current_month_sht.range(f"A{summ_row+3}").expand("table")
         set_borders(border_range)
 
         #Saving workbooks
-        wb.save(output_file)
-        new_wb.save(det_output_file)
+        wb.save(det_output_file)
+        new_wb.save(output_file)
 
         wb.app.quit()
 
@@ -5536,6 +5809,491 @@ def tkt_n_settlement_summ(input_date, output_date):
         except:
             pass
 
+
+def credit_card_entry(input_date, output_date):
+    try:
+        job_name = 'Credit_Card_Entry'
+        datetime_input=datetime.strptime(input_date,"%m.%d.%Y")
+        input_month=datetime.strftime(datetime_input,"%B")
+        input_year=datetime.strftime(datetime_input,"%Y")
+        input_month_small=datetime.strftime(datetime_input,"%b").upper()
+        input_year_small=datetime.strftime(datetime_input,"%y")
+        input_month_no=datetime.strftime(datetime_input,"%m")
+        date=datetime_input.replace(day=1)-timedelta(1)
+        previous_month=datetime.strftime(date,"%B")
+        previous_year=datetime.strftime(date,"%Y")
+        input_csv = r'J:\WEST PLAINS\REPORT\Credit Card Entry\Raw Files'+f'\\Credit_Card_{input_month_no}.{input_year}.csv'
+        if not os.path.exists(input_csv):
+            return(f"{input_csv} Excel file not present for date {input_date}") 
+        input_sheet = r'J:\WEST PLAINS\REPORT\Credit Card Entry\Output files'+f'\\{previous_month} {previous_year} Credit Card expense.xlsx'
+        if not os.path.exists(input_sheet):
+            return(f"{input_sheet} Excel file not present for date {input_date}") 
+
+        working_sheet = f'{input_month} {input_year}'           # current month sheet name
+        output_location = r'J:\WEST PLAINS\REPORT\Credit Card Entry\Output files'               
+        
+        
+        cardName_df = pd.read_excel(input_sheet,sheet_name='Card List', usecols="C,D",index_col = 0)       #Data Frame of Card List
+        # required dictionary with card_num as KEY and Name as Value
+        req_dict = cardName_df.to_dict()['Name']
+        # logging.info('Opening Workbook')
+        wb = xw.Book(input_sheet, update_links=False)      #open workbook
+        # logging.info('Adding Current month Sheet')
+        try:
+            wb.sheets.add(working_sheet,after=wb.sheets[-1].name)
+        except:
+            pass
+
+        # logging.info('opening current month sheet')
+        ws1 = wb.sheets[working_sheet]          # opening current month sheet
+        ws1.clear()
+
+        # opening raw data workbook
+        # logging.info(' Opening raw data workbook')
+        # raw_wb = xw.Book('Chase4284_Activity20211229_20220128_20220203.csv',update_links=True)
+        raw_df = pd.read_csv(f'{input_csv}')
+        # logging.info('Changing columns order as required')
+        raw_df = raw_df[['Card','Type','Transaction Date','Post Date','Description','Amount','Category']]      #change columns order
+        # logging.info('Adding data from from raw file')
+        ws1.range('B1').options(index = False).value = raw_df          #adding raw file data
+        # wb = xw.Book(wb_path).save()
+
+        card_lst = list(raw_df['Card'])
+        amount_lst = list(raw_df['Amount'])
+
+        # logging.info('Changing  credit card number format')
+        for i in range(len(card_lst)):
+            if len(str(card_lst[i]))==3:
+                card_lst[i] = f'XX-0{card_lst[i]}'
+            else:
+                card_lst[i] = f'XX-{card_lst[i]}'
+            
+        # print(card_lst) 
+        # logging.info('Adding credit card number')
+        ws1.range('B2').options(transpose = True).value = card_lst    #adding card number
+        ws1.range('A1').value = 'Name'
+        ws1.range("B1").value = 'Credit Card No'
+
+        
+        name_lst = []
+        for i in card_lst:
+            name_lst.append(req_dict[i])
+        # print(name_lst)
+
+        # logging.info('Remove negative sign from amount column')
+        for i in range(len(amount_lst)):
+            if amount_lst[i] < 0:
+                amount_lst[i]*= (-1)
+        
+        ws1.range('G2').options(transpose = True).value = amount_lst   
+        # logging.info('Adding emloyee name')
+        ws1.range('A2').options(transpose = True).value = name_lst      #adding employee name
+        # wb = xw.Book(wb_path).save()
+        # final_df = pd.read_excel(wb_path,sheet_name=working_sheet)
+        final_df = pd.DataFrame(ws1.range('A1').expand('table').value, columns=ws1.range('A1').expand('right').value)
+        # logging.info('Sorting data in ascending order')
+        final_df = final_df.sort_values(by='Name')     #sorting data frame
+        ws1.range('A1').options(index = False).value = final_df
+
+        ws1.range('1:1').api.Font.Bold = True
+        ws1['1:1'].font.size = 12
+        ws1.autofit()
+        num_row = ws1.range('A1').end('down').row
+
+        ws1.range(f'G2:G{num_row}').api.NumberFormat= '_("$"* #,##0.00_);_("$"* (#,##0.00);_("$"* "-"??_);_(@_)'
+        # wb = xw.Book(wb_path).save()
+        name_lst.sort()
+        # logging.info('Put Arpita Bhandari on top of the sheet')
+
+        last_column = ws1.range('A1').end('right').last_cell.column
+        last_column_letter=num_to_col_letters(last_column)
+        last_row = ws1.range(f'A'+ str(ws1.cells.last_cell.row)).end('up').row
+        ws1.range(f"A2:{last_column_letter}{last_row}").api.Sort(Key1=ws1.range(f"A2:A{last_row}").api,Order1=1,DataOption1=0,Orientation=1)
+        ws1.api.Sort.SortFields.Clear()
+        top_row = 2
+        for i in range(2,num_row*2):
+            if ws1.range(f'A{i}').value == 'Arpita Bhandari':
+                ws1.range(f"{top_row}:{top_row}").api.Insert(win32c.InsertShiftDirection.xlShiftDown,win32c.InsertFormatOrigin.xlFormatFromRightOrBelow)
+                i+=1
+                ws1.range(f'{top_row}:{top_row}').value = ws1.range(f'{i}:{i}').value
+                ws1.range(f'{i}:{i}').api.Delete(win32c.DeleteShiftDirection.xlShiftUp) 
+            else:
+                continue
+            top_row+=1
+
+        top_row = 2
+        for i in range(2,last_row):
+            if (ws1.range(f'C{i}').value == 'Payment') or (ws1.range(f'C{i}').value == 'Return'):
+                ws1.range(f'G{i}').value = ws1.range(f'G{i}').value*(-1) 
+            else:
+                pass
+            top_row+=1
+
+        prev = ws1.range('A2').value
+        prev_row = 2
+        # logging.info('Insert blank row after every employee and adding total amount ')
+        for i in range(2,num_row*2):
+            curr = ws1.range(f'A{i}').value
+            if prev ==curr:
+                # ws1.range(f'A{i}').color = (0,128,0)
+                continue
+            else:
+               
+                ws1.range(f"{i}:{i}").api.Insert(win32c.InsertShiftDirection.xlShiftToRight)
+                ws1.range(f'A{i}').value = ws1.range(f'A{i-1}').value
+                ws1.range(f'B{i}').value = ws1.range(f'B{i-1}').value
+                ws1.range(f'F{i}').value = 'Chase Corp Card Clearing Acct'
+                ws1.range(f'F{i}').api.Font.Bold = True
+                ws1.range(f'G{i}').formula = f'=-SUM(G{prev_row}:G{i-1})'
+                ws1.range(f'G{i}').api.Font.Bold = True
+                # ws1.range(f"{i}:{i}").api.Font.Bold = True
+            prev = curr
+            prev_row = i+1
+
+        # wb = xw.Book(wb_path).save()
+        ws1.autofit()
+        last_row = ws1.range(f'A'+ str(ws1.cells.last_cell.row)).end('up').row
+        column_list = ws1.range("A1").expand('right').value
+        Name_no_column=column_list.index('Name')+1
+        Name_letter_column = num_to_col_letters(Name_no_column)
+        i = 2
+        while i <= last_row:
+            if ws1.range(f"{Name_letter_column}{i}").value == "Name": 
+                ws1.range(f"{i}:{i}").api.Delete(win32c.win32c.DeleteShiftDirection.xlShiftUp)
+                # print(i)
+                i-=1                   
+            else:
+                i+=1
+        column_list = ws1.range("A1").expand('right').value
+        list1=["G/L ID Center","ACCT Part","Sub Acct","Location","GL","Back up details"]
+        list2=["","",'','=IFERROR(INDEX(Code!$B:$B,MATCH(H2,Code!A:A,0)),"")','=IFERROR(INDEX(Code!$F:$F,MATCH(I2,Code!$E:$E,0)),"")',''] 
+        last_column = ws1.range('A1').end('right').last_cell.column
+        last_column+=1
+        i=0
+        last_row = ws1.range(f'A'+ str(ws1.cells.last_cell.row)).end('up').row
+        for values in list1:
+            last_column_letter2=num_to_col_letters(last_column-1)
+            ws1.api.Range(f"{last_column_letter2}1").EntireColumn.Insert()
+            ws1.range(f"{last_column_letter2}1").value = values
+            ws1.range(f"{last_column_letter2}1").api.Font.Bold = True
+            ws1.range(f"{last_column_letter2}2").value = list2[i]
+            time.sleep(1)
+            ws1.range(f"{last_column_letter2}2").copy(ws1.range(f"{last_column_letter2}2:{last_column_letter2}{last_row}"))
+            i+=1
+            last_column+=1
+        ws1.autofit()
+        last_column = ws1.range('A1').end('right').last_cell.column
+        last_column_letter = num_to_col_letters(last_column)
+        last_row = ws1.range(f'A'+ str(ws1.cells.last_cell.row)).end('up').row
+        ws1.activate()
+        insert_all_borders(cellrange=f"A1:{last_column_letter}{last_row}",working_sheet=ws1,working_workbook=wb)
+        dt=datetime_input.replace(day=1)-timedelta(1)
+        previous_month=datetime.strftime(dt,"%B")
+        previous_year=datetime.strftime(dt,"%Y")
+        previous_sheet=wb.sheets[f"{previous_month} {previous_year}"]
+        previous_sheet.activate()
+        last_row_num1 = previous_sheet.range('F1').end('down').end('down').row
+        last_row_num2=last_row_num1+9
+        last_row = ws1.range(f'A'+ str(ws1.cells.last_cell.row)).end('up').row
+        last_row+=5
+        wb.app.display_alerts=False
+        previous_sheet.range(f"F{last_row_num1}:H{last_row_num2}").copy(ws1.range(f"F{last_row}"))
+        wb.app.display_alerts=True
+        ws1.range(f"G{last_row}").value=f"='{previous_month} {previous_year}'!G{last_row_num2}"
+        directories_created=[f"Excel_Files_{input_month} {input_year}"]
+        for directory in directories_created:
+            path3 = os.path.join(output_location,directory)  
+            try:
+                os.makedirs(path3, exist_ok = True)
+                print("Directory '%s' created successfully" % directory)
+            except OSError as error:
+                print("Directory '%s' can not be created" % directory)   
+       
+        row_list = ws1.range("A2").expand('down').value
+        row_list_n = list(OrderedDict.fromkeys(row_list))
+        for values in row_list_n:
+            # logging.info('Opening Workbook')
+            wb2 = xw.Book() 
+            wss1=wb2.sheets[0]
+            time.sleep(1)
+            ws1.range(f"A1:G1").copy(wss1.range("A1"))
+            time.sleep(1)
+            wb.activate()
+            ws1.activate()
+            ws1.api.Range(f"A1").AutoFilter(Field:=1, Criteria1:=values, Operator:=7)
+            last_row = ws1.range(f'A'+ str(ws1.cells.last_cell.row)).end('up').row
+            ws1.api.Range(f"A2:G{last_row}").SpecialCells(12).Select()
+            time.sleep(1)
+            wb.app.selection.copy(wss1.range("A2"))
+            time.sleep(1)
+            wb2.activate()
+            wss1.activate()
+            wss1.api.Range(f"H1").Value="Location"
+            wss1.range(f"H1").api.Font.Size = "12"
+            last_row = wss1.range(f'A'+ str(wss1.cells.last_cell.row)).end('up').row
+            insert_all_borders(cellrange=f"H1:H{last_row}",working_sheet=wss1,working_workbook=wb2)
+            wss1.autofit()       
+            wb2.save(f"{output_location}\\Excel_Files_{input_month} {input_year}\\{values}.xlsx")
+            wb2.close()      
+
+        ws1.api.AutoFilterMode=False
+        ws1.api.Rows("2:2").Select()
+        wb.app.api.ActiveWindow.FreezePanes = True
+        ws1.api.Range("H:H").NumberFormat="General"
+        ws1.api.Range("I:I").NumberFormat="General"
+        ws1.api.Range("J:J").NumberFormat="General"
+        
+        # save_month = (datetime_input+relativedelta(months=+1)).strftime("%B")
+        ws1.autofit()
+        file_name = f'{input_month} {input_year} Credit Card expense'
+        wb.save(f"{output_location}\\{file_name}.xlsx")
+        # raw_wb.close()
+        return f"{job_name} Report for {input_date} generated succesfully"
+    except Exception as e:
+        raise e
+        # logging.exception(str(e))
+    finally:
+        wb.app.quit()
+
+
+def payroll_summ(input_date, output_date):
+    try:
+        input_datetime = datetime.strptime(input_date,"%m.%d.%Y")
+        monthYear = datetime.strftime(datetime.strptime(input_date, "%m.%d.%Y"), "%b %y")
+        input_pdf = r"J:\WEST PLAINS\REPORT\Payroll summary accounting report\Raw Files" +f"\\Payroll Summary By Cost Center *.pdf"
+        # input_pdf = r"C:\Users\imam.khan\OneDrive - BioUrja Trading LLC\Documents\WEST PLAINS\REPORT\Macquaire Accrual Entry\Raw Files" +f"\\Macq Statement_{input_date}.pdf"
+        # if not os.path.exists(input_pdf):
+        #         return(f"{input_pdf} PDF file not present for date {input_date}")
+        input_xl = r"J:\WEST PLAINS\REPORT\Payroll summary accounting report\Raw Files" +f"\\Payroll by Dept - {monthYear}.xlsx"
+        # input_xl = r"C:\Users\imam.khan\OneDrive - BioUrja Trading LLC\Documents\WEST PLAINS\REPORT\Macquaire Accrual Entry\Raw Files" +f"\\Macq Accrual_{input_date}.xlsx"
+        if not os.path.exists(input_xl):
+                return(f"{input_xl} Excel file not present for date {input_date}")
+        template_xl = r"J:\WEST PLAINS\REPORT\Payroll summary accounting report\Raw Files" +f"\\Template.xlsx"
+        # input_xl = r"C:\Users\imam.khan\OneDrive - BioUrja Trading LLC\Documents\WEST PLAINS\REPORT\Macquaire Accrual Entry\Raw Files" +f"\\Macq Accrual_{input_date}.xlsx"
+        if not os.path.exists(template_xl):
+                return(f"{template_xl} Excel file not present")
+        output_location = r'J:\WEST PLAINS\REPORT\Payroll summary accounting report\Output Files'+f"\\Payroll by Dept - {monthYear}.xlsx"
+
+        data = payroll_pdf_extractor(input_pdf, input_datetime, monthYear)
+
+        retry=0
+        while retry < 10:
+            try:
+                wb=xw.Book(input_xl)
+                break
+            except Exception as e:
+                time.sleep(2)
+                retry+=1
+                if retry ==9:
+                    raise e
+
+        retry=0
+        while retry < 10:
+            try:
+                inp_sht = wb.sheets["Detail"]
+                break
+            except Exception as e:
+                time.sleep(2)
+                retry+=1
+                if retry ==9:
+                    raise e
+        while retry < 10:
+            try:
+                t_wb=xw.Book(template_xl)
+                break
+            except Exception as e:
+                time.sleep(2)
+                retry+=1
+                if retry ==9:
+                    raise e
+
+        retry=0
+        while retry < 10:
+            try:
+                t_sht = t_wb.sheets["Detail"]
+                break
+            except Exception as e:
+                time.sleep(2)
+                retry+=1
+                if retry ==9:
+                    raise e
+        inp_sht.range("F4:T4").expand("down").expand("down").delete()
+        inp_sht.range("A4:T4").expand("down").expand("down").delete()
+        last_row=4
+        first_row = 4
+        init_chr = "F"
+        last_column = inp_sht.range("F3").end('right').column-6 #considering f as intial col
+        for pdf_data in range(len(data)-1,-1,-1):
+            t_sht.range(f"A4:T4").expand("down").copy(inp_sht.range(f"A{first_row}"))#copying data from template
+            last_row = inp_sht.range(f'A'+ str(inp_sht.cells.last_cell.row)).end('up').row
+            #inserting dates
+            inp_sht.range(f"C{first_row}:C{last_row}").value = list(data.keys())[pdf_data]
+            
+            for row in range(first_row,last_row+1):
+                for col in range(last_column):
+                    try:
+                        inp_sht.range(f"{chr(ord(init_chr)+col)}{row}").value = data[list(data.keys())[pdf_data]][inp_sht.range(f"A{row}").value][inp_sht.range(f"{chr(ord(init_chr)+col)}3").value]
+                    except:
+                        inp_sht.range(f"{chr(ord(init_chr)+col)}{row}").value = 0
+                    if row == last_row and pdf_data == 0:
+                        inp_sht.range(f"{chr(ord(init_chr)+col)}{row+2}").formula = f'=SUM({chr(ord(init_chr)+col)}4:{chr(ord(init_chr)+col)}{row})'
+                #updating first row as last row
+            first_row = last_row+1
+        inp_sht.range(f"F4:{chr(ord(init_chr)+last_column)}{row+2}").api.NumberFormat = '_(* #,##0.00_);_(* (#,##0.00);_(* "-"??_);_(@_)' #Standard format
+        #Pivot part starts
+        retry=0
+        while retry < 10:
+            try:
+                p_sht = wb.sheets["Pivot"]
+                break
+            except Exception as e:
+                time.sleep(2)
+                retry+=1
+                if retry ==9:
+                    raise e
+        p_sht.activate()
+        wb.api.ActiveSheet.PivotTables(1).PivotCache().SourceData = f"Detail!R3C1:R{last_row}C{last_column+6}" #Updateing data source, Removing initialization for f
+        wb.api.ActiveSheet.PivotTables(1).PivotCache().Refresh()  
+
+        p_last_row = p_sht.range(f'A'+ str(inp_sht.cells.last_cell.row)).end('up').row -1
+        p_sht.range(f"C5:D{p_last_row}").copy(p_sht.range("G5"))
+
+        #Updating Dates
+        p_sht.range("K1").value = datetime.strftime(input_datetime.replace(day=1)-timedelta(days=1), "%m/%d/%Y") #Last Monthend
+        p_sht.range("M1").value = datetime.strftime(input_datetime, "%m/%d/%Y") #Monthend
+
+        p_sht.range("U5").expand("down").value = f"PAYROLL RECLASSIFICATION {monthYear}"
+        p_sht.range("V5").expand("down").value = f"PAYROLL {monthYear}"
+        
+        wb.save(output_location)
+        print()
+        wb.app.quit()
+
+        return f"Payroll Summary Report for {input_date} generated succesfully"
+    except Exception as e:
+        raise e
+    
+    finally:
+        try:
+            wb.app.quit()
+        except:
+            pass
+
+def credit_card_gl(input_date, output_date):
+    try:
+        job_name = "Credit_Card_GL_Monthly"
+        datetime_input=datetime.strptime(input_date,"%m.%d.%Y")
+        input_month=datetime.strftime(datetime_input,"%B")
+        input_year=datetime.strftime(datetime_input,"%Y")
+        input_month_small=datetime.strftime(datetime_input,"%b").upper()
+        input_year_small=datetime.strftime(datetime_input,"%y")
+        lastday=calendar.monthrange(datetime_input.year,datetime_input.month)[1]
+        input_month_no=datetime.strftime(datetime_input,"%m")
+        insertdate=f'{input_year}{input_month_no}{lastday}'
+
+
+        input_sheet = r'J:\WEST PLAINS\REPORT\Credit_Card_GL\Raw Files'+f'\\{input_month} {input_year} Credit Card expense.xlsx' 
+        if not os.path.exists(input_sheet):
+            return(f"{input_sheet} Excel file not present for date {input_date}")           
+        output_location = r'J:\WEST PLAINS\REPORT\Credit_Card_GL\Output files'
+        output_location_file=f'{output_location}'+f'\\March {input_year} Credit Card expense.xlsx'
+        if os.path.exists(output_location_file):
+            input_sheet=output_location_file
+        xw.App.display_alerts = False
+        retry=0
+        while retry < 10:
+            try:
+                wb=xw.Book(input_sheet,update_links=False)
+                break
+            except Exception as e:
+                time.sleep(5)
+                retry+=1
+                if retry ==10:
+                    raise e                       
+        input_tab=wb.sheets[f"{input_month} {input_year}"]
+        entry_tab=0
+        try:
+            entry_tab=wb.sheets[f"GS entry {input_month_small} {input_year_small}"]
+            entry_tab.clear() 
+        except:
+            wb.sheets.add(f"GS entry {input_month_small} {input_year_small}",after=input_tab)        
+        entry_tab=wb.sheets[f"GS entry {input_month_small} {input_year_small}"]  
+        input_tab.activate()
+        column_list = input_tab.range("A1").expand('right').value
+        gl_letter_column = num_to_col_letters(column_list.index('GL')+1)
+        last_row = input_tab.range(f'A'+ str(input_tab.cells.last_cell.row)).end('up').row
+        entry_tab.activate()
+        entry_tab.api.Range("A1").Select()
+        input_tab.api.Range(f"A1:{gl_letter_column}{last_row}").Copy()
+        time.sleep(5)
+        entry_tab.api.Paste()
+        wb.app.api.CutCopyMode=False
+        entry_tab.autofit()
+        last_row = entry_tab.range(f'A'+ str(entry_tab.cells.last_cell.row)).end('up').row
+        column_list = entry_tab.range("A1").expand('right').value
+        Description_no_column=column_list.index('Description')+1
+        Description_letter_column = num_to_col_letters(Description_no_column)
+        i = 2
+        while i <= last_row:
+            color_hex="ffc000"
+            rgb_value=tuple(int(color_hex[i:i+2], 16) for i in (0, 2, 4))
+            if entry_tab.range(f"{Description_letter_column}{i}").color == rgb_value: 
+                entry_tab.range(f"{i}:{i}").api.Delete(win32c.DeleteShiftDirection.xlShiftUp)
+                # print(i)
+                i-=1                   
+            else:
+                i+=1
+
+        Type_no_column=column_list.index('Type')+1
+        Type_letter_column = num_to_col_letters(Type_no_column)
+        i = 2
+        while i <= last_row:
+            if entry_tab.range(f"{Type_letter_column}{i}").value == "Payment": 
+                entry_tab.range(f"{i}:{i}").api.Delete(win32c.DeleteShiftDirection.xlShiftUp)
+                row_list = entry_tab.range(f"{Description_letter_column}1").expand('down').value
+                Chase_Corp=row_list.index('Chase Corp Card Clearing Acct')+1
+                Amount_no_column=column_list.index('Amount')+1
+                Amount_letter_column = num_to_col_letters(Amount_no_column)
+                if entry_tab.range(f"{Amount_letter_column}{Chase_Corp}").value == None:
+                    entry_tab.range(f"{Chase_Corp}:{Chase_Corp}").api.Delete(win32c.DeleteShiftDirection.xlShiftUp)
+                i-=1                   
+            else:
+                i+=1        
+
+        column_list = entry_tab.range("A1").expand('right').value
+        list1=["MONTH"," ","description"," ","fiscal_year","gl_acct_nbr","journal_source_code","transaction_date","description","refrence_id","amount"]
+        list2=[f"{input_month_small}'{input_year_small}","'00",'=+F2&" "&B2&" "&M2',"","C",'=+N2&H2&"-"&I2&"-"&J2',"GLM",f"{insertdate}","=TRIM(O2)","=+VLOOKUP(@A:A,Code!I:J,2,FALSE)","=+ROUND(G2,2)"] 
+        last_column = entry_tab.range('A1').end('right').last_cell.column
+        last_column+=1
+        i=0
+        last_row = entry_tab.range(f'A'+ str(entry_tab.cells.last_cell.row)).end('up').row
+        for values in list1:
+            last_column_letter=num_to_col_letters(last_column)
+            entry_tab.range(f"{last_column_letter}1").value = values
+            entry_tab.range(f"{last_column_letter}1").api.Font.Bold = True
+            entry_tab.range(f"{last_column_letter}2").value = list2[i]
+            time.sleep(1)
+            entry_tab.range(f"{last_column_letter}2").copy(entry_tab.range(f"{last_column_letter}2:{last_column_letter}{last_row}"))
+            i+=1
+            last_column+=1
+        entry_tab.autofit()
+        entry_tab.activate() 
+        last_row = entry_tab.range(f'A'+ str(entry_tab.cells.last_cell.row)).end('up').row  
+        column_list = entry_tab.range("A1").expand('right').value        
+        amount_column=num_to_col_letters(column_list.index('amount')+1)
+        MONTH_letter_column = num_to_col_letters(column_list.index('MONTH')+1)
+        insert_all_borders(cellrange=f"{MONTH_letter_column}1:{amount_column}{last_row}",working_sheet=entry_tab,working_workbook=wb)                    
+        save_month = (datetime_input+relativedelta(months=+1)).strftime("%B")
+        wb.save(f"{output_location}\\{save_month} {input_year} Credit Card expense.xlsx")
+        wb.app.quit()
+        return f"{job_name} Report for {input_date} generated succesfully"
+    except Exception as e:
+        raise e
+    finally:
+        try:
+            wb.app.quit()
+        except:
+            pass
 
 def main():
     def on_closing():
@@ -5612,7 +6370,8 @@ def main():
     wp_job_ids = {'ABS':1,'BBR':bbr,'CPR Report':cpr, 'Freight analysis':freight_analysis, 'CTM combined':ctm,'FIFO Report':fifo,'MTM Report':mtm_report,'Inventory MTM excel report summary':inv_mtm_excel_summ,
                     'MOC Interest Allocation':moc_interest_alloc,'Open AR':open_ar,'Open AP':open_ap, 'Unsettled Payable Report':unsetteled_payables,'Unsettled Receivable Report':unsetteled_receivables,
                     'Storage Month End Report':strg_month_end_report, "Month End BBR":bbr_monthEnd, "Bank Recons Report":bank_recons_rep, "Payables_GL_Entry_Monthly":payables_gl_entry_monthly,
-                    "Receivables_GL_Entry_Monthly":receivables_gl_entry_monthly,"CTM_GL_Entry_Monthly":ctm_gl_entry_monthly, "Macquarie Accrual Entry":macq_accr_entry, "Ticket_N_Settlement_Report":tkt_n_settlement_summ}
+                    "Receivables_GL_Entry_Monthly":receivables_gl_entry_monthly,"CTM_GL_Entry_Monthly":ctm_gl_entry_monthly, "Macquarie Accrual Entry":macq_accr_entry, "Ticket_N_Settlement_Report":tkt_n_settlement_summ,
+                    "Payroll_Summary":payroll_summ,"Credit_Card_Entry":credit_card_entry, "Credit_Card_GL_Entry":credit_card_gl}
     # wp_job_ids = {'ABS':1,'BBR':bbr,'CPR Report':cpr, 'Freight analysis':freight_analysis, 'CTM combined':ctm,'MTM Report':mtm_report,
     #                 'MOC Interest Allocation':moc_interest_alloc,'Open AR':open_ar,'Open AP':open_ap, 'Unsettled Payable Report':unsetteled_payables,'Unsettled Receivable Report':unsetteled_receivables,
     #                 'Storage Month End Report':strg_month_end_report, "Month End BBR":bbr_monthEnd, "Bank Recons Report":bank_recons_rep}
