@@ -4240,8 +4240,8 @@ def moc_interest_alloc(input_date, output_date):
         dt = datetime.strptime(input_date,"%m.%d.%Y")
         mtm_input_date = dt.strftime("%B %Y")
 
-        mtm_file = r"J:\WEST PLAINS\REPORT\MOC Interest allocation\Raw files\Inventory MTM Excel Report " + mtm_input_date +'.xlsx'
-
+        # mtm_file = r"J:\WEST PLAINS\REPORT\MOC Interest allocation\Raw files\Inventory MTM Excel Report " + mtm_input_date +'.xlsx'
+        mtm_file = r"J:\WEST PLAINS\REPORT\FIFO reports\Output files\Inventory MTM Excel Report " + mtm_input_date +'.xlsx'
         if not os.path.exists(mtm_file):
                 return(f"{mtm_file} Excel file not present for date {input_date}")
 
@@ -5391,7 +5391,7 @@ def tkt_n_settlement_summ(input_date, output_date):
         if not os.path.exists(final_input):
             return(f"{final_input} Excel file not present")
 
-        output_file =  r"J:\WEST PLAINS\REPORT\Ticket And Settlement Summary\Output Files"+f"\\Tickets and Settlement {monthYear}.xlsx"
+        output_file =  r"J:\WEST PLAINS\REPORT\Ticket And Settlement Summary\Output Files"+f"\\Tickets and Settlement.xlsx"
         det_output_file = r"J:\WEST PLAINS\REPORT\Ticket And Settlement Summary\Output Files"+f"\\Ticket Query {monthYear} Details.xlsx"
 
 
@@ -5598,7 +5598,7 @@ def tkt_n_settlement_summ(input_date, output_date):
         left_df.columns = ["Row Labels", "Tickets"]
         left_df.replace(to_replace='None', value=np.nan).dropna(inplace=True)
         left_df.dropna(inplace=True)
-        right_df = set_p_sht.range(f"B2:C{set_p_sht.range('C2').end('down').row}").options(pd.DataFrame, 
+        right_df = set_p_sht.range(f"B1:C{set_p_sht.range('C2').end('down').row}").options(pd.DataFrame, 
                                 header=1,
                                 index=False
                                 ).value[:-1]
@@ -5628,7 +5628,7 @@ def tkt_n_settlement_summ(input_date, output_date):
         pivotCount = wb.api.ActiveSheet.PivotTables().Count
             
         for j in range(1, pivotCount+1):
-            wb.api.ActiveSheet.PivotTables(j).PivotCache().SourceData = f"'Sheet1'!R1C1:R{len(merged_df)}C3" #3 for C col
+            wb.api.ActiveSheet.PivotTables(j).PivotCache().SourceData = f"'Sheet1'!R1C1:R{len(merged_df)+1}C3" #3 for C col
             wb.api.ActiveSheet.PivotTables(j).PivotCache().Refresh()
 
     
