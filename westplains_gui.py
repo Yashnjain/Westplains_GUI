@@ -273,91 +273,97 @@ def other_loc_extractor(input_pdf):
         raise e
 
 def mac_accr_pdf(input_pdf):
-    acc_dict = {}
-    
-    acc_no = None
-    pdfReader = PyPDF2.PdfFileReader(input_pdf)
-    for page in range(pdfReader.numPages):
+    try:
+        acc_dict = {}
         
-        pageObj = pdfReader.getPage(page)
-        a=pageObj.extractText()
-
-        if "MARKET REVALUATION" in a:
-            acc_no = a[a.find('Account'):a.find('Account')+17]
-            acc_no = acc_no.replace("Account: ","")
-            #taking acc_no last 3 digits
-            acc_no = acc_no[-3:]
-            # print(f"account_num = {acc_no}, prev_acc = {prev_acc_no} and page is {page}")
-            if acc_no == "":
-                continue
-            # if prev_acc_no is None:
-            #     prev_acc_no=acc_no #a[25:42]
-            # elif prev_acc_no != acc_no:
-            #     print(page-1)
-                
-            #     print(acc_no)
-            #     if str(prev_acc_no) in input_pdf:
-            df2 = None
-            df = read_pdf(input_pdf, pages = page+1, guess = False, stream = True ,
-                        pandas_options={'header':0}, area = ["50,10,725,850"], columns=["195,280,430"])
-            df = pd.concat(df, ignore_index=True)
-            print(df)
-
-            i=0
-            while df.iloc[i,0]!='MARKET REVALUATION':
-                i+=1
-            j=0
-            try:
-                while df.iloc[j,0]!='TOTALS':
-                    j+=1
-            except Exception as e:
-                df2=read_pdf(input_pdf, pages = page+2, guess = False, stream = True ,
-                         area = ["50,10,725,850"], columns=["195,280,430"])
-                df2 = pd.concat(df2, ignore_index=True)
-                print(df2)
-                k=0
-                try:
-                    while df2.iloc[k,0]!='TOTALS':
-                        k+=1
-                except Exception as e:
-                    raise e
-
-            if df2 is None or df2.iloc[0,0] == "TOTALS":    
-                df = df.iloc[i+3:j-1,:]
-            else:
-                df.columns = df2.columns
-                df = pd.concat([df.iloc[i+3:,:], df2.iloc[:k-1,:]], ignore_index=True)
-
+        acc_no = None
+        pdfReader = PyPDF2.PdfFileReader(input_pdf)
+        for page in range(pdfReader.numPages):
             
-            for i in range(len(df)):
-                if df.iloc[i,3] != "Profit/Loss":
-                    commodity = df.iloc[i,0]
-                    # price = df.iloc[i,2]
-                    valuation = df.iloc[i,3]
-                    if acc_no in acc_dict.keys():  
-                        
-                        acc_dict[acc_no][commodity]= float(valuation.replace(',',''))
-                        
-                    else:  
-                        acc_dict[acc_no] = {}
-                        acc_dict[acc_no][commodity]= float(valuation.replace(',',''))
+            pageObj = pdfReader.getPage(page)
+            a=pageObj.extractText()
+
+            if "MARKET REVALUATION" in a:
+                acc_no = a[a.find('Account'):a.find('Account')+17]
+                acc_no = acc_no.replace("Account: ","")
+                #taking acc_no last 3 digits
+                acc_no = acc_no[-3:]
+                # print(f"account_num = {acc_no}, prev_acc = {prev_acc_no} and page is {page}")
+                if acc_no == "":
+                    continue
+                # if prev_acc_no is None:
+                #     prev_acc_no=acc_no #a[25:42]
+                # elif prev_acc_no != acc_no:
+                #     print(page-1)
                     
+                #     print(acc_no)
+                #     if str(prev_acc_no) in input_pdf:
+                df2 = None
+                # df = read_pdf(input_pdf, pages = page+1, guess = False, stream = True ,
+                #             pandas_options={'header':0}, area = ["50,10,725,850"], columns=["195,280,430"])
+                df = read_pdf(input_pdf, pages = page+1, guess = False, stream = True ,
+                            pandas_options={'header':0}, area = ["50,10,740,850"], columns=["195,280,430"])
+                df = pd.concat(df, ignore_index=True)
+                print(df)
 
+                i=0
+                while df.iloc[i,0]!='MARKET REVALUATION':
+                    i+=1
+                j=0
+                try:
+                    while df.iloc[j,0]!='TOTALS':
+                        j+=1
+                except Exception as e:
+                    df2=read_pdf(input_pdf, pages = page+2, guess = False, stream = True ,
+                            area = ["50,10,725,850"], columns=["195,280,430"])
+                    df2 = pd.concat(df2, ignore_index=True)
+                    print(df2)
+                    k=0
+                    try:
+                        while df2.iloc[k,0]!='TOTALS':
+                            k+=1
+                    except Exception as e:
+                        raise e
 
+                if df2 is None or df2.iloc[0,0] == "TOTALS":    
+                    df = df.iloc[i+3:j-1,:]
+                else:
+                    df.columns = df2.columns
+                    df = pd.concat([df.iloc[i+3:,:], df2.iloc[:k-1,:]], ignore_index=True)
 
-            # amount_dict[prev_acc_no] = float(df.iloc[-1,-1].replace(",","")) 
+                df = df.dropna(subset=[df.columns[-1]])
+                for i in range(len(df)):
                     
-            # print(prev_acc_no)
-            print()
-            # prev_acc_no = acc_no
-        elif page == (pdfReader.numPages - 1):
-            df = read_pdf(input_pdf, pages = page+1, guess = False, stream = True ,
-                        pandas_options={'header':0}, area = ["70,10,725,850"], columns=["195,280,430"])
-            df = pd.concat(df, ignore_index=True)
-            print(df)
-            net_liq = float(df.iloc[-1,2].replace(",",""))
+                    if df.iloc[i,3] != "Profit/Loss":
+                        commodity = df.iloc[i,0]
+                        # price = df.iloc[i,2]
+                        valuation = df.iloc[i,3]
+                        if acc_no in acc_dict.keys():  
+                            
+                            acc_dict[acc_no][commodity]= float(valuation.replace(',',''))
+                            
+                        else:  
+                            acc_dict[acc_no] = {}
+                            acc_dict[acc_no][commodity]= float(valuation.replace(',',''))
+                        
 
-    return acc_dict, net_liq
+
+
+                # amount_dict[prev_acc_no] = float(df.iloc[-1,-1].replace(",","")) 
+                        
+                # print(prev_acc_no)
+                print()
+                # prev_acc_no = acc_no
+            elif page == (pdfReader.numPages - 1):
+                df = read_pdf(input_pdf, pages = page+1, guess = False, stream = True ,
+                            pandas_options={'header':0}, area = ["70,10,725,850"], columns=["195,280,430"])
+                df = pd.concat(df, ignore_index=True)
+                print(df)
+                net_liq = float(df.iloc[-1,2].replace(",",""))
+
+        return acc_dict, net_liq
+    except Exception as e:
+        raise e
 
 def inv_mtm_pdf_data_extractor(input_date, f, hrw_pdf_loc=None, yc_pdf_loc=None, mtm_report=False):
     try:
