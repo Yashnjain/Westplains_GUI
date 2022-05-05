@@ -4288,13 +4288,13 @@ def moc_interest_alloc(input_date, output_date):
     
 def bbr_monthEnd(input_date, output_date):
     try:
-        monthYear = datetime.strftime(datetime.strptime(input_date, "%m.%d.%Y"), "%b%Y").upper()
+        monthYear = datetime.strftime(datetime.strptime(input_date, "%m.%d.%Y"), "%b %Y").upper()
         input_bbr = r"J:\WEST PLAINS\REPORT\BBR Reports\Output files" +f"\\{input_date}_Borrowing Base Report.xlsx"
         output_loc = r"J:\WEST PLAINS\REPORT\BBR Reports\Output files\Month_End" +f"\\{input_date}_Borrowing Base Report.xlsx"
         if not os.path.exists(input_bbr):
             return(f"{input_bbr} Excel file not present for date {input_date}")
 
-        strg_accr = r'J:\WEST PLAINS\REPORT\Storage Month End Report\Output Files'+f"\\{monthYear}.xlsx"
+        strg_accr = r'J:\WEST PLAINS\REPORT\Storage Month End Report\Output Files'+f"\\STORAGE ACCRUAL {monthYear}.xlsx" #f"\\{monthYear}.xlsx"
         if not os.path.exists(strg_accr):
             return(f"{strg_accr} Excel file not present for date {input_date}")
 
@@ -4331,10 +4331,14 @@ def bbr_monthEnd(input_date, output_date):
         accr_wb.sheets[0].copy(before = bbr_wb.sheets["AR-Open Storage Rcbl Org"])
         bbr_wb.sheets["AR-Open Storage Rcbl Org"].delete()
         bbr_wb.save(output_loc)
+        return f"BBR motnh End report genetated for {monthYear}"
     except Exception as e:
         raise e
     finally:
-        bbr_wb.app.quit()
+        try:
+            bbr_wb.app.quit()
+        except:
+            pass
 
 def inv_mtm_excel_summ(input_date, output_date):
     try:
@@ -5966,7 +5970,7 @@ def credit_card_entry(input_date, output_date):
         i = 2
         while i <= last_row:
             if ws1.range(f"{Name_letter_column}{i}").value == "Name": 
-                ws1.range(f"{i}:{i}").api.Delete(win32c.win32c.DeleteShiftDirection.xlShiftUp)
+                ws1.range(f"{i}:{i}").api.Delete(win32c.DeleteShiftDirection.xlShiftUp)
                 # print(i)
                 i-=1                   
             else:
