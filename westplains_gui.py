@@ -5833,12 +5833,8 @@ def credit_card_entry(input_date, output_date):
         date=datetime_input.replace(day=1)-timedelta(1)
         previous_month=datetime.strftime(date,"%B")
         previous_year=datetime.strftime(date,"%Y")
-        input_csv = r'J:\WEST PLAINS\REPORT\Credit Card Entry\Raw Files'+f'\\Credit_Card_{input_month_no}.{input_year}.csv'
-        if not os.path.exists(input_csv):
-            return(f"{input_csv} Excel file not present for date {input_date}") 
-        input_sheet = r'J:\WEST PLAINS\REPORT\Credit Card Entry\Output files'+f'\\{previous_month} {previous_year} Credit Card expense.xlsx'
-        if not os.path.exists(input_sheet):
-            return(f"{input_sheet} Excel file not present for date {input_date}") 
+        input_csv = r'J:\WEST PLAINS\REPORT\Credit Card Entry\Raw Files'+f'\\Credit_Card_{input_month_no}.{input_year}.csv' 
+        input_sheet = r'J:\WEST PLAINS\REPORT\Credit Card Entry\Output files'+f'\\{previous_month} {previous_year} Credit Card expense.xlsx' 
 
         working_sheet = f'{input_month} {input_year}'           # current month sheet name
         output_location = r'J:\WEST PLAINS\REPORT\Credit Card Entry\Output files'               
@@ -5848,7 +5844,16 @@ def credit_card_entry(input_date, output_date):
         # required dictionary with card_num as KEY and Name as Value
         req_dict = cardName_df.to_dict()['Name']
         # logging.info('Opening Workbook')
-        wb = xw.Book(input_sheet, update_links=False)      #open workbook
+        retry=0
+        while retry < 10:
+            try:
+                wb = xw.Book(input_sheet, update_links=False) 
+                break
+            except Exception as e:
+                time.sleep(5)
+                retry+=1
+                if retry ==10:
+                    raise e  
         # logging.info('Adding Current month Sheet')
         try:
             wb.sheets.add(working_sheet,after=wb.sheets[-1].name)
@@ -6018,13 +6023,43 @@ def credit_card_entry(input_date, output_date):
                 os.makedirs(path3, exist_ok = True)
                 print("Directory '%s' created successfully" % directory)
             except OSError as error:
-                print("Directory '%s' can not be created" % directory)   
-       
+                print("Directory '%s' can not be created" % directory)
+        path3 = os.path.join(output_location,directory)         
+        def remove_existing_files(path3):
+            """_summary_
+
+            Args:
+                path3 (_type_): _description_
+
+            Raises:
+                e: _description_
+            """           
+        try:
+            files = os.listdir(path3)
+            if len(files) > 0:
+                for file in files:
+                    os.remove(path3 + "\\" + file) 
+            else:
+                print("No existing files available to reomve")
+            print("Pause")
+        except Exception as e:
+            raise e
+        remove_existing_files(path3)   
+           
         row_list = ws1.range("A2").expand('down').value
         row_list_n = list(OrderedDict.fromkeys(row_list))
         for values in row_list_n:
             # logging.info('Opening Workbook')
-            wb2 = xw.Book() 
+            retry=0
+            while retry < 10:
+                try:
+                    wb2 = xw.Book() 
+                    break
+                except Exception as e:
+                    time.sleep(5)
+                    retry+=1
+                    if retry ==10:
+                        raise e  
             wss1=wb2.sheets[0]
             time.sleep(1)
             ws1.range(f"A1:G1").copy(wss1.range("A1"))
