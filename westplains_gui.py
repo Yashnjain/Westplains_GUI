@@ -91,14 +91,18 @@ def insert_all_borders(cellrange:str,working_sheet,working_workbook):
 def payroll_pdf_extractor(input_pdf, input_datetime, monthYear):
     try:
         main_dict = {}
-    
+        count = 0
         for loc in glob.glob(input_pdf):       #add month difference if ==2 then not consider that file
             file_date = loc.split()[-1].split(".pdf")[0].replace(".","-")
             file_datetime = datetime.strptime(loc.split()[-1].split(".pdf")[0],"%m.%d.%Y")
             file_date = datetime.strftime(file_datetime, "%d-%m-%Y")
             diff = relativedelta(input_datetime.replace(day=1),file_datetime.replace(day=1))
             diff = diff.months*(diff.years+1)
-            if diff == 0 or diff == 1 or diff==-1:
+
+            if diff == 0: # or diff == 1 or diff==-1:
+                if count == 2:
+                    raise Exception(f"3rd file found for input month {monthYear}")
+                count+=1
                 date_df = read_pdf(loc, pages = 1, guess = False, stream = True ,
                                     pandas_options={'header':0}, area = ["30,290,120,415"], columns=["320"])[0]
                 dates = date_df.iloc[0,1].split("to")
