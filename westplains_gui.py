@@ -6208,6 +6208,9 @@ def payroll_summ(input_date, output_date):
         p_sht.range("K1").value = datetime.strftime(input_datetime.replace(day=1)-timedelta(days=1), "%m/%d/%Y") #Last Monthend
         p_sht.range("M1").value = datetime.strftime(input_datetime, "%m/%d/%Y") #Monthend
 
+        p_sht.range("L4").formula = "=C4" #take first date from pivot
+        p_sht.range("M4").formula = "=D4" #take second date from pivot
+
         p_sht.range("U5").expand("down").value = f"PAYROLL RECLASSIFICATION {monthYear}"
         p_sht.range("V5").expand("down").value = f"PAYROLL {monthYear}"
         
