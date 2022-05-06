@@ -4410,10 +4410,7 @@ def inv_mtm_excel_summ(input_date, output_date):
         mtm_sht.api.Range(f"G4:G{mtm_last_row}").SpecialCells(12).Select()
         for rng in mtm_wb.app.selection.address.split(','):
             for i in range(int(rng.split(":")[0].split("$")[-1]),int(rng.split(":")[-1].split("$")[-1])+1):
-                try:
-                    loc_dict[mtm_sht.range(f"D{i}").value][0].rename(index={'OMA COMM': 'TERMINAL'}, inplace=True)
-                except:
-                    pass
+                
                 if mtm_sht.range(f"B{i}").value == "BROWNSVILL" and mtm_sht.range(f"D{i}").value == "MILO":
                     try:
                         loc_dict["SORGHUM"][0].set_index('Location Zone', inplace=True)
@@ -4424,6 +4421,11 @@ def inv_mtm_excel_summ(input_date, output_date):
                 else:
                     try:
                         loc_dict[mtm_sht.range(f"D{i}").value][0].set_index('Location Zone', inplace=True)
+                        try:
+                            # loc_dict[mtm_sht.range(f"D{i}").value][0].rename(index={'OMA COMM': 'TERMINAL'}, inplace=True)
+                            loc_dict[mtm_sht.range(f"D{i}").value][0].rename(index={'OMA COMM': 'OMCOM'}, inplace=True)
+                        except:
+                            pass
                     except:
                         pass
                     try:
