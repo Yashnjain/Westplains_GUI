@@ -1,5 +1,5 @@
 from tkinter.filedialog import askdirectory, askopenfilename
-from tkinter import Menubutton, Tk, StringVar, Text
+from tkinter import N, Menubutton, Tk, StringVar, Text
 from tkinter import PhotoImage
 from tkinter.font import Font
 from tkinter.ttk import Label
@@ -24,7 +24,7 @@ from tabula import read_pdf
 # import PyPDF2
 from collections import defaultdict
 import xlwings.constants as win32c
-import sys
+import sys, traceback
 import PyPDF2
 from collections import OrderedDict
 import calendar
@@ -1056,7 +1056,9 @@ def cash_colat(wb,bank_recons_loc, input_date_date):
         cash_colat_sht.range("B12").value = bank_colat_sht.range("B58").value
         cash_colat_sht.range("B14").value = -1*bank_colat_sht.range("E58").value
 
+        jp_morgan_amount = -1*bank_colat_sht.range("E27").value
         bank_wb.close()
+        return jp_morgan_amount
     except Exception as e:
         raise e
 
@@ -1343,7 +1345,7 @@ def inv_whre_n_in_trans(wb, mtm_loc, input_date):
     except Exception as e:
         raise e
 
-def payables(input_date,wb, bbr_mapping_loc, open_ap_loc,unset_pay_loc):
+def payables(input_date,wb, bbr_mapping_loc, open_ap_loc,unset_pay_loc,jp_morgan_amount):
     try:
         df = pd.read_excel(bbr_mapping_loc, usecols="A,B")   
         new_dict = dict(zip(df.iloc[:,0],df.iloc[:,1]))
@@ -1521,6 +1523,8 @@ def payables(input_date,wb, bbr_mapping_loc, open_ap_loc,unset_pay_loc):
         bbr_payab_sht.range("A3").formula = "='Cash Collateral'!A3"
         bbr_payab_sht.api.Range("A3").NumberFormat = 'mm/dd/yyyy'
         bbr_payab_sht.api.Range("C:F").NumberFormat = "_($* #,##0.00_);_($* (#,##0.00);_($* ""-""??_);_(@_)"
+        bbr_payab_sht.range("I14").value = jp_morgan_amount
+        bbr_payab_sht.api.Range("I14").NumberFormat = "_($* #,##0.00_);_($* (#,##0.00);_($* ""-""??_);_(@_)"
         open_ap_wb.close()
         payab_wb.close()
 
@@ -1961,7 +1965,16 @@ def mtm_excel(input_date,input_xl,loc_dict,loc_sheet, output_location, hrw_fut, 
                 else:
                     m_sht.range(f"F{i}").value = loc_dict["HRW"][0].loc[loc_abbr[location]]["Value.5"]/loc_dict["HRW"][0].loc[loc_abbr[location]]["Quantity.5"] #loc_dict["HRW"][0].loc[loc_abbr[location]]["Price"]
                     m_sht.range(f"C{i}").value = loc_dict["HRW"][0].loc[loc_abbr[location]]["Quantity.5"]
-                    m_sht.range(f"I{i}").value = hrw_fut
+                    if m_sht.range(f"C{i}").value is None:
+                        m_sht.range(f"C{i}").value = 0
+                    if m_sht.range(f"F{i}").value is None:
+                        m_sht.range(f"F{i}").value = 0
+                    if (m_sht.range(f"F{i}").value is not None) and (m_sht.range(f"F{i}").value != 0):
+                        m_sht.range(f"I{i}").value = hrw_fut
+                        m_sht.range(f"J{i}").formula = f"=F{i}-I{i}"
+                    else:
+                        m_sht.range(f"I{i}").value = None
+                        m_sht.range(f"J{i}").value = None
                 i+=1
             except:
                 m_sht.range(f"F{i}").value = 0
@@ -2024,7 +2037,16 @@ def mtm_excel(input_date,input_xl,loc_dict,loc_sheet, output_location, hrw_fut, 
             try:
                 m_sht.range(f"F{i}").value = loc_dict["YC"][0].loc[loc_abbr[location]]["Value.5"]/loc_dict["YC"][0].loc[loc_abbr[location]]["Quantity.5"] #loc_dict["YC"][0].loc[loc_abbr[location]]["Price"]
                 m_sht.range(f"C{i}").value = loc_dict["YC"][0].loc[loc_abbr[location]]["Quantity.5"]
-                m_sht.range(f"I{i}").value = yc_fut
+                if m_sht.range(f"C{i}").value is None:
+                    m_sht.range(f"C{i}").value = 0
+                if m_sht.range(f"F{i}").value is None:
+                    m_sht.range(f"F{i}").value = 0
+                if (m_sht.range(f"F{i}").value is not None) and (m_sht.range(f"F{i}").value != 0):
+                    m_sht.range(f"I{i}").value = yc_fut
+                    m_sht.range(f"J{i}").formula = f"=F{i}-I{i}"
+                else:
+                    m_sht.range(f"I{i}").value = None
+                    m_sht.range(f"J{i}").value = None
                 i+=1
             except:
                 m_sht.range(f"F{i}").value = 0
@@ -2329,14 +2351,14 @@ def bbr(input_date, output_date):
         # bbr_other_tabs(input_date, wb, input_ar, input_ctm)
         # payables(input_date,wb, bbr_mapping_loc, open_ap_loc,unset_pay_loc)
         
-        cash_colat(wb,bank_recons_loc, input_date_date)
+        jp_morgan_amount = cash_colat(wb,bank_recons_loc, input_date_date)
         comm_acc_xl(wb, pdf_loc)
         inv_whre_n_in_trans(wb, mtm_loc, input_date)
         
         ar_unsettled_by_tier(wb, unset_rec_loc, input_date)
         ar_open_storage_rcbl(wb, strg_accr_loc, input_date)
         
-        payables(input_date,wb, bbr_mapping_loc, open_ap_loc,unset_pay_loc)
+        payables(input_date,wb, bbr_mapping_loc, open_ap_loc,unset_pay_loc,jp_morgan_amount)
         bbr_other_tabs(input_date, wb, input_ar, input_ctm)
 
         wb.sheets[0].activate()
@@ -4628,7 +4650,7 @@ def fifo(input_date, output_date):
                 wb.app.api.ActiveWindow.FreezePanes = True
                 # if loc  == "HRW":
                 mtm_sht.activate()
-                mtm_sht.api.AutoFilterMode=False
+                mtm_sht.api.AutoFilterMode=Falsemtm_wb.app.selection
                 mtm_sht.api.Range(f"D3").AutoFilter(Field:=4,Criteria1:=loc, Operator:=7)
                 time.sleep(1)
                 if key == 'HaySprings':
@@ -5428,7 +5450,7 @@ def tkt_n_settlement_summ(input_date, output_date):
         retry=0
         while retry < 10:
             try:
-                tkt_sht = tkt_wb.sheets["2021"]
+                tkt_sht = tkt_wb.sheets[Year]
                 break
             except Exception as e:
                 time.sleep(2)
@@ -5459,7 +5481,12 @@ def tkt_n_settlement_summ(input_date, output_date):
                     raise e
         last_row = tkt_sht.range(f'A'+ str(tkt_sht.cells.last_cell.row)).end('up').row
         tkt_ent_sht.cells.clear_contents()
-        tkt_sht.range(f"A1:M{last_row-1}").copy()
+        # tkt_sht.api.Range(f"L1").AutoFilter(Field:=12, Operator:=7, Criteria2:=[1,"2/28/2022"])
+        tkt_wb.activate()
+        tkt_sht.activate()
+        tkt_sht.api.Range(f"A1:M{last_row-1}").SpecialCells(12).Select()
+        tkt_wb.app.selection.copy()
+        # tkt_sht.range(f"A1:M{last_row-1}").copy()
         tkt_ent_sht.range("A1").paste(paste="values_and_number_formats") #pasting only values
         tkt_last_row = tkt_ent_sht.range(f'A'+ str(tkt_ent_sht.cells.last_cell.row)).end('up').row
         
@@ -6247,13 +6274,15 @@ def credit_card_gl(input_date, output_date):
         insertdate=f'{input_year}{input_month_no}{lastday}'
 
 
-        input_sheet = r'J:\WEST PLAINS\REPORT\Credit_Card_GL\Raw Files'+f'\\{input_month} {input_year} Credit Card expense.xlsx' 
+        # input_sheet = r'J:\WEST PLAINS\REPORT\Credit_Card_GL\Raw Files'+f'\\{input_month} {input_year} Credit Card expense.xlsx'
+        input_sheet = r'J:\WEST PLAINS\REPORT\Credit Card Entry\Output files'+f'\\{input_month} {input_year} Credit Card expense.xlsx'
+        
         if not os.path.exists(input_sheet):
             return(f"{input_sheet} Excel file not present for date {input_date}")           
         output_location = r'J:\WEST PLAINS\REPORT\Credit_Card_GL\Output files'
         output_location_file=f'{output_location}'+f'\\March {input_year} Credit Card expense.xlsx'
-        if os.path.exists(output_location_file):
-            input_sheet=output_location_file
+        # if os.path.exists(output_location_file):
+        #     input_sheet=output_location_file
         xw.App.display_alerts = False
         retry=0
         while retry < 10:
@@ -6277,11 +6306,14 @@ def credit_card_gl(input_date, output_date):
         column_list = input_tab.range("A1").expand('right').value
         gl_letter_column = num_to_col_letters(column_list.index('GL')+1)
         last_row = input_tab.range(f'A'+ str(input_tab.cells.last_cell.row)).end('up').row
+        
+        # input_tab.api.Range(f"A1:{gl_letter_column}{last_row}").Copy()
+        input_tab.range(f"A1:{gl_letter_column}{last_row}").copy()
+        time.sleep(5)
         entry_tab.activate()
         entry_tab.api.Range("A1").Select()
-        input_tab.api.Range(f"A1:{gl_letter_column}{last_row}").Copy()
-        time.sleep(5)
-        entry_tab.api.Paste()
+        entry_tab.range("A1").paste(paste="values_and_number_formats")
+        # entry_tab.api.Paste()
         wb.app.api.CutCopyMode=False
         entry_tab.autofit()
         last_row = entry_tab.range(f'A'+ str(entry_tab.cells.last_cell.row)).end('up').row
@@ -6401,7 +6433,8 @@ def main():
         
         
     def report_callback_exception(self, exc, val, tb):
-        showerror("Error", message=str(exc) + str(val) +str(tb))
+        msg = traceback.format_exc()
+        showerror("Error", message=msg)
         text_box.delete(1.0, "end")
         text_box.insert("end", str(exc), "center")
         submit_text.set("Submit")
