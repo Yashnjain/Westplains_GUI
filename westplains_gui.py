@@ -29,6 +29,7 @@ import PyPDF2
 from collections import OrderedDict
 import calendar
 from dateutil.relativedelta import relativedelta
+import shutil
 
 
 
@@ -6394,6 +6395,213 @@ def credit_card_gl(input_date, output_date):
         except:
             pass
 
+
+def unsettled_ar_by_location_part1(input_date, output_date):
+    try:       
+        job_name = 'Unsettled AR By Location - Part 1'
+        output_raw_date=datetime.strptime(output_date,"%m.%d.%Y")
+        output_date=datetime.strftime(output_raw_date,"%m.%d.%y")   
+        input_raw_date=datetime.strptime(input_date,"%m.%d.%Y")
+        input_date_short=datetime.strftime(input_raw_date,"%m.%d.%y") 
+        input_sheet = r'J:\WEST PLAINS\REPORT\Unsettled AR By Location - Part 1\Raw Files'+f'\\Unsettled AR_{input_date}.xlsx'
+        previous_output= r'J:\WEST PLAINS\REPORT\Unsettled AR By Location - Part 1\Output_Files'+f'\\Unsettled AR {output_date}_with reason.xlsx'
+        if not os.path.exists(input_sheet):
+            return(f"{input_sheet} Excel file not present for date {input_date}")
+        if not os.path.exists(previous_output):
+            return(f"{previous_output} Excel file not present") 
+
+        source_folder = r"J:\WEST PLAINS\REPORT\Unsettled AR By Location - Part 1\Output_Files"
+        destination_folder = r"J:\WEST PLAINS\REPORT\Unsettled AR By Location - Part 1\Output_Files"
+        file_name=f"Unsettled AR {output_date}_with reason.xlsx"
+        file_name2=f"Unsettled AR {input_date_short}_with reason.xlsx"
+        source = source_folder + "\\"+ file_name
+        destination = destination_folder +"\\"+ file_name2
+        if os.path.isfile(source):
+                shutil.copy(source, destination)
+                print('copied', file_name)
+        else:
+            print(f"{file_name} not present in the folder please recheck")           
+
+        retry=0
+        while retry < 10:
+            try:
+                wb = xw.Book(input_sheet) 
+                break
+            except Exception as e:
+                time.sleep(5)
+                retry+=1
+                if retry ==10:
+                    raise e 
+        ws1=wb.sheets[0]
+        ws1.activate
+        column_list = ws1.range("A1").expand('right').value
+        list1=["Lk Up","Lk Up","Diff"]
+        for values in list1:
+             delete_column_no = column_list.index(values)+1
+             delete_column_letter=num_to_col_letters(delete_column_no)
+             ws1.api.Range(f"{delete_column_letter}1").EntireColumn.Delete()
+             column_list = ws1.range("A1").expand('right').value
+        last_row = ws1.range(f'A'+ str(ws1.cells.last_cell.row)).end('up').row
+        last_column_letter=num_to_col_letters(ws1.range('A2').end('right').last_cell.column)     
+   
+        retry=0
+        while retry < 10:
+            try:
+                wb2 = xw.Book(destination) 
+                break
+            except Exception as e:
+                time.sleep(5)
+                retry+=1
+                if retry ==10:
+                    raise e 
+        wss1=wb2.sheets[0]
+        wss1.activate 
+        column_list2 = wss1.range("A1").expand('right').value
+        PurchaseSale_column_no = column_list2.index("Purchase/Sale")+1
+        PurchaseSale_column_letter=num_to_col_letters(PurchaseSale_column_no)
+        last_row2 = wss1.range(f'A'+ str(wss1.cells.last_cell.row)).end('up').row
+        last_column_letter2=num_to_col_letters(wss1.range('A1').end('right').end('right').last_cell.column)
+        time.sleep(1)
+        wb.app.DisplayAlerts = False
+        ws1.api.Range(f"A2:{last_column_letter}{last_row}").Copy(wss1.api.Range(f"{PurchaseSale_column_letter}2:{last_column_letter2}{last_row2}"))  
+        wb.app.DisplayAlerts = True
+        time.sleep(1)
+        wss1.activate()
+        Reason_column_no = column_list2.index("Reason")+1
+        Reason_column_letter=num_to_col_letters(Reason_column_no)
+        wss1.range(f"A{last_row2}:{Reason_column_letter}{last_row2}").copy(wss1.range(f"A{last_row2}:{Reason_column_letter}{last_row}"))
+        retry=0
+        while retry < 10:
+            try:
+                wb3 = xw.Book(source) 
+                break
+            except Exception as e:
+                time.sleep(5)
+                retry+=1
+                if retry ==10:
+                    raise e
+        wb2.activate()
+        wss1.activate()
+        wss1.api.Range(f"{Reason_column_letter}2").Value=f"=VLOOKUP(A2,'[Unsettled AR {output_date}_with reason.xlsx]Sheet1'!$A:$E,5,0)"
+        wss1.range(f"{Reason_column_letter}2").copy(wss1.range(f"{Reason_column_letter}2:{Reason_column_letter}{last_row}"))
+        time.sleep(1)
+        wss1.range(f"{Reason_column_letter}:{Reason_column_letter}").copy()
+        time.sleep(1)
+        wss1.range(f"{Reason_column_letter}:{Reason_column_letter}").paste(paste="values_and_number_formats")
+        wb2.app.api.CutCopyMode=False
+        wss1.api.Range(f"{Reason_column_letter}1").AutoFilter(Field:=f'{Reason_column_no}', Criteria1:=['#N/A'], Operator:=7)
+        time.sleep(1)
+        wss1.api.Range(f"{Reason_column_letter}2:{Reason_column_letter}{last_row}").SpecialCells(win32c.CellType.xlCellTypeVisible).Select()
+        time.sleep(1)
+        wb2.app.api.Selection.Value=None
+        time.sleep(1)
+        wb2.app.api.ActiveSheet.ShowAllData()
+
+        CVC_column_no = column_list2.index("Customer/Vendor Name")+1
+        CVC_column_letter=num_to_col_letters(CVC_column_no)
+        wss1.api.Range(f"{CVC_column_letter}1").AutoFilter(Field:=f'{CVC_column_no}', Criteria1:=['INTER-COMPANY PURCH/SALES'], Operator:=7)
+        time.sleep(1)
+        last_column_letter21=num_to_col_letters(wss1.range('A1').end('right').end('right').last_cell.column)
+        wss1.api.Range(f"A2:{last_column_letter21}{last_row}").SpecialCells(win32c.CellType.xlCellTypeVisible).Select()
+        time.sleep(1)
+        wb2.app.api.Selection.Delete(win32c.DeleteShiftDirection.xlShiftUp)
+        time.sleep(1)
+        wb2.app.api.ActiveSheet.ShowAllData()
+   
+        wb2.save()   
+       
+        return f"{job_name} Report for {input_date} generated succesfully"
+
+    except Exception as e:
+        raise e
+    finally:
+        try:
+            wb.app.quit()
+        except:
+            pass
+
+
+
+def unsettled_ar_by_location_part2(input_date, output_date):
+    try:       
+        job_name = 'unsettled_ar_by_location_part2'  
+        input_raw_date=datetime.strptime(input_date,"%m.%d.%Y")
+        input_date_short=datetime.strftime(input_raw_date,"%m.%d.%y") 
+        input_sheet = r'J:\WEST PLAINS\REPORT\Unsettled AR By Location - Part 2\Raw Files'+f'\\Unsettled AR {input_date_short}_with reason.xlsx'
+        template_sheet= r'J:\WEST PLAINS\REPORT\Unsettled AR By Location - Part 2\Raw Files\Template'+f'\\Template.xlsx'
+        output_location=r"J:\WEST PLAINS\REPORT\Unsettled AR By Location - Part 2\Output_Files"        
+        if not os.path.exists(input_sheet):
+            return(f"{input_sheet} Excel file not present for date {input_date}")
+        if not os.path.exists(template_sheet):
+            return(f"{template_sheet} Excel file not present") 
+
+        retry=0
+        while retry < 10:
+            try:
+                wb = xw.Book(template_sheet) 
+                break
+            except Exception as e:
+                time.sleep(5)
+                retry+=1
+                if retry ==10:
+                    raise e 
+
+        retry=0
+        while retry < 10:
+            try:
+                wb2 = xw.Book(input_sheet) 
+                break
+            except Exception as e:
+                time.sleep(5)
+                retry+=1
+                if retry ==10:
+                    raise e 
+
+        wss1=wb2.sheets[0]
+        wss1.activate()
+        column_list = wss1.range("A1").expand('right').value
+        Location_Name_column_no = column_list.index("Location Name")+1
+        Location_Name_column_letter=num_to_col_letters(Location_Name_column_no)
+        dict1={'Unsettled Gering':["GERING - WEST PLAINS, LLC"],'Unsettled AR HS':['HAY SPRINGS - WEST PLAINS, LLC'],"Unsettled Brownsville":["BROWNSVILLE - WEST PLAINS, LLC"],
+        "Unsettled JT":['JOHNSTOWN - WEST PLAINS, LLC','OMAHA COMM - WEST PLAINS, LLC'],'Unsettled Omaha':['OMAHA TERMINAL ELEVATOR - WEST PLAINS, LLC'],'All Location':"<>"}      
+        for key, value in dict1.items():
+            try:
+                wss1.api.Range(f"{Location_Name_column_letter}1").AutoFilter(Field:=f'{Location_Name_column_no}', Criteria1:=value, Operator:=7)
+                last_row = wss1.range(f'A'+ str(wss1.cells.last_cell.row)).end('up').row
+                last_column_letter=num_to_col_letters(wss1.range('A1').end('right').end('right').last_cell.column)
+                working_worksheet=wb.sheets[key]
+                wss1.api.Range(f"A2:{last_column_letter}{last_row}").SpecialCells(win32c.CellType.xlCellTypeVisible).Select()
+                if str(wb2.app.api.Selection.Address).split()[0].replace('$','')=='A1:AK1':
+                    wb2.app.api.ActiveSheet.ShowAllData()
+                else:
+                    wb2.app.api.Selection.Copy(working_worksheet.api.Range("A2"))
+                    wss1.activate()  
+                    wb2.app.api.ActiveSheet.ShowAllData()
+            except:
+                wb2.app.api.ActiveSheet.ShowAllData()
+                pass
+
+        ws1=wb.sheets[0]
+        ws1.activate() 
+        refresh_sheet=wb.sheets["All Location"]
+        last_row = refresh_sheet.range(f'A'+ str(refresh_sheet.cells.last_cell.row)).end('up').row
+        last_column=refresh_sheet.range('A1').end('right').last_cell.column 
+        wb.api.ActiveSheet.PivotTables(1).PivotCache().SourceData=f"'All Location'!R1C1:R{last_row}C{last_column}"
+        wb.api.ActiveSheet.PivotTables(1).PivotCache().Refresh()      
+        wb.save(f"{output_location}\\Unsettled AR_{input_date_short} with reasons.xlsx")   
+       
+        return f"{job_name} Report for {input_date} generated succesfully"
+
+    except Exception as e:
+        raise e
+    finally:
+        try:
+            wb.app.quit()
+        except:
+            pass
+
+
+
 def main():
     def on_closing():
         if messagebox.askokcancel("Quit", "Do you want to quit?"):
@@ -6471,7 +6679,8 @@ def main():
                     'MOC Interest Allocation':moc_interest_alloc,'Open AR':open_ar,'Open AP':open_ap, 'Unsettled Payable Report':unsetteled_payables,'Unsettled Receivable Report':unsetteled_receivables,
                     'Storage Month End Report':strg_month_end_report, "Month End BBR":bbr_monthEnd, "Bank Recons Report":bank_recons_rep, "Payables_GL_Entry_Monthly":payables_gl_entry_monthly,
                     "Receivables_GL_Entry_Monthly":receivables_gl_entry_monthly,"CTM_GL_Entry_Monthly":ctm_gl_entry_monthly, "Macquarie Accrual Entry":macq_accr_entry, "Ticket_N_Settlement_Report":tkt_n_settlement_summ,
-                    "Payroll_Summary":payroll_summ,"Credit_Card_Entry":credit_card_entry, "Credit_Card_GL_Entry":credit_card_gl}
+                    "Payroll_Summary":payroll_summ,"Credit_Card_Entry":credit_card_entry, "Credit_Card_GL_Entry":credit_card_gl,"Unsettled_AR_By_Location":unsettled_ar_by_location_part1,
+                    "Unsettled_AR_By_Location_with_Reasons":unsettled_ar_by_location_part2}
     # wp_job_ids = {'ABS':1,'BBR':bbr,'CPR Report':cpr, 'Freight analysis':freight_analysis, 'CTM combined':ctm,'MTM Report':mtm_report,
     #                 'MOC Interest Allocation':moc_interest_alloc,'Open AR':open_ar,'Open AP':open_ap, 'Unsettled Payable Report':unsetteled_payables,'Unsettled Receivable Report':unsetteled_receivables,
     #                 'Storage Month End Report':strg_month_end_report, "Month End BBR":bbr_monthEnd, "Bank Recons Report":bank_recons_rep}
