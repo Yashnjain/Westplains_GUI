@@ -1218,6 +1218,9 @@ def ar_open_storage_rcbl(wb, strg_accr_loc, input_date):
                 break
             except Exception as e:
                 time.sleep(2)
+                retry+=1
+                if retry ==9:
+                    raise e
 
         while True:
             try:
@@ -1225,6 +1228,9 @@ def ar_open_storage_rcbl(wb, strg_accr_loc, input_date):
                 break
             except Exception as e:
                 time.sleep(2)
+                retry+=1
+                if retry ==9:
+                    raise e
         # strg_acc_sht.copy(bbr_strg_acc_sht)
         bbr_strg_acc_sht.range("A5").value = strg_acc_sht.range("A5").value
         last_row = strg_acc_sht.range(f'A'+ str(strg_acc_sht.cells.last_cell.row)).end('up').row
@@ -4650,7 +4656,7 @@ def fifo(input_date, output_date):
                 wb.app.api.ActiveWindow.FreezePanes = True
                 # if loc  == "HRW":
                 mtm_sht.activate()
-                mtm_sht.api.AutoFilterMode=Falsemtm_wb.app.selection
+                mtm_sht.api.AutoFilterMode=False #mtm_wb.app.selection
                 mtm_sht.api.Range(f"D3").AutoFilter(Field:=4,Criteria1:=loc, Operator:=7)
                 time.sleep(1)
                 if key == 'HaySprings':
@@ -5409,7 +5415,9 @@ def tkt_n_settlement_summ(input_date, output_date):
     try:
         monthYear = datetime.strftime(datetime.strptime(input_date, "%m.%d.%Y"), "%b %Y")
         Year = datetime.strftime(datetime.strptime(input_date, "%m.%d.%Y"), "%Y")
-
+        input_datetime = datetime.strptime(input_date, "%m.%d.%Y")
+        end_date = datetime.strftime(input_datetime, "%d/%m/%Y")
+        st_date = datetime.strftime(input_datetime.replace(day=1), "%d/%m/%Y")
         tkt_query_xl = r"J:\WEST PLAINS\REPORT\Ticket And Settlement Summary\Raw Files" +f"\\Ticket Query {Year}.xlsx"
         # input_xl = r"C:\Users\imam.khan\OneDrive - BioUrja Trading LLC\Documents\WEST PLAINS\REPORT\Macquaire Accrual Entry\Raw Files" +f"\\Macq Accrual_{input_date}.xlsx"
         if not os.path.exists(tkt_query_xl):
@@ -5481,6 +5489,8 @@ def tkt_n_settlement_summ(input_date, output_date):
                     raise e
         last_row = tkt_sht.range(f'A'+ str(tkt_sht.cells.last_cell.row)).end('up').row
         tkt_ent_sht.cells.clear_contents()
+        tkt_sht.api.AutoFilterMode=False
+        tkt_sht.api.Range(f"L1").AutoFilter(Field:=12,Criteria1:=f">={st_date}", Operator:=1, Criteria2=f"<={end_date}")
         # tkt_sht.api.Range(f"L1").AutoFilter(Field:=12, Operator:=7, Criteria2:=[1,"2/28/2022"])
         tkt_wb.activate()
         tkt_sht.activate()
@@ -6196,8 +6206,10 @@ def payroll_summ(input_date, output_date):
                 retry+=1
                 if retry ==9:
                     raise e
-        inp_sht.range("F4:T4").expand("down").expand("down").delete()
-        inp_sht.range("A4:T4").expand("down").expand("down").delete()
+        # inp_sht.range("F4:T4").expand("down").expand("down").delete()
+        # inp_sht.range("A4:T4").expand("down").expand("down").delete()
+        last_row = inp_sht.range(f'A'+ str(inp_sht.cells.last_cell.row)).end('up').row
+        inp_sht.range(f"A4:T{last_row}").delete()
         last_row=4
         first_row = 4
         init_chr = "F"
