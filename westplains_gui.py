@@ -6287,15 +6287,13 @@ def credit_card_gl(input_date, output_date):
         insertdate=f'{input_year}{input_month_no}{lastday}'
 
 
-        # input_sheet = r'J:\WEST PLAINS\REPORT\Credit_Card_GL\Raw Files'+f'\\{input_month} {input_year} Credit Card expense.xlsx'
-        input_sheet = r'J:\WEST PLAINS\REPORT\Credit Card Entry\Output files'+f'\\{input_month} {input_year} Credit Card expense.xlsx'
-        
+        input_sheet = r'J:\WEST PLAINS\REPORT\Credit_Card_GL\Raw Files'+f'\\{input_month} {input_year} Credit Card expense.xlsx' 
         if not os.path.exists(input_sheet):
             return(f"{input_sheet} Excel file not present for date {input_date}")           
         output_location = r'J:\WEST PLAINS\REPORT\Credit_Card_GL\Output files'
-        output_location_file=f'{output_location}'+f'\\March {input_year} Credit Card expense.xlsx'
-        # if os.path.exists(output_location_file):
-        #     input_sheet=output_location_file
+        output_location_file=f'{output_location}'+f'\\{input_month} {input_year} Credit Card expense.xlsx'
+        if os.path.exists(output_location_file):
+            input_sheet=output_location_file
         xw.App.display_alerts = False
         retry=0
         while retry < 10:
@@ -6319,14 +6317,11 @@ def credit_card_gl(input_date, output_date):
         column_list = input_tab.range("A1").expand('right').value
         gl_letter_column = num_to_col_letters(column_list.index('GL')+1)
         last_row = input_tab.range(f'A'+ str(input_tab.cells.last_cell.row)).end('up').row
-        
-        # input_tab.api.Range(f"A1:{gl_letter_column}{last_row}").Copy()
-        input_tab.range(f"A1:{gl_letter_column}{last_row}").copy()
-        time.sleep(5)
         entry_tab.activate()
         entry_tab.api.Range("A1").Select()
-        entry_tab.range("A1").paste(paste="values_and_number_formats")
-        # entry_tab.api.Paste()
+        input_tab.api.Range(f"A1:{gl_letter_column}{last_row}").Copy()
+        time.sleep(5)
+        entry_tab.api.Paste()
         wb.app.api.CutCopyMode=False
         entry_tab.autofit()
         last_row = entry_tab.range(f'A'+ str(entry_tab.cells.last_cell.row)).end('up').row
@@ -6383,7 +6378,7 @@ def credit_card_gl(input_date, output_date):
         amount_column=num_to_col_letters(column_list.index('amount')+1)
         MONTH_letter_column = num_to_col_letters(column_list.index('MONTH')+1)
         insert_all_borders(cellrange=f"{MONTH_letter_column}1:{amount_column}{last_row}",working_sheet=entry_tab,working_workbook=wb)                    
-        save_month = (datetime_input+relativedelta(months=+1)).strftime("%B")
+        save_month = (datetime_input).strftime("%B")
         wb.save(f"{output_location}\\{save_month} {input_year} Credit Card expense.xlsx")
         wb.app.quit()
         return f"{job_name} Report for {input_date} generated succesfully"
@@ -6496,17 +6491,20 @@ def unsettled_ar_by_location_part1(input_date, output_date):
         wb2.app.api.Selection.Value=None
         time.sleep(1)
         wb2.app.api.ActiveSheet.ShowAllData()
-
-        CVC_column_no = column_list2.index("Customer/Vendor Name")+1
-        CVC_column_letter=num_to_col_letters(CVC_column_no)
-        wss1.api.Range(f"{CVC_column_letter}1").AutoFilter(Field:=f'{CVC_column_no}', Criteria1:=['INTER-COMPANY PURCH/SALES'], Operator:=7)
-        time.sleep(1)
-        last_column_letter21=num_to_col_letters(wss1.range('A1').end('right').end('right').last_cell.column)
-        wss1.api.Range(f"A2:{last_column_letter21}{last_row}").SpecialCells(win32c.CellType.xlCellTypeVisible).Select()
-        time.sleep(1)
-        wb2.app.api.Selection.Delete(win32c.DeleteShiftDirection.xlShiftUp)
-        time.sleep(1)
-        wb2.app.api.ActiveSheet.ShowAllData()
+        try:
+            CVC_column_no = column_list2.index("Customer/Vendor Name")+1
+            CVC_column_letter=num_to_col_letters(CVC_column_no)
+            wss1.api.Range(f"{CVC_column_letter}1").AutoFilter(Field:=f'{CVC_column_no}', Criteria1:=['INTER-COMPANY PURCH/SALES'], Operator:=7)
+            time.sleep(1)
+            last_column_letter21=num_to_col_letters(wss1.range('A1').end('right').end('right').last_cell.column)
+            wss1.api.Range(f"A2:{last_column_letter21}{last_row}").SpecialCells(win32c.CellType.xlCellTypeVisible).Select()
+            time.sleep(1)
+            wb2.app.api.Selection.Delete(win32c.DeleteShiftDirection.xlShiftUp)
+            time.sleep(1)
+            wb2.app.api.ActiveSheet.ShowAllData()
+        except:
+            wb2.app.api.ActiveSheet.ShowAllData()
+            pass
    
         wb2.save()   
        
