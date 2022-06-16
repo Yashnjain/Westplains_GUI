@@ -4363,8 +4363,9 @@ def bbr_monthEnd(input_date, output_date):
 
         accr_wb.sheets[0].copy(before = bbr_wb.sheets["AR-Open Storage Rcbl Org"])
         bbr_wb.sheets["AR-Open Storage Rcbl Org"].delete()
+        bbr_wb.sheets["Storage Accrual"].name = 'AR-Open Storage Rcbl'
         bbr_wb.save(output_loc)
-        return f"BBR motnh End report genetated for {monthYear}"
+        return f"BBR motnh End report generated for {monthYear}"
     except Exception as e:
         raise e
     finally:
@@ -5417,8 +5418,8 @@ def tkt_n_settlement_summ(input_date, output_date):
         monthYear = datetime.strftime(datetime.strptime(input_date, "%m.%d.%Y"), "%b %Y")
         Year = datetime.strftime(datetime.strptime(input_date, "%m.%d.%Y"), "%Y")
         input_datetime = datetime.strptime(input_date, "%m.%d.%Y")
-        end_date = datetime.strftime(input_datetime, "%d/%m/%Y")
-        st_date = datetime.strftime(input_datetime.replace(day=1), "%d/%m/%Y")
+        end_date = datetime.strftime(input_datetime+timedelta(days=1), "%d-%m-%Y")#
+        st_date = datetime.strftime(input_datetime.replace(day=1), "%d-%m-%Y")
         tkt_query_xl = r"J:\WEST PLAINS\REPORT\Ticket And Settlement Summary\Raw Files" +f"\\Ticket Query {Year}.xlsx"
         # input_xl = r"C:\Users\imam.khan\OneDrive - BioUrja Trading LLC\Documents\WEST PLAINS\REPORT\Macquaire Accrual Entry\Raw Files" +f"\\Macq Accrual_{input_date}.xlsx"
         if not os.path.exists(tkt_query_xl):
@@ -5491,7 +5492,8 @@ def tkt_n_settlement_summ(input_date, output_date):
         last_row = tkt_sht.range(f'A'+ str(tkt_sht.cells.last_cell.row)).end('up').row
         tkt_ent_sht.cells.clear_contents()
         tkt_sht.api.AutoFilterMode=False
-        tkt_sht.api.Range(f"L1").AutoFilter(Field:=12,Criteria1:=f">={st_date}", Operator:=1, Criteria2=f"<={end_date}")
+        tkt_sht.api.Range(f"L1").AutoFilter(Field:=12,Criteria1:=f">={st_date}", Operator:=1, Criteria2:=f"<={end_date}")
+        messagebox.showinfo(title="Info",message="Data is filtered and selected in ticket query 2022 sheet")
         # tkt_sht.api.Range(f"L1").AutoFilter(Field:=12, Operator:=7, Criteria2:=[1,"2/28/2022"])
         tkt_wb.activate()
         tkt_sht.activate()
@@ -5518,8 +5520,9 @@ def tkt_n_settlement_summ(input_date, output_date):
         tkt_ent_sht.range("O1").value = "Team"
         tkt_ent_sht.range("O2").formula = "=VLOOKUP(K2,'Name (2)'!A:C,3,0)"
         tkt_ent_sht.range("O2").copy(tkt_ent_sht.range(f"O3:O{tkt_last_row}"))
-        tkt_wb.close()
-
+        tkt_wb.save()
+        
+        messagebox.showinfo(title="Info",message="Data is pasted in ticket entry sheet")
         #Now getting settlemt data same as above
         retry=0
         while retry < 10:
@@ -5579,21 +5582,28 @@ def tkt_n_settlement_summ(input_date, output_date):
         inp_set_sht.range("M2").copy(inp_set_sht.range(f"M3:M{inp_set_last_row}"))
 
         #Refreshing Pivots
-        while retry < 10:
+        while retry < 20:
             try:
                 tkt_p_sht = wb.sheets["Ticket Summary (2)"]
                 break
             except Exception as e:
                 time.sleep(2)
                 retry+=1
-                if retry ==9:
+                if retry ==19:
                     raise e
         tkt_p_sht.activate()
+        # time.sleep(5)
         tkt_p_sht.range("A:E").clear()
+        # time.sleep(5)
         tkt_p_sht.range("A1").select()
+        # messagebox.showinfo(title="Info",message=f"Currently source data is '{tkt_ent_sht.name}'!R1C1:R{tkt_last_row}C15")
+        # time.sleep(150)
+        messagebox.showinfo(title="Info",message=f"Currently source data is '{tkt_ent_sht.name}'!R1C1:R{tkt_last_row}C15")
         #First pivot
         PivotCache=wb.api.PivotCaches().Create(SourceType=win32c.PivotTableSourceType.xlDatabase, SourceData=f"'{tkt_ent_sht.name}'!R1C1:R{tkt_last_row}C15", Version=win32c.PivotTableVersionList.xlPivotTableVersion14)
+        # time.sleep(5)
         PivotTable = PivotCache.CreatePivotTable(TableDestination=f"'Ticket Summary (2)'!R1C1", TableName="PivotTable1", DefaultVersion=win32c.PivotTableVersionList.xlPivotTableVersion14)        ###logger.info("Adding particular Row in Pivot Table")
+        # time.sleep(5)
         PivotTable.PivotFields('Team').Orientation = win32c.PivotFieldOrientation.xlRowField
         PivotTable.PivotFields('Team').Position = 1
         PivotTable.PivotFields('Add By').Orientation = win32c.PivotFieldOrientation.xlRowField
@@ -5625,7 +5635,7 @@ def tkt_n_settlement_summ(input_date, output_date):
         #     wb.api.ActiveSheet.PivotTables(j).PivotCache().SourceData = f"'{tkt_ent_sht.name}'!R1C1:R{tkt_last_row}C15" #15 for O col
         #     wb.api.ActiveSheet.PivotTables(j).PivotCache().Refresh()
 
-        
+        tkt_wb.close()
 
         #Refreshing Pivots
         while retry < 10:
@@ -6599,6 +6609,215 @@ def unsettled_ar_by_location_part2(input_date, output_date):
             pass
 
 
+def open_ar_monthly(input_date, output_date):
+    try:       
+        job_name = 'open_ar_v2'
+        input_sheet = r'J:\WEST PLAINS\REPORT\Open AR New\Raw Files'+f'\\Open AR_{input_date}.xlsx'
+        input_sheet2= r'J:\WEST PLAINS\REPORT\Open AR New\Raw Files'+f'\\Profile.xls'
+        if not os.path.exists(input_sheet):
+            return(f"{input_sheet} Excel file not present for date {input_date}")
+        if not os.path.exists(input_sheet2):
+            return(f"{input_sheet2} Excel file not present") 
+        retry=0
+        while retry < 10:
+            try:
+                wb = xw.Book(input_sheet) 
+                break
+            except Exception as e:
+                time.sleep(5)
+                retry+=1
+                if retry ==10:
+                    raise e 
+        input_tab=wb.sheets[f"Open AR_{input_date}"]
+        column_list = input_tab.range("A1").expand('right').value
+        Customer_Name_column_no = column_list.index('Customer Name')+1
+        Customer_Name_column_letter=num_to_col_letters(Customer_Name_column_no)
+        Location_column_no = column_list.index('Location')+1
+        Location_column_letter=num_to_col_letters(Location_column_no)
+        last_row = input_tab.range(f'A'+ str(input_tab.cells.last_cell.row)).end('up').row
+        last_column_letter=num_to_col_letters(input_tab.range('A1').end('right').last_cell.column)
+        dict1={"MACQUARIE COMMODITIES (USA) INC.":[Customer_Name_column_no,Customer_Name_column_letter],"INTER-COMPANY PURCH/SALES":[Customer_Name_column_no,Customer_Name_column_letter],"WPMEXICO":[Location_column_no,Location_column_letter]}
+        for key, value in dict1.items():
+            try:
+                input_tab.api.Range(f"{value[1]}1").AutoFilter(Field:=f'{value[0]}', Criteria1:=[key], Operator:=7)
+                time.sleep(1)
+                input_tab.api.Range(f"A2:{last_column_letter}{last_row}").SpecialCells(win32c.CellType.xlCellTypeVisible).Select()
+                time.sleep(1)
+                wb.app.api.Selection.Delete(win32c.DeleteShiftDirection.xlShiftUp)
+                time.sleep(1)
+                wb.app.api.ActiveSheet.ShowAllData()
+            except:
+                wb.app.api.ActiveSheet.ShowAllData()
+                pass    
+        retry=0
+        while retry < 10:
+            try:
+                wb2 = xw.Book(input_sheet2) 
+                break
+            except Exception as e:
+                time.sleep(5)
+                retry+=1
+                if retry ==10:
+                    raise e 
+
+        column_list = input_tab.range("A1").expand('right').value
+        Customer_Name_column_no = column_list.index('Customer Name')+1
+        list1=["Address","City","State","Zip Code"]
+        list2=[f"=VLOOKUP(A2,Profile.xls!$A$1:$I$29312,9,0)",f"=VLOOKUP(A2,Profile.xls!$A$1:$I$29312,4,0)",f"=VLOOKUP(A2,Profile.xls!$A$1:$I$29312,5,0)",f"=VLOOKUP(A2,Profile.xls!$A$1:$K$29312,11,0)"] 
+        Customer_Name_column_no+=1
+        i=0
+        last_row = input_tab.range(f'A'+ str(input_tab.cells.last_cell.row)).end('up').row
+        for values in list1:
+            last_column_letter=num_to_col_letters(Customer_Name_column_no)
+            input_tab.api.Range(f"{last_column_letter}1").EntireColumn.Insert()
+            input_tab.range(f"{last_column_letter}1").value = values
+            input_tab.range(f"{last_column_letter}2").value = list2[i]
+            time.sleep(1)
+            input_tab.range(f"{last_column_letter}2").copy(input_tab.range(f"{last_column_letter}2:{last_column_letter}{last_row}"))
+            i+=1
+            Customer_Name_column_no+=1
+        #combining 1-10 & 11-30 column
+        wb2.close()
+        column_list = input_tab.range("A1").expand('right').value
+        insert_column_no = column_list.index('11 - 30')+1
+        insert_column_no+=1
+        insert_column_letter=num_to_col_letters(insert_column_no)
+        input_tab.api.Range(f"{insert_column_letter}1").EntireColumn.Insert()  
+        input_tab.range(f"{insert_column_letter}1").number_format="@"
+        input_tab.api.Range(f"{insert_column_letter}1").Value = '1 - 30'
+        prevous_column1=num_to_col_letters(insert_column_no-1)
+        prevous_column2=num_to_col_letters(insert_column_no-2)
+        input_tab.range(f"{insert_column_letter}2").value = f'={prevous_column1}2+{prevous_column2}2'
+        time.sleep(1)
+        input_tab.range(f"{insert_column_letter}2").copy(input_tab.range(f"{insert_column_letter}2:{insert_column_letter}{last_row}"))
+        time.sleep(1)
+        input_tab.range(f"{insert_column_letter}:{insert_column_letter}").copy()
+        time.sleep(1)
+        input_tab.range(f"{insert_column_letter}:{insert_column_letter}").paste(paste="values_and_number_formats")
+        time.sleep(1)
+        wb.app.api.CutCopyMode=False
+        input_tab.api.Range(f"{prevous_column2}1").EntireColumn.Delete()
+        time.sleep(1)
+        input_tab.api.Range(f"{prevous_column2}1").EntireColumn.Delete()
+        #creating date and as of date columns
+        column_list = input_tab.range("A1").expand('right').value
+        Due_Date_column_no = column_list.index('Due Date')+1
+        Due_Date_column_no+=1
+        insert_column_letter=num_to_col_letters(Due_Date_column_no)
+        input_tab.api.Range(f"{insert_column_letter}1").EntireColumn.Insert()
+        As_of_date_CN=Due_Date_column_no+1
+        As_of_date_letter=num_to_col_letters(As_of_date_CN)
+        input_tab.api.Range(f"{As_of_date_letter}1").EntireColumn.Insert()
+        prevous_column1=num_to_col_letters(Due_Date_column_no-1)
+        input_tab.range(f"{prevous_column1}:{prevous_column1}").copy(input_tab.range(f"{insert_column_letter}:{insert_column_letter}"))
+        time.sleep(1)
+        input_tab.range(f"{insert_column_letter}1").value = 'Date'
+        x=datetime.strptime(input_date,"%m.%d.%Y")
+        x=datetime.strftime(x,"%d-%m-%Y")
+        input_tab.range(f"{As_of_date_letter}1").value = x
+        for i in range(2,int(f'{last_row+1}')):
+            
+            if input_tab.range(f"N{i}").value==None:
+                print(i)
+                input_tab.range(f"N{i}").value=input_tab.range(f"K{i}").value
+        input_tab.range(f"{As_of_date_letter}2").value = f'=+${As_of_date_letter}$1-{insert_column_letter}2'  
+        input_tab.range(f"{As_of_date_letter}2").number_format="0.00"
+        input_tab.range(f"{As_of_date_letter}2").copy(input_tab.range(f"{As_of_date_letter}2:{As_of_date_letter}{last_row}"))
+        column_list = input_tab.range("A1").expand('right').value
+        insert_column_no = column_list.index('61 - 9999')+1
+        prevous_column1=num_to_col_letters(insert_column_no)
+        insert_column_no+=1
+        insert_column_letter=num_to_col_letters(insert_column_no)
+        input_tab.api.Range(f"{insert_column_letter}1").EntireColumn.Insert() 
+        input_tab.range(f"{insert_column_letter}1").number_format="General"
+        input_tab.api.Range(f"{insert_column_letter}1").Value = '90+'
+        input_tab.api.Range(f"{prevous_column1}1").Value = '61 - 90'
+        input_tab.api.Range(f"{prevous_column1}2:{prevous_column1}{last_row}").Copy(input_tab.api.Range(f"{insert_column_letter}2:{insert_column_letter}{last_row}"))
+        input_tab.api.Range(f"{As_of_date_letter}1").AutoFilter(Field:=f'{As_of_date_CN}', Criteria1:=[">90"], Operator:=1) 
+        time.sleep(1) 
+        input_tab.api.Range(f"{prevous_column1}2:{prevous_column1}{last_row}").SpecialCells(win32c.CellType.xlCellTypeVisible).Select()
+        time.sleep(1)
+        wb.app.api.Selection.Value=0
+        time.sleep(1)
+        wb.app.api.ActiveSheet.ShowAllData()
+        input_tab.api.Range(f"{As_of_date_letter}1").AutoFilter(Field:=f'{As_of_date_CN}', Criteria1:=["<=90"], Operator:=1)  
+        input_tab.api.Range(f"{insert_column_letter}2:{insert_column_letter}{last_row}").SpecialCells(win32c.CellType.xlCellTypeVisible).Select()
+        wb.app.api.Selection.Value=0
+        time.sleep(1)
+        wb.app.api.ActiveSheet.ShowAllData()
+        print("ddd")        
+
+        wb.sheets.add("Pivot",after=input_tab)
+        ###logger.info("Clearing contents for new sheet")
+        wb.sheets["Pivot"].clear_contents()
+        ws2=wb.sheets["Pivot"]
+        ###logger.info("Declaring Variables for columns and rows")
+        last_column = input_tab.range('A1').end('right').last_cell.column
+        last_column_letter=num_to_col_letters(input_tab.range('A1').end('right').last_cell.column)
+        ###logger.info("Creating Pivot Table")
+        PivotCache=wb.api.PivotCaches().Create(SourceType=win32c.PivotTableSourceType.xlDatabase, SourceData=f"\'Open AR_{input_date}\'!R1C1:R{last_row}C{last_column}", Version=win32c.PivotTableVersionList.xlPivotTableVersion14)
+        PivotTable = PivotCache.CreatePivotTable(TableDestination=f"'Pivot'!R1C1", TableName="PivotTable1", DefaultVersion=win32c.PivotTableVersionList.xlPivotTableVersion14)        ###logger.info("Adding particular Row in Pivot Table")
+        PivotTable.PivotFields('Customer Id').Orientation = win32c.PivotFieldOrientation.xlRowField
+        PivotTable.PivotFields('Customer Id').Position = 1
+        PivotTable.PivotFields('Customer Id').Subtotals=(False, False, False, False, False, False, False, False, False, False, False, False)
+        PivotTable.PivotFields('Customer Name').Orientation = win32c.PivotFieldOrientation.xlRowField
+        PivotTable.PivotFields('Customer Name').Subtotals=(False, False, False, False, False, False, False, False, False, False, False, False)
+        PivotTable.PivotFields('Address').Orientation = win32c.PivotFieldOrientation.xlRowField
+        PivotTable.PivotFields('Address').Subtotals=(False, False, False, False, False, False, False, False, False, False, False, False)
+        PivotTable.PivotFields('City').Orientation = win32c.PivotFieldOrientation.xlRowField
+        PivotTable.PivotFields('City').Subtotals=(False, False, False, False, False, False, False, False, False, False, False, False)
+        PivotTable.PivotFields('State').Orientation = win32c.PivotFieldOrientation.xlRowField
+        PivotTable.PivotFields('State').Subtotals=(False, False, False, False, False, False, False, False, False, False, False, False)
+        PivotTable.PivotFields('Zip Code').Orientation = win32c.PivotFieldOrientation.xlRowField
+        PivotTable.PivotFields('Zip Code').Subtotals=(False, False, False, False, False, False, False, False, False, False, False, False)
+        ###logger.info("Adding particular Data Field in Pivot Table")
+        PivotTable.PivotFields('Balance').Orientation = win32c.PivotFieldOrientation.xlDataField
+        PivotTable.PivotFields('Current').Orientation = win32c.PivotFieldOrientation.xlDataField
+        PivotTable.PivotFields('1 - 30').Orientation = win32c.PivotFieldOrientation.xlDataField
+        # PivotTable.PivotFields('Sum of  1 - 10').NumberFormat= '_("$"* #,##0.00_);_("$"* (#,##0.00);_("$"* "-"??_);_(@_)'
+        PivotTable.PivotFields('31 - 60').Orientation = win32c.PivotFieldOrientation.xlDataField
+        # PivotTable.PivotFields('Sum of  31 - 60').NumberFormat= '_("$"* #,##0.00_);_("$"* (#,##0.00);_("$"* "-"??_);_(@_)'
+        PivotTable.PivotFields('61 - 90').Orientation = win32c.PivotFieldOrientation.xlDataField
+        # PivotTable.PivotFields('Sum of  61 - 9999').NumberFormat= '_("$"* #,##0.00_);_("$"* (#,##0.00);_("$"* "-"??_);_(@_)'
+        PivotTable.PivotFields('90+').Orientation = win32c.PivotFieldOrientation.xlDataField
+        PivotTable.TableStyle2 = ""
+        ###logger.info("Changing Table Layout in Pivot Table")
+        PivotTable.RowAxisLayout(1)
+        wb.api.ActiveSheet.PivotTables("PivotTable1").InGridDropZones = True
+        wb.api.ActiveSheet.PivotTables("PivotTable1").DataPivotField.Caption = "Values"
+        time.sleep(1)
+        last_row_2 = ws2.range(f'A'+ str(ws2.cells.last_cell.row)).end('up').row
+        wb.sheets.add("Summary",after=ws2)
+        ###logger.info("Clearing contents for new sheet")
+        wb.sheets["Summary"].clear_contents()
+        ws3=wb.sheets["Summary"]
+        last_column2 = ws2.range('A2').end('right').last_cell.column
+        last_column_letter2=num_to_col_letters(last_column2)
+        ws2.api.Range(f"A2:{last_column_letter2}{last_row_2}").Copy(ws3.api.Range(f"A1"))
+        last_row_3 = ws3.range(f'A'+ str(ws2.cells.last_cell.row)).end('up').row
+        last_column3 = ws3.range('A1').end('right').last_cell.column
+        last_column_letter3=num_to_col_letters(last_column3)
+        insert_all_borders(cellrange=f"A1:{last_column_letter3}{last_row_3}",working_sheet=ws3,working_workbook=wb)
+        ws3.autofit()
+        ws3.api.Range("1:1").Font.Bold = True
+        ws2.activate()
+        wb.app.api.ActiveSheet.PivotTables("PivotTable1").TableStyle2 = "PivotStyleLight16"
+        ws3.api.Range(f"{last_row_3}:{last_row_3}").Font.Bold = True
+        output_location = r'J:\WEST PLAINS\REPORT\Open AR New\Output Files'   
+        wb.save(f"{output_location}\\Open AR_"+input_date+' updated.xlsx')
+        wb.app.quit()
+        return f"{job_name} Report for {input_date} generated succesfully"
+
+    except Exception as e:
+        raise e
+    finally:
+        try:
+            wb.app.quit()
+        except:
+            pass
+
+
+
 
 def main():
     def on_closing():
@@ -6677,8 +6896,8 @@ def main():
                     'MOC Interest Allocation':moc_interest_alloc,'Open AR':open_ar,'Open AP':open_ap, 'Unsettled Payable Report':unsetteled_payables,'Unsettled Receivable Report':unsetteled_receivables,
                     'Storage Month End Report':strg_month_end_report, "Month End BBR":bbr_monthEnd, "Bank Recons Report":bank_recons_rep, "Payables_GL_Entry_Monthly":payables_gl_entry_monthly,
                     "Receivables_GL_Entry_Monthly":receivables_gl_entry_monthly,"CTM_GL_Entry_Monthly":ctm_gl_entry_monthly, "Macquarie Accrual Entry":macq_accr_entry, "Ticket_N_Settlement_Report":tkt_n_settlement_summ,
-                    "Payroll_Summary":payroll_summ,"Credit_Card_Entry":credit_card_entry, "Credit_Card_GL_Entry":credit_card_gl,"Unsettled_AR_By_Location":unsettled_ar_by_location_part1,
-                    "Unsettled_AR_By_Location_with_Reasons":unsettled_ar_by_location_part2}
+                    "Payroll_Summary":payroll_summ,"Credit_Card_Entry":credit_card_entry, "Credit_Card_GL_Entry":credit_card_gl,"Unsettled_AR_By_Reason":unsettled_ar_by_location_part1,
+                    "Unsettled_AR_By_Location_with_Location":unsettled_ar_by_location_part2,"Open_AR_Mothly":open_ar_monthly}
     # wp_job_ids = {'ABS':1,'BBR':bbr,'CPR Report':cpr, 'Freight analysis':freight_analysis, 'CTM combined':ctm,'MTM Report':mtm_report,
     #                 'MOC Interest Allocation':moc_interest_alloc,'Open AR':open_ar,'Open AP':open_ap, 'Unsettled Payable Report':unsetteled_payables,'Unsettled Receivable Report':unsetteled_receivables,
     #                 'Storage Month End Report':strg_month_end_report, "Month End BBR":bbr_monthEnd, "Bank Recons Report":bank_recons_rep}
