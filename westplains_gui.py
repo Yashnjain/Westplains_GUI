@@ -1,3 +1,4 @@
+from email.mime import message
 from tkinter.filedialog import askdirectory, askopenfilename
 from tkinter import N, Menubutton, Tk, StringVar, Text
 from tkinter import PhotoImage
@@ -5418,8 +5419,8 @@ def tkt_n_settlement_summ(input_date, output_date):
         monthYear = datetime.strftime(datetime.strptime(input_date, "%m.%d.%Y"), "%b %Y")
         Year = datetime.strftime(datetime.strptime(input_date, "%m.%d.%Y"), "%Y")
         input_datetime = datetime.strptime(input_date, "%m.%d.%Y")
-        end_date = datetime.strftime(input_datetime+timedelta(days=1), "%d-%m-%Y")#
-        st_date = datetime.strftime(input_datetime.replace(day=1), "%d-%m-%Y")
+        end_date = datetime.strftime(input_datetime+timedelta(days=1), "%m-%d-%Y")#
+        st_date = datetime.strftime(input_datetime.replace(day=1), "%m-%d-%Y")
         tkt_query_xl = r"J:\WEST PLAINS\REPORT\Ticket And Settlement Summary\Raw Files" +f"\\Ticket Query {Year}.xlsx"
         # input_xl = r"C:\Users\imam.khan\OneDrive - BioUrja Trading LLC\Documents\WEST PLAINS\REPORT\Macquaire Accrual Entry\Raw Files" +f"\\Macq Accrual_{input_date}.xlsx"
         if not os.path.exists(tkt_query_xl):
@@ -5493,11 +5494,14 @@ def tkt_n_settlement_summ(input_date, output_date):
         tkt_ent_sht.cells.clear_contents()
         tkt_sht.api.AutoFilterMode=False
         tkt_sht.api.Range(f"L1").AutoFilter(Field:=12,Criteria1:=f">={st_date}", Operator:=1, Criteria2:=f"<={end_date}")
-        messagebox.showinfo(title="Info",message="Data is filtered and selected in ticket query 2022 sheet")
+        
         # tkt_sht.api.Range(f"L1").AutoFilter(Field:=12, Operator:=7, Criteria2:=[1,"2/28/2022"])
         tkt_wb.activate()
+        time.sleep(2)
         tkt_sht.activate()
+        time.sleep(2)
         tkt_sht.api.Range(f"A1:M{last_row-1}").SpecialCells(12).Select()
+        # messagebox.showinfo(title="Info",message="Data is filtered and selected in ticket query 2022 sheet")
         tkt_wb.app.selection.copy()
         # tkt_sht.range(f"A1:M{last_row-1}").copy()
         tkt_ent_sht.range("A1").paste(paste="values_and_number_formats") #pasting only values
@@ -5522,7 +5526,7 @@ def tkt_n_settlement_summ(input_date, output_date):
         tkt_ent_sht.range("O2").copy(tkt_ent_sht.range(f"O3:O{tkt_last_row}"))
         tkt_wb.save()
         
-        messagebox.showinfo(title="Info",message="Data is pasted in ticket entry sheet")
+        # messagebox.showinfo(title="Info",message="Data is pasted in ticket entry sheet")
         #Now getting settlemt data same as above
         retry=0
         while retry < 10:
@@ -5598,7 +5602,7 @@ def tkt_n_settlement_summ(input_date, output_date):
         tkt_p_sht.range("A1").select()
         # messagebox.showinfo(title="Info",message=f"Currently source data is '{tkt_ent_sht.name}'!R1C1:R{tkt_last_row}C15")
         # time.sleep(150)
-        messagebox.showinfo(title="Info",message=f"Currently source data is '{tkt_ent_sht.name}'!R1C1:R{tkt_last_row}C15")
+        # messagebox.showinfo(title="Info",message=f"Currently source data is '{tkt_ent_sht.name}'!R1C1:R{tkt_last_row}C15")
         #First pivot
         PivotCache=wb.api.PivotCaches().Create(SourceType=win32c.PivotTableSourceType.xlDatabase, SourceData=f"'{tkt_ent_sht.name}'!R1C1:R{tkt_last_row}C15", Version=win32c.PivotTableVersionList.xlPivotTableVersion14)
         # time.sleep(5)
@@ -6711,10 +6715,15 @@ def open_ar_monthly(input_date, output_date):
         prevous_column1=num_to_col_letters(Due_Date_column_no-1)
         input_tab.range(f"{prevous_column1}:{prevous_column1}").copy(input_tab.range(f"{insert_column_letter}:{insert_column_letter}"))
         time.sleep(1)
+        Due_Date_letter=num_to_col_letters(Due_Date_column_no-1)
+        input_tab.range(f"{Due_Date_letter}{1}:{Due_Date_letter}{last_row}").number_format='dd-mm-yyyy'
+        next_letter=num_to_col_letters(Due_Date_column_no)
+        input_tab.range(f"{next_letter}{1}:{next_letter}{last_row}").number_format='dd-mm-yyyy'
         input_tab.range(f"{insert_column_letter}1").value = 'Date'
         x=datetime.strptime(input_date,"%m.%d.%Y")
         x=datetime.strftime(x,"%d-%m-%Y")
-        input_tab.range(f"{As_of_date_letter}1").value = x
+        input_tab.range(f"{As_of_date_letter}{1}").number_format='dd-mm-yyyy'
+        input_tab.range(f"{As_of_date_letter}1").options(dates=datetime.date).value = x
         for i in range(2,int(f'{last_row+1}')):
             
             if input_tab.range(f"N{i}").value==None:
@@ -6897,7 +6906,7 @@ def main():
                     'Storage Month End Report':strg_month_end_report, "Month End BBR":bbr_monthEnd, "Bank Recons Report":bank_recons_rep, "Payables_GL_Entry_Monthly":payables_gl_entry_monthly,
                     "Receivables_GL_Entry_Monthly":receivables_gl_entry_monthly,"CTM_GL_Entry_Monthly":ctm_gl_entry_monthly, "Macquarie Accrual Entry":macq_accr_entry, "Ticket_N_Settlement_Report":tkt_n_settlement_summ,
                     "Payroll_Summary":payroll_summ,"Credit_Card_Entry":credit_card_entry, "Credit_Card_GL_Entry":credit_card_gl,"Unsettled_AR_By_Reason":unsettled_ar_by_location_part1,
-                    "Unsettled_AR_By_Location_with_Location":unsettled_ar_by_location_part2,"Open_AR_Mothly":open_ar_monthly}
+                    "Unsettled_AR_By_Location_with_Location":unsettled_ar_by_location_part2,"Open_AR_Monthly":open_ar_monthly}
     # wp_job_ids = {'ABS':1,'BBR':bbr,'CPR Report':cpr, 'Freight analysis':freight_analysis, 'CTM combined':ctm,'MTM Report':mtm_report,
     #                 'MOC Interest Allocation':moc_interest_alloc,'Open AR':open_ar,'Open AP':open_ap, 'Unsettled Payable Report':unsetteled_payables,'Unsettled Receivable Report':unsetteled_receivables,
     #                 'Storage Month End Report':strg_month_end_report, "Month End BBR":bbr_monthEnd, "Bank Recons Report":bank_recons_rep}
