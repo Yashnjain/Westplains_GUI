@@ -6300,11 +6300,27 @@ def credit_card_gl(input_date, output_date):
         input_month_no=datetime.strftime(datetime_input,"%m")
         insertdate=f'{input_year}{input_month_no}{lastday}'
 
-
-        input_sheet = r'J:\WEST PLAINS\REPORT\Credit_Card_GL\Raw Files'+f'\\{input_month} {input_year} Credit Card expense.xlsx' 
+        template_sheet=r'J:\WEST PLAINS\REPORT\\Credit_Card_GL\Raw Files\template'+f'\\template.xlsx'
+        retry=0
+        if not os.path.exists(template_sheet):
+            return(f"{template_sheet} Excel file not present in template folder") 
+        while retry < 10:
+            try:              
+                template_wb=xw.Book(template_sheet,update_links=False)
+                break
+            except Exception as e:
+                time.sleep(5)
+                retry+=1
+                if retry ==10:
+                    raise e    
+        sht=template_wb.sheets[0]
+        tlast_row = sht.range(f'A'+ str(sht.cells.last_cell.row)).end('up').row
+        dict1=sht.range(f'A1:B{tlast_row}').options(dict).value
+        template_wb.close()
+        input_sheet = r'J:\WEST PLAINS\REPORT\\Credit_Card_GL\Raw Files'+f'\\{input_month} {input_year} Credit Card expense.xlsx' 
         if not os.path.exists(input_sheet):
             return(f"{input_sheet} Excel file not present for date {input_date}")           
-        output_location = r'J:\WEST PLAINS\REPORT\Credit_Card_GL\Output files'
+        output_location = r'J:\WEST PLAINS\REPORT\\Credit_Card_GL\Output files'
         output_location_file=f'{output_location}'+f'\\{input_month} {input_year} Credit Card expense.xlsx'
         if os.path.exists(output_location_file):
             input_sheet=output_location_file
@@ -6342,16 +6358,45 @@ def credit_card_gl(input_date, output_date):
         column_list = entry_tab.range("A1").expand('right').value
         Description_no_column=column_list.index('Description')+1
         Description_letter_column = num_to_col_letters(Description_no_column)
-        i = 2
-        while i <= last_row:
-            color_hex="ffc000"
-            rgb_value=tuple(int(color_hex[i:i+2], 16) for i in (0, 2, 4))
-            if entry_tab.range(f"{Description_letter_column}{i}").color == rgb_value: 
-                entry_tab.range(f"{i}:{i}").api.Delete(win32c.DeleteShiftDirection.xlShiftUp)
-                # print(i)
-                i-=1                   
-            else:
-                i+=1
+        # i = 2
+        # while i <= last_row:
+        #     color_hex="ffc000"
+        #     rgb_value=tuple(int(color_hex[i:i+2], 16) for i in (0, 2, 4))
+        #     if entry_tab.range(f"{Description_letter_column}{i}").color == rgb_value: 
+        #         entry_tab.range(f"{i}:{i}").api.Delete(win32c.DeleteShiftDirection.xlShiftUp)
+        #         # print(i)
+        #         i-=1                   
+        #     else:
+        #         i+=1
+        for key, value in dict1.items():
+            try:
+                entry_tab.api.Range(f"A1").AutoFilter(Field:=1, Criteria1:=value, Operator:=7)
+                last_row = entry_tab.range(f'A'+ str(entry_tab.cells.last_cell.row)).end('up').row
+                last_column_letter=num_to_col_letters(entry_tab.range('A1').end('right').end('right').last_cell.column)
+                cell_range=entry_tab.api.Range(f"A2:{last_column_letter}{last_row}").SpecialCells(win32c.CellType.xlCellTypeVisible).Address
+                starting_index=int(cell_range.split(':')[0].replace("$",""))
+                ending_index=int(cell_range.split(':')[1].replace("$",""))
+                i = starting_index
+                while i <= ending_index:
+                    if key in entry_tab.range(f"{Description_letter_column}{i}").value: 
+                        entry_tab.range(f"{i}:{i}").api.Delete(win32c.DeleteShiftDirection.xlShiftUp)
+                        # print(i)                 
+                    else:
+                        i+=1
+                last_row = entry_tab.range(f'A'+ str(entry_tab.cells.last_cell.row)).end('up').row
+                last_column_letter=num_to_col_letters(entry_tab.range('A1').end('right').end('right').last_cell.column)
+                cell_range=entry_tab.api.Range(f"A2:{last_column_letter}{last_row}").SpecialCells(win32c.CellType.xlCellTypeVisible).Address
+                starting_index=int(cell_range.split(':')[0].replace("$",""))
+                ending_index=int(cell_range.split(':')[1].replace("$","")) 
+                Amount_no_column=column_list.index('Amount')+1
+                Amount_letter_column = num_to_col_letters(Amount_no_column)      
+                if entry_tab.range(f"{Amount_letter_column}{ending_index}").value==None:
+                    entry_tab.range(f"{ending_index}:{ending_index}").api.Delete(win32c.DeleteShiftDirection.xlShiftUp)
+ 
+                wb.app.api.ActiveSheet.ShowAllData()
+            except:
+                wb.app.api.ActiveSheet.ShowAllData()
+                pass
 
         Type_no_column=column_list.index('Type')+1
         Type_letter_column = num_to_col_letters(Type_no_column)
@@ -6905,7 +6950,7 @@ def main():
                     'MOC Interest Allocation':moc_interest_alloc,'Open AR':open_ar,'Open AP':open_ap, 'Unsettled Payable Report':unsetteled_payables,'Unsettled Receivable Report':unsetteled_receivables,
                     'Storage Month End Report':strg_month_end_report, "Month End BBR":bbr_monthEnd, "Bank Recons Report":bank_recons_rep, "Payables_GL_Entry_Monthly":payables_gl_entry_monthly,
                     "Receivables_GL_Entry_Monthly":receivables_gl_entry_monthly,"CTM_GL_Entry_Monthly":ctm_gl_entry_monthly, "Macquarie Accrual Entry":macq_accr_entry, "Ticket_N_Settlement_Report":tkt_n_settlement_summ,
-                    "Payroll_Summary":payroll_summ,"Credit_Card_Entry":credit_card_entry, "Credit_Card_GL_Entry":credit_card_gl,"Unsettled_AR_By_Reason":unsettled_ar_by_location_part1,
+                    "Payroll_Summary":payroll_summ,"Credit_Card_Entry":credit_card_entry, "Credit_Card_GL_Entry_Monthly":credit_card_gl,"Unsettled_AR_By_Reason":unsettled_ar_by_location_part1,
                     "Unsettled_AR_By_Location_with_Location":unsettled_ar_by_location_part2,"Open_AR_Monthly":open_ar_monthly}
     # wp_job_ids = {'ABS':1,'BBR':bbr,'CPR Report':cpr, 'Freight analysis':freight_analysis, 'CTM combined':ctm,'MTM Report':mtm_report,
     #                 'MOC Interest Allocation':moc_interest_alloc,'Open AR':open_ar,'Open AP':open_ap, 'Unsettled Payable Report':unsetteled_payables,'Unsettled Receivable Report':unsetteled_receivables,
