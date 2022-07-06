@@ -494,7 +494,7 @@ def storage_qty(input_date,input_qty_pdf, input_qty_xl, monthYear2, qty_loc_dict
             #                 pandas_options={'header':0},area = ["5,15,80,300"],columns=["60"])[0]
 
         df = read_pdf(input_qty_pdf,pages = f"1-{page_num}",guess = False,stream = True,
-                pandas_options={'header':0},area = ["65,630,580,735"],columns=["675"])
+                pandas_options={'header':0},area = ["65,630,580,735"],columns=["680"])
         
         location_df = read_pdf(input_qty_pdf,pages = f"1-{page_num}",guess = False,stream = True,
                         pandas_options={'header':0},area = ["5,15,80,300"],columns=["60"])
@@ -928,9 +928,12 @@ def bbr_other_tabs(input_date, wb, input_ar, input_ctm):
         num_row=excl_sht.range(f'A' + str(excl_sht.cells.last_cell.row)).end('up').row
         last_column = excl_sht.range('A1').end('right').last_cell.column
         last_column_letter=num_to_col_letters(last_column)
-        excl_sht.range(f'A1:{last_column_letter}{num_row}').copy()
+        # excl_sht.range(f'A1:{last_column_letter}{num_row}').copy()
         wb.activate()
         ws5 = wb.sheets['Detail CTM Non MCUI']
+        ws5.clear_contents()
+        excl_sht.range(f'A1:{last_column_letter}{num_row}').copy()
+        wb.activate()
         ws5.range('A1').paste()
         wb.app.api.CutCopyMode=False
         wb1.activate()
@@ -6766,9 +6769,12 @@ def open_ar_monthly(input_date, output_date):
         input_tab.range(f"{next_letter}{1}:{next_letter}{last_row}").number_format='dd-mm-yyyy'
         input_tab.range(f"{insert_column_letter}1").value = 'Date'
         x=datetime.strptime(input_date,"%m.%d.%Y")
-        x=datetime.strftime(x,"%d-%m-%Y")
+        # x=datetime.strftime(x,"%d-%m-%Y")
         input_tab.range(f"{As_of_date_letter}{1}").number_format='dd-mm-yyyy'
-        input_tab.range(f"{As_of_date_letter}1").options(dates=datetime.date).value = x
+        input_tab.range(f"{As_of_date_letter}1").options(dates=datetime.date).value = x      
+        input_tab.range(f"{As_of_date_letter}{1}").number_format='dd-mm-yyyy'
+        # messagebox.showinfo("Info", 'Changing formating')
+        
         for i in range(2,int(f'{last_row+1}')):
             
             if input_tab.range(f"N{i}").value==None:
@@ -6787,6 +6793,7 @@ def open_ar_monthly(input_date, output_date):
         input_tab.api.Range(f"{insert_column_letter}1").Value = '90+'
         input_tab.api.Range(f"{prevous_column1}1").Value = '61 - 90'
         input_tab.api.Range(f"{prevous_column1}2:{prevous_column1}{last_row}").Copy(input_tab.api.Range(f"{insert_column_letter}2:{insert_column_letter}{last_row}"))
+        # messagebox.showinfo("Info", 'Checking Error')
         input_tab.api.Range(f"{As_of_date_letter}1").AutoFilter(Field:=f'{As_of_date_CN}', Criteria1:=[">90"], Operator:=1) 
         time.sleep(1) 
         input_tab.api.Range(f"{prevous_column1}2:{prevous_column1}{last_row}").SpecialCells(win32c.CellType.xlCellTypeVisible).Select()
