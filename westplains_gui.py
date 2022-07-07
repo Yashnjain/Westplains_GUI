@@ -6546,13 +6546,17 @@ def unsettled_ar_by_location_part1(input_date, output_date):
         time.sleep(1)
         wss1.range(f"{Reason_column_letter}:{Reason_column_letter}").paste(paste="values_and_number_formats")
         wb2.app.api.CutCopyMode=False
-        wss1.api.Range(f"{Reason_column_letter}1").AutoFilter(Field:=f'{Reason_column_no}', Criteria1:=['#N/A'], Operator:=7)
-        time.sleep(1)
-        wss1.api.Range(f"{Reason_column_letter}2:{Reason_column_letter}{last_row}").SpecialCells(win32c.CellType.xlCellTypeVisible).Select()
-        time.sleep(1)
-        wb2.app.api.Selection.Value=None
-        time.sleep(1)
-        wb2.app.api.ActiveSheet.ShowAllData()
+        try:
+            wss1.api.Range(f"{Reason_column_letter}1").AutoFilter(Field:=f'{Reason_column_no}', Criteria1:=['#N/A'], Operator:=7)
+            time.sleep(1)
+            wss1.api.Range(f"{Reason_column_letter}2:{Reason_column_letter}{last_row}").SpecialCells(win32c.CellType.xlCellTypeVisible).Select()
+            time.sleep(1)
+            wb2.app.api.Selection.Value=None
+            time.sleep(1)
+            wb2.app.api.ActiveSheet.ShowAllData()
+        except:
+            wb2.app.api.ActiveSheet.ShowAllData()
+            pass
         try:
             CVC_column_no = column_list2.index("Customer/Vendor Name")+1
             CVC_column_letter=num_to_col_letters(CVC_column_no)
