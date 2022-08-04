@@ -4028,6 +4028,7 @@ def unsetteled_payables(input_date, output_date):
         ######logger.info("Adding Worksheet for Pivot Table")
         wb.sheets.add("For allocation entry",before=inp_sht)
         ######logger.info("Creating Pivot table")
+        
         PivotCache=wb.api.PivotCaches().Create(SourceType=win32c.PivotTableSourceType.xlDatabase, SourceData=f'\'{inp_sht.name}\'!R1C1:R{last_row}C{last_col_num}', Version=win32c.PivotTableVersionList.xlPivotTableVersion14)
         PivotTable = PivotCache.CreatePivotTable(TableDestination="'For allocation entry'!R3C1", TableName="PivotTable1", DefaultVersion=win32c.PivotTableVersionList.xlPivotTableVersion14)
         ######logger.info("Adding particular Row in Pivot Table")
@@ -4673,7 +4674,7 @@ def fifo(input_date, output_date):
                 mtm_sht.api.Range(f"G4:G{mtm_last_row}").SpecialCells(12).Select()
                 qty_sum=0
                 price_sum = 0
-                je_sht.range(f'A'+ str(je_sht.cells.last_cell.row)).end('up').end('up').row
+                # je_sht.range(f'A'+ str(je_sht.cells.last_cell.row)).end('up').end('up').row
                 for rng in mtm_wb.app.selection.address.split(','):
                     # if rng != '$G$3':
                     if type(mtm_sht.range(rng).value) is list:
@@ -4769,7 +4770,11 @@ def fifo(input_date, output_date):
         mtm_je_sht.activate()
         mtm_je_sht.api.AutoFilterMode=False
         pivotCount = mtm_wb.api.ActiveSheet.PivotTables().Count
-        for j in range(1, pivotCount+1): 
+        for j in range(1, pivotCount+1):
+            mtm_je_sht.activate()
+            PivotCache = mtm_wb.api.PivotCaches().Create(SourceType=win32c.PivotTableSourceType.xlDatabase, SourceData=f"\'INPUT DATA\'!R3C1:R{mtm_last_row}C19", Version=win32c.PivotTableVersionList.xlPivotTableVersion14)
+            mtm_wb.api.ActiveSheet.PivotTables(j).ChangePivotCache(PivotCache)
+            
             mtm_wb.api.ActiveSheet.PivotTables(j).PivotCache().Refresh()   
         # mtm_wb.api.ActiveSheet.PivotTables(2).PivotCache().Refresh() 
         mtm_sht.activate()
