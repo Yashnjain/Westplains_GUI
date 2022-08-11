@@ -1841,9 +1841,12 @@ def mtm_pdf_data_extractor(input_date, f, hrw_pdf_loc, yc_pdf_loc):
 
             df["Quantity.5"] = df["Quantity.5"].astype(str).str.replace("(","-").str.replace(",","").str.replace(")","").astype(float)
             df["Value.5"] = df["Value.5"].astype(str).str.replace("(","-").str.replace(",","").str.replace(")","").astype(float)
-
+            
             for i in range(len(df)):
-                print(df.iloc[i,2]) #2 for "Offsite Name Cont. No."
+                try:
+                    print(df.iloc[i,2]) #2 for "Offsite Name Cont. No."
+                except:
+                    continue
                 if "priced Sales" in df.iloc[i,2]:
                     print("Unprised Value found")
                     if df.iloc[-2,2] == 'Unpriced Sales:' and df.iloc[-2,-2]==0: #pd.isna(df.iloc[-2,-1]):
@@ -1851,6 +1854,14 @@ def mtm_pdf_data_extractor(input_date, f, hrw_pdf_loc, yc_pdf_loc):
                     else:
                         df.iloc[i+1,-2] = df.iloc[i+1,-2] - df.iloc[i,-2]
                         df.iloc[i+1,-1] = df.iloc[i+1,-1] - df.iloc[i,-1]
+                if i>0 and df.iloc[i-1,0]==df.iloc[i,0]:
+                    #Price Remains last one
+                    #Adding Quantity and Value
+                    df.iloc[i,4] = df.iloc[i,4]+df.iloc[i-1,4]
+                    df.iloc[i,5] = df.iloc[i,5]+df.iloc[i-1,5]
+                    #droping i-1 index row
+                    df.drop([df.index[i-1]], inplace=True)
+                    pass
 
             # n_df[n_df.iloc[:,2].str.contains("Company Owned Risk:")] #Another way
             
