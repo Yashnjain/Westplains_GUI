@@ -1786,6 +1786,10 @@ def mtm_pdf_data_extractor(input_date, f, hrw_pdf_loc, yc_pdf_loc):
             df = read_pdf(loc, pages = 1, guess = False, stream = True ,
                                     pandas_options={'header':0}, area = ["700,70,1000,1200"], columns=['150','480','550','650', '700','800','900'])
             df = pd.concat(df, ignore_index=True)
+            if df.iloc[0,0]=="MONTH":
+                df.columns = df.iloc[0]
+                df = df[1:]
+                df = df.reset_index(drop=True)
             df = df[["MONTH","SETTLE"]]
             form_dict = {"'6":"75", "'4":"50", "'2":"25", "'0":"00"}
             for month in range(len(df)):
