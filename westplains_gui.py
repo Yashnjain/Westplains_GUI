@@ -2128,9 +2128,9 @@ def mtm_excel(input_date,input_xl,loc_dict,loc_sheet, output_location, hrw_fut, 
         for location in other_loc_lst:
             try:
                 if location.upper() == 'ZEOLITE':
-                    m_sht.range(f"M69").value = loc_dict[loc_abbr[location]][0].iloc[-1,-1]/loc_dict[loc_abbr[location]][0].iloc[-1,-2]
+                    m_sht.range(f"P69").value = loc_dict[loc_abbr[location]][0].iloc[-1,-1]/loc_dict[loc_abbr[location]][0].iloc[-1,-2]
 
-                    m_sht.range(f"P69").value = loc_dict[loc_abbr[location]][0].iloc[-1,-2] #Quantity
+                    m_sht.range(f"M69").value = loc_dict[loc_abbr[location]][0].iloc[-1,-2] #Quantity
 
                     # m_sht.range(f"F{i}").value = loc_dict[loc_abbr[location]][0].iloc[-1,-2] #Price
                     m_sht.range(f"F{i}").value = 0
