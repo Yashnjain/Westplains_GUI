@@ -2322,7 +2322,10 @@ def bbr(input_date, output_date):
             p_wb.app.api.CutCopyMode=False
             time.sleep(1)
             wb.sheets['AR-Re-Purchase Storage Rcbl'].activate()
-            wb.api.ChangeLink(Name = wb.api.LinkSources()[0], NewName=wb.fullname, Type=1)
+            try:
+                wb.api.ChangeLink(Name = wb.api.LinkSources()[0], NewName=wb.fullname, Type=1)
+            except:
+                pass
 
             pass
 
