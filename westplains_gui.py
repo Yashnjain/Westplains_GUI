@@ -31,7 +31,11 @@ from collections import OrderedDict
 import calendar
 from dateutil.relativedelta import relativedelta
 import shutil
-
+from selenium import webdriver
+from selenium.webdriver.support.wait import WebDriverWait
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
+from webdriver_manager.firefox import GeckoDriverManager
 
 
 
@@ -1776,21 +1780,36 @@ def num_to_col_letters(num):
     except Exception as e:
         raise e
 
-def mtm_pdf_data_extractor(input_date, f, hrw_pdf_loc, yc_pdf_loc):
+def mtm_pdf_data_extractor(input_date, f, hrw_pdf_loc, yc_pdf_loc ,ysb_pdf_loc):
     try:
         # reader = PyPDF2.PdfFileReader(open(f, mode='rb' ))
         # n = reader.getNumPages() 
         inp_month_year = datetime.strptime(input_date,"%m.%d.%Y").replace(day=1)
         # data_list = []
-        for loc in [hrw_pdf_loc, yc_pdf_loc]:
-            df = read_pdf(loc, pages = 1, guess = False, stream = True ,
-                                    pandas_options={'header':0}, area = ["700,70,1000,1200"], columns=['150','480','550','650', '700','800','900'])
-            df = pd.concat(df, ignore_index=True)
-            if df.iloc[0,0]=="MONTH":
+        driver=webdriver.Firefox(executable_path=GeckoDriverManager().install())
+        for loc in [hrw_pdf_loc, yc_pdf_loc , ysb_pdf_loc]:
+            date_datetime = datetime.strptime(input_date,"%m.%d.%Y")
+            dmonth = date_datetime.strftime("%m")
+            dday = date_datetime.strftime("%d")
+            dyear = date_datetime.strftime("%Y")
+            if loc == hrw_pdf_loc:
+                driver.get(f"https://www.cmegroup.com/markets/agriculture/grains/corn.settlements.html#tradeDate={dmonth}%2F{dday}%2F{dyear}")
+            elif loc == yc_pdf_loc:   
+                driver.get(f"https://www.cmegroup.com/markets/agriculture/grains/kc-wheat.settlements.html#tradeDate={dmonth}%2F{dday}%2F{dyear}")
+            elif loc == ysb_pdf_loc:
+                driver.get(f"https://www.cmegroup.com/markets/agriculture/oilseeds/soybean.settlements.html#tradeDate={dmonth}%2F{dday}%2F{dyear}")                
+            time.sleep(5)
+            table_element=WebDriverWait(driver, 90, poll_frequency=1).until(EC.element_to_be_clickable((By.CLASS_NAME, "table-wrapper")))
+            df=pd.read_html(table_element.get_attribute('outerHTML'),header=0,skiprows=[0])[0]      
+            # df = read_pdf(loc, pages = 1, guess = False, stream = True ,
+            #                         pandas_options={'header':0}, area = ["700,70,1000,1200"], columns=['150','480','550','650', '700','800','900'])
+            # df = pd.concat(df, ignore_index=True)
+            if df.iloc[0,0]=="Month":
                 df.columns = df.iloc[0]
                 df = df[1:]
                 df = df.reset_index(drop=True)
-            df = df[["MONTH","SETTLE"]]
+            df = df[["Month","Settle"]]
+            df.columns = ["MONTH","SETTLE"]
             form_dict = {"'6":"75", "'4":"50", "'2":"25", "'0":"00"}
             for month in range(len(df)):
                 if "JLY" in df["MONTH"][month]:
@@ -1803,6 +1822,8 @@ def mtm_pdf_data_extractor(input_date, f, hrw_pdf_loc, yc_pdf_loc):
                                 hrw_fut = int(settle_price.replace(key,form_dict[key]))/10000  
                             elif 'YC' in loc.upper():
                                 yc_fut =  int(settle_price.replace(key,form_dict[key]))/10000
+                            elif 'YSB' in loc.upper():
+                                ysb_fut =  int(settle_price.replace(key,form_dict[key]))/10000                                
                             break
                     break
                 elif inp_month_year < datetime.strptime(df["MONTH"][month], "%b %y"):
@@ -1813,11 +1834,16 @@ def mtm_pdf_data_extractor(input_date, f, hrw_pdf_loc, yc_pdf_loc):
                                 hrw_fut = int(settle_price.replace(key,form_dict[key]))/10000  
                             elif 'YC' in loc.upper():
                                 yc_fut =  int(settle_price.replace(key,form_dict[key]))/10000
+                            elif 'YSB' in loc.upper():
+                                ysb_fut =  int(settle_price.replace(key,form_dict[key]))/10000                                
                             break
                     break
                 
                 
-
+        try:
+            driver.quit() 
+        except:
+            print("could not close the driver object") 
         date_df = read_pdf(f, pages = 1, guess = False, stream = True ,
                         pandas_options={'header':None}, area = ["20,40,40,800"])
         print(date_df)
@@ -1887,12 +1913,11 @@ def mtm_pdf_data_extractor(input_date, f, hrw_pdf_loc, yc_pdf_loc):
                 # print(len(value))
                 # print()
         
-        
-        return loc_dict, hrw_fut, yc_fut
+        return loc_dict, hrw_fut, yc_fut ,ysb_fut
     except Exception as e:
         raise e
 
-def mtm_excel(input_date,input_xl,loc_dict,loc_sheet, output_location, hrw_fut, yc_fut):
+def mtm_excel(input_date,input_xl,loc_dict,loc_sheet, output_location, hrw_fut, yc_fut ,ysb_fut):
     try:
         monthYear = datetime.strftime(datetime.strptime(input_xl.split("_")[-1].split(".xlsx")[0],"%m.%d.%Y"), "%d-%b")
         
@@ -2157,6 +2182,8 @@ def mtm_excel(input_date,input_xl,loc_dict,loc_sheet, output_location, hrw_fut, 
         i=int(other_loc_2.replace("A", ""))
         for location in other_loc_2_lst:
             try:
+                if location == 'YSB':
+                    m_sht.range(f"I{i}").value = ysb_fut
                 m_sht.range(f"F{i}").value = loc_dict[loc_abbr[location]][0].iloc[-1,-1]/loc_dict[loc_abbr[location]][0].iloc[-1,-2] #Price
                 # m_sht.range(f"F{i}").value = loc_dict[loc_abbr[location]][0].iloc[-1,-2]
                 m_sht.range(f"C{i}").value = loc_dict[loc_abbr[location]][0].iloc[-1,-2] #Quantity
@@ -3021,21 +3048,30 @@ def ctm(input_date, output_date):
         ###logger.info("Adding particular Page Field in Pivot Table")
         PivotTable.PivotFields('Ship Tier').Orientation = win32c.PivotFieldOrientation.xlPageField
         ###logger.info("Applying filter in pagefield in Pivot Table")
-        PivotTable.PivotFields('Ship Tier').CurrentPage = ">12 months"
-        ###logger.info("Changing No Format in Pivot Table")
-        ###logger.info("Changing Table layout")
-        PivotTable.PivotFields('Location Id').Subtotals=(False, False, False, False, False, False, False, False, False, False, False, False)
-        PivotTable.PivotFields('Commodity Id').Subtotals=(False, False, False, False, False, False, False, False, False, False, False, False)
-        PivotTable.RowAxisLayout(1)
-        ###logger.info("Changing Table Style")
-        PivotTable.TableStyle2 = ""
-
-        last_column = ws3.range('A7').end('right').last_cell.column
-        last_column+=3
-        last_row = ws3.range(f'A'+ str(ws1.cells.last_cell.row)).end('up').row
-        last_row+=5
-        last_column_letter=num_to_col_letters(last_column)
-        ws3.range(f"{last_column_letter}{last_row}").value=f'=GETPIVOTDATA("Gain/LossTotal",$A$7)+GETPIVOTDATA("Gain/LossTotal",$A${last_row2})'
+        Event = False
+        try:
+            PivotTable.PivotFields('Ship Tier').CurrentPage = ">12 months"
+            ###logger.info("Changing No Format in Pivot Table")
+            ###logger.info("Changing Table layout")
+            PivotTable.PivotFields('Location Id').Subtotals=(False, False, False, False, False, False, False, False, False, False, False, False)
+            PivotTable.PivotFields('Commodity Id').Subtotals=(False, False, False, False, False, False, False, False, False, False, False, False)
+            PivotTable.RowAxisLayout(1)
+            ###logger.info("Changing Table Style")
+            PivotTable.TableStyle2 = ""
+        except:
+            wb.api.ActiveSheet.PivotTables("PivotTable2").PivotSelect("",win32c.PTSelectionMode.xlDataAndLabel,True) 
+            wb.app.selection.api.ClearContents()
+            Event = True
+        finally:
+            last_column = ws3.range('A7').end('right').last_cell.column
+            last_column+=3
+            last_row = ws3.range(f'A'+ str(ws1.cells.last_cell.row)).end('up').row
+            last_row+=5
+            last_column_letter=num_to_col_letters(last_column)
+        if Event:    
+            ws3.range(f"{last_column_letter}{last_row}").value=f'=GETPIVOTDATA("Gain/LossTotal",$A$7)'
+        else:
+            ws3.range(f"{last_column_letter}{last_row}").value=f'=GETPIVOTDATA("Gain/LossTotal",$A$7)+GETPIVOTDATA("Gain/LossTotal",$A${last_row2})'    
 
         ws3.range(f"{last_column_letter}{last_row}").api.NumberFormat= '_(* #,##0.00_);_(* (#,##0.00);_(* "-"??_);_(@_)'
         # last_col_num = ws1.range('A1').expand('right').last_cell.column 
@@ -3209,21 +3245,23 @@ def mtm_report(input_date, output_date):
         if not os.path.exists(pdf_loc):
             return(f"{pdf_loc} Pdf file not present for date {input_date}")
 
-        hrw_pdf_loc = r'J:\WEST PLAINS\REPORT\MTM reports\Raw Files\HRW_'+input_date+'.pdf'
-        if not os.path.exists(hrw_pdf_loc):
-            return(f"{hrw_pdf_loc} Pdf file not present for date {input_date}")
-
-        yc_pdf_loc = r'J:\WEST PLAINS\REPORT\MTM reports\Raw Files\YC_'+input_date+'.pdf'
-        if not os.path.exists(yc_pdf_loc):
-            return(f"{yc_pdf_loc} Pdf file not present for date {input_date}")
+        hrw_pdf_loc = 'HRW_loc'
+        # hrw_pdf_loc = r'J:\WEST PLAINS\REPORT\MTM reports\Raw Files\HRW_'+input_date+'.pdf'
+        # if not os.path.exists(hrw_pdf_loc):
+        #     return(f"{hrw_pdf_loc} Pdf file not present for date {input_date}")
+        yc_pdf_loc = 'YC_loc'
+        # yc_pdf_loc = r'J:\WEST PLAINS\REPORT\MTM reports\Raw Files\YC_'+input_date+'.pdf'
+        # if not os.path.exists(yc_pdf_loc):
+        #     return(f"{yc_pdf_loc} Pdf file not present for date {input_date}")
+        ysb_pdf_loc = 'YSB_loc'
 
         loc_sheet = r'J:\WEST PLAINS\REPORT\MTM reports\Loc_Abbr.xlsx'
         if not os.path.exists(loc_sheet):
             return(f"{loc_sheet}Excel file not present for date {input_date}")
 
-        loc_dict, hrw_fut, yc_fut = mtm_pdf_data_extractor(input_date,pdf_loc, hrw_pdf_loc, yc_pdf_loc)
+        loc_dict, hrw_fut, yc_fut, ysb_fut = mtm_pdf_data_extractor(input_date,pdf_loc, hrw_pdf_loc, yc_pdf_loc ,ysb_pdf_loc)
         output_location = r'J:\WEST PLAINS\REPORT\MTM reports\Output files\Inventory MTM_'+input_date+".xlsx"
-        mtm_excel(input_date, input_xl,loc_dict,loc_sheet, output_location, hrw_fut, yc_fut)
+        mtm_excel(input_date, input_xl,loc_dict,loc_sheet, output_location, hrw_fut, yc_fut , ysb_fut)
 
         print("Done")
         return f"MTM report Generated for {input_date}"
