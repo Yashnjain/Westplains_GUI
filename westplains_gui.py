@@ -1000,19 +1000,43 @@ def bbr_other_tabs(input_date, wb, input_ar, input_ctm):
         #logger.info("Adding particular Page Field in Pivot Table")
         PivotTable.PivotFields('Ship Tier').Orientation = win32c.PivotFieldOrientation.xlPageField
         #logger.info("Applying filter in pagefield in Pivot Table")
-        PivotTable.PivotFields('Ship Tier').CurrentPage = ">12 months"
-        #logger.info("Changing No Format in Pivot Table")
-        #logger.info("Changing Table layout")
-        PivotTable.PivotFields('Location Id').Subtotals=(False, False, False, False, False, False, False, False, False, False, False, False)
-        PivotTable.PivotFields('Commodity Id').Subtotals=(False, False, False, False, False, False, False, False, False, False, False, False)
-        PivotTable.RowAxisLayout(1)
-        #logger.info("Changing Table Style")
-        PivotTable.TableStyle2 = ""
-        wb.api.ActiveSheet.PivotTables("PivotTable2").InGridDropZones = True
+
+        Event = False
+        try:
+            PivotTable.PivotFields('Ship Tier').CurrentPage = ">12 months"
+            ###logger.info("Changing No Format in Pivot Table")
+            ###logger.info("Changing Table layout")
+            PivotTable.PivotFields('Location Id').Subtotals=(False, False, False, False, False, False, False, False, False, False, False, False)
+            PivotTable.PivotFields('Commodity Id').Subtotals=(False, False, False, False, False, False, False, False, False, False, False, False)
+            PivotTable.RowAxisLayout(1)
+            ###logger.info("Changing Table Style")
+            PivotTable.TableStyle2 = ""
+            wb.api.ActiveSheet.PivotTables("PivotTable2").InGridDropZones = True
+        except:
+            wb.api.ActiveSheet.PivotTables("PivotTable2").PivotSelect("",win32c.PTSelectionMode.xlDataAndLabel,True) 
+            wb.app.selection.api.ClearContents()
+            Event = True
+        finally:
+            last_row3 = ws6.range(f'A'+ str(ws6.cells.last_cell.row)).end('up').row 
+            last_row3+=5
+        if Event:    
+            ws6.range(f"E58").value=f'=+GETPIVOTDATA("Gain/LossTotal",$A$7)'
+        else:
+            ws6.range(f"E58").value=f'=+GETPIVOTDATA("Gain/LossTotal",$A$7)+GETPIVOTDATA("Gain/LossTotal",$A${last_row2})'  
+
+        # PivotTable.PivotFields('Ship Tier').CurrentPage = ">12 months"
+        # #logger.info("Changing No Format in Pivot Table")
+        # #logger.info("Changing Table layout")
+        # PivotTable.PivotFields('Location Id').Subtotals=(False, False, False, False, False, False, False, False, False, False, False, False)
+        # PivotTable.PivotFields('Commodity Id').Subtotals=(False, False, False, False, False, False, False, False, False, False, False, False)
+        # PivotTable.RowAxisLayout(1)
+        # #logger.info("Changing Table Style")
+        # PivotTable.TableStyle2 = ""
+        # wb.api.ActiveSheet.PivotTables("PivotTable2").InGridDropZones = True
         #logic for adding total
-        last_row3 = ws6.range(f'A'+ str(ws6.cells.last_cell.row)).end('up').row 
-        last_row3+=5
-        ws6.range(f"E58").value=f'=+GETPIVOTDATA("Gain/LossTotal",$A$7)+GETPIVOTDATA("Gain/LossTotal",$A${last_row2})'
+        # last_row3 = ws6.range(f'A'+ str(ws6.cells.last_cell.row)).end('up').row 
+        # last_row3+=5
+        # ws6.range(f"E58").value=f'=+GETPIVOTDATA("Gain/LossTotal",$A$7)+GETPIVOTDATA("Gain/LossTotal",$A${last_row2})'
         ws6.range(f"E58").api.NumberFormat= '_(* #,##0.00_);_(* (#,##0.00);_(* "-"??_);_(@_)'
 
         ws6.range("A1").value = "West Plains, LLC"  
