@@ -1817,9 +1817,9 @@ def mtm_pdf_data_extractor(input_date, f, hrw_pdf_loc, yc_pdf_loc ,ysb_pdf_loc):
             dday = date_datetime.strftime("%d")
             dyear = date_datetime.strftime("%Y")
             if loc == hrw_pdf_loc:
-                driver.get(f"https://www.cmegroup.com/markets/agriculture/grains/corn.settlements.html#tradeDate={dmonth}%2F{dday}%2F{dyear}")
-            elif loc == yc_pdf_loc:   
                 driver.get(f"https://www.cmegroup.com/markets/agriculture/grains/kc-wheat.settlements.html#tradeDate={dmonth}%2F{dday}%2F{dyear}")
+            elif loc == yc_pdf_loc:   
+                driver.get(f"https://www.cmegroup.com/markets/agriculture/grains/corn.settlements.html#tradeDate={dmonth}%2F{dday}%2F{dyear}")
             elif loc == ysb_pdf_loc:
                 driver.get(f"https://www.cmegroup.com/markets/agriculture/oilseeds/soybean.settlements.html#tradeDate={dmonth}%2F{dday}%2F{dyear}")                
             time.sleep(5)
