@@ -112,6 +112,8 @@ def payroll_pdf_extractor(input_pdf, input_datetime, monthYear):
                 date_df = read_pdf(loc, pages = 1, guess = False, stream = True ,
                                     pandas_options={'header':0}, area = ["30,290,120,415"], columns=["320"])[0]
                 dates = date_df.iloc[0,1].split("to")
+                beg_date = datetime.strptime(dates[0].strip(), "%m/%d/%Y")
+                end_date = datetime.strptime(dates[1].strip(), "%m/%d/%Y")
                 monthYear1 = datetime.strftime(datetime.strptime(dates[0].strip(), "%m/%d/%Y"), "%b %y")
                 monthYear2 = datetime.strftime(datetime.strptime(dates[1].strip(), "%m/%d/%Y"), "%b %y")
                 if monthYear1 == monthYear or monthYear2 == monthYear:
@@ -141,15 +143,15 @@ def payroll_pdf_extractor(input_pdf, input_datetime, monthYear):
                         deduc_ana_df = deduc_ana_df[deduc_ana_df[deduc_ana_df.columns[0]].notna()].reset_index(drop=True)
                         deduc_ana_df = deduc_ana_df[deduc_ana_df[deduc_ana_df.columns[-1]].notna()].reset_index(drop=True)
 
-                        medicare_ee = 0  #ER-Med	      Medicare -EE R
-                        soc_sec_er = 0   #ER-SS           Social Security - ER
+                        medicare_ee = 0  #ER-Med	       Medicare -EE R
+                        soc_sec_er = 0   #ER-SS            Social Security - ER
                         futa_nesui = 0   #FUTA             NESUI
                         suta_cosui = 0   #SUTA             COSUI
                         suta_wysui = 0   #SUTA             WYSUI
                         ffcra = 0        #FFCRA            Value Not Received Till Now ( Blank )
                         benefits = 0     #Benefits         Value Not Received Till Now ( Blank )
                         med_dent_vis = 0 # Med/Dent/Vis	   Total Value of Cafeteria 125 Deds
-                        volutary = 0 #Voluntary            Sum of All Misc. Expenses with no Parent Name (Deduction Analysis )
+                        voluntary = 0 #Voluntary            Sum of All Misc. Expenses with no Parent Name (Deduction Analysis )
                         garnish_chldi = 0 #Garnishment     Deduction Analysis – CHLD1+GARN1
                         ee_401k = 0 #EE 401k               Deduction Analysis 401K
                         er_401k = 0 #ER401k	               Deduction Analysis  401L1   4ROTH
@@ -196,47 +198,53 @@ def payroll_pdf_extractor(input_pdf, input_datetime, monthYear):
                                         med_dent_vis = float(deduc_ana_df[deduc_ana_df.columns[-1]][col].replace(",",""))*-1
                                     break
                             
-                            elif deduc_ana_df[deduc_ana_df.columns[0]][col] == "CHLD1" or deduc_ana_df[deduc_ana_df.columns[0]][col] == "GARN1":
-                                if "("  in deduc_ana_df[deduc_ana_df.columns[-1]][col] and ")" in deduc_ana_df[deduc_ana_df.columns[-1]][col]:
-                                    garnish_chldi += float(deduc_ana_df[deduc_ana_df.columns[-1]][col].replace(",","").replace("(","").replace(")",""))
-                                else:
-                                    garnish_chldi += float(deduc_ana_df[deduc_ana_df.columns[-1]][col].replace(",",""))*-1
-                            elif deduc_ana_df[deduc_ana_df.columns[0]][col] == "401K":
-                                if "("  in deduc_ana_df[deduc_ana_df.columns[-1]][col] and ")" in deduc_ana_df[deduc_ana_df.columns[-1]][col]:
-                                    ee_401k = float(deduc_ana_df[deduc_ana_df.columns[-1]][col].replace(",","").replace("(","").replace(")",""))
-                                else:
-                                    ee_401k = float(deduc_ana_df[deduc_ana_df.columns[-1]][col].replace(",",""))*-1
-                            elif deduc_ana_df[deduc_ana_df.columns[0]][col] == "401L1":
-                                if "("  in deduc_ana_df[deduc_ana_df.columns[-1]][col] and ")" in deduc_ana_df[deduc_ana_df.columns[-1]][col]:
-                                    er_401k = float(deduc_ana_df[deduc_ana_df.columns[-1]][col].replace(",","").replace("(","").replace(")",""))
-                                else:
-                                    er_401k = float(deduc_ana_df[deduc_ana_df.columns[-1]][col].replace(",",""))*-1
-                            elif deduc_ana_df[deduc_ana_df.columns[0]][col] == "401L2":
-                                if "("  in deduc_ana_df[deduc_ana_df.columns[-1]][col] and ")" in deduc_ana_df[deduc_ana_df.columns[-1]][col]:
-                                    kln_401 = float(deduc_ana_df[deduc_ana_df.columns[-1]][col].replace(",","").replace("(","").replace(")",""))
-                                else:
-                                    kln_401 = float(deduc_ana_df[deduc_ana_df.columns[-1]][col].replace(",",""))*-1
-                            elif deduc_ana_df[deduc_ana_df.columns[0]][col] == "4ROTH":
-                                if "("  in deduc_ana_df[deduc_ana_df.columns[-1]][col] and ")" in deduc_ana_df[deduc_ana_df.columns[-1]][col]:
-                                    ee_roth = float(deduc_ana_df[deduc_ana_df.columns[-1]][col].replace(",","").replace("(","").replace(")",""))
-                                else:
-                                    ee_roth = float(deduc_ana_df[deduc_ana_df.columns[-1]][col].replace(",",""))*-1
+                            # elif deduc_ana_df[deduc_ana_df.columns[0]][col] == "CHLD1" or deduc_ana_df[deduc_ana_df.columns[0]][col] == "GARN1":
+                            #     if "("  in deduc_ana_df[deduc_ana_df.columns[-1]][col] and ")" in deduc_ana_df[deduc_ana_df.columns[-1]][col]:
+                            #         garnish_chldi += float(deduc_ana_df[deduc_ana_df.columns[-1]][col].replace(",","").replace("(","").replace(")",""))
+                            #     else:
+                            #         garnish_chldi += float(deduc_ana_df[deduc_ana_df.columns[-1]][col].replace(",",""))*-1
+                            # elif deduc_ana_df[deduc_ana_df.columns[0]][col] == "401K":
+                            #     if "("  in deduc_ana_df[deduc_ana_df.columns[-1]][col] and ")" in deduc_ana_df[deduc_ana_df.columns[-1]][col]:
+                            #         ee_401k = float(deduc_ana_df[deduc_ana_df.columns[-1]][col].replace(",","").replace("(","").replace(")",""))
+                            #     else:
+                            #         ee_401k = float(deduc_ana_df[deduc_ana_df.columns[-1]][col].replace(",",""))*-1
+                            # elif deduc_ana_df[deduc_ana_df.columns[0]][col] == "401L1":
+                            #     if "("  in deduc_ana_df[deduc_ana_df.columns[-1]][col] and ")" in deduc_ana_df[deduc_ana_df.columns[-1]][col]:
+                            #         er_401k = float(deduc_ana_df[deduc_ana_df.columns[-1]][col].replace(",","").replace("(","").replace(")",""))
+                            #     else:
+                            #         er_401k = float(deduc_ana_df[deduc_ana_df.columns[-1]][col].replace(",",""))*-1
+                            # elif deduc_ana_df[deduc_ana_df.columns[0]][col] == "401L2":
+                            #     if "("  in deduc_ana_df[deduc_ana_df.columns[-1]][col] and ")" in deduc_ana_df[deduc_ana_df.columns[-1]][col]:
+                            #         kln_401 = float(deduc_ana_df[deduc_ana_df.columns[-1]][col].replace(",","").replace("(","").replace(")",""))
+                            #     else:
+                            #         kln_401 = float(deduc_ana_df[deduc_ana_df.columns[-1]][col].replace(",",""))*-1
+                            # elif deduc_ana_df[deduc_ana_df.columns[0]][col] == "4ROTH":
+                            #     if "("  in deduc_ana_df[deduc_ana_df.columns[-1]][col] and ")" in deduc_ana_df[deduc_ana_df.columns[-1]][col]:
+                            #         ee_roth = float(deduc_ana_df[deduc_ana_df.columns[-1]][col].replace(",","").replace("(","").replace(")",""))
+                            #     else:
+                            #         ee_roth = float(deduc_ana_df[deduc_ana_df.columns[-1]][col].replace(",",""))*-1
                             else:
                                 if deduc_ana_df[deduc_ana_df.columns[0]][col] != "Total":
                                     if "("  in deduc_ana_df[deduc_ana_df.columns[-1]][col] and ")" in deduc_ana_df[deduc_ana_df.columns[-1]][col]:
-                                        volutary += float(deduc_ana_df[deduc_ana_df.columns[-1]][col].replace(",","").replace("(","").replace(")",""))
+                                        voluntary += float(deduc_ana_df[deduc_ana_df.columns[-1]][col].replace(",","").replace("(","").replace(")",""))
                                     else:
-                                        volutary += float(deduc_ana_df[deduc_ana_df.columns[-1]][col].replace(",",""))*-1
+                                        voluntary += float(deduc_ana_df[deduc_ana_df.columns[-1]][col].replace(",",""))*-1
                         if file_date in main_dict.keys():  
                             
-                            main_dict[file_date][ada_group] = {"Gross":gross_value, "ER- SS":soc_sec_er, "ER - Med":medicare_ee, "FUTA":futa_nesui, "SUTA":suta_cosui+suta_wysui, "FFCRA": ffcra,
-                                "Benefits":benefits, "Med/Dent/Vis":med_dent_vis, "Voluntary ":volutary, "Garnishment":garnish_chldi, "EE 401k ":ee_401k, "ER 401K":er_401k,
-                                "EE Roth":ee_roth, "401KLN":kln_401}
+                            # main_dict[file_date][ada_group] = {"Gross":gross_value, "ER- SS":soc_sec_er, "ER - Med":medicare_ee, "FUTA":futa_nesui, "SUTA":suta_cosui+suta_wysui, "FFCRA": ffcra,
+                            #     "Benefits":benefits, "Med/Dent/Vis":med_dent_vis, "Voluntary ":volutary, "Garnishment":garnish_chldi, "EE 401k ":ee_401k, "ER 401K":er_401k,
+                            #     "EE Roth":ee_roth, "401KLN":kln_401}
+
+                            main_dict[file_date][ada_group] = {"Gross Paid":gross_value, "SS - ER":soc_sec_er, "Medicare - ER":medicare_ee, "SUI":futa_nesui+suta_cosui+suta_wysui,
+                             "Cafeteria 125 Deductions":med_dent_vis, "Voluntary Deductions":voluntary, "Beggining Date":beg_date, "Ending Date":end_date}
                         else:  
                             main_dict[file_date] = {}
-                            main_dict[file_date][ada_group] = {"Gross":gross_value, "ER- SS":soc_sec_er, "ER - Med":medicare_ee, "FUTA":futa_nesui, "SUTA":suta_cosui+suta_wysui, "FFCRA": ffcra,
-                                    "Benefits":benefits, "Med/Dent/Vis":med_dent_vis, "Voluntary ":volutary, "Garnishment":garnish_chldi, "EE 401k ":ee_401k, "ER 401K":er_401k,
-                                    "EE Roth":ee_roth, "401KLN":kln_401}
+                            # main_dict[file_date][ada_group] = {"Gross":gross_value, "ER- SS":soc_sec_er, "ER - Med":medicare_ee, "FUTA":futa_nesui, "SUTA":suta_cosui+suta_wysui, "FFCRA": ffcra,
+                            #         "Benefits":benefits, "Med/Dent/Vis":med_dent_vis, "Voluntary ":volutary, "Garnishment":garnish_chldi, "EE 401k ":ee_401k, "ER 401K":er_401k,
+                            #         "EE Roth":ee_roth, "401KLN":kln_401}
+
+                            main_dict[file_date][ada_group] = {"Gross Paid":gross_value, "SS - ER":soc_sec_er, "Medicare - ER":medicare_ee, "SUI":futa_nesui+suta_cosui+suta_wysui,
+                             "Cafeteria 125 Deductions":med_dent_vis, "Voluntary Deductions":voluntary, "Beggining Date":beg_date, "Ending Date":end_date}
                         
                         
             
@@ -6281,10 +6289,31 @@ def payroll_summ(input_date, output_date):
 
         data = payroll_pdf_extractor(input_pdf, input_datetime, monthYear)
 
+        # retry=0
+        # while retry < 10:
+        #     try:
+        #         wb=xw.Book(input_xl)
+        #         break
+        #     except Exception as e:
+        #         time.sleep(2)
+        #         retry+=1
+        #         if retry ==9:
+        #             raise e
+
         retry=0
+        # while retry < 10:
+        #     try:
+        #         # inp_sht = wb.sheets["Detail"]
+        #         inp_sht = wb.sheets["PAYLOCITY"]
+        #         break
+        #     except Exception as e:
+        #         time.sleep(2)
+        #         retry+=1
+        #         if retry ==9:
+        #             raise e
         while retry < 10:
             try:
-                wb=xw.Book(input_xl)
+                wb=xw.Book(template_xl)
                 break
             except Exception as e:
                 time.sleep(2)
@@ -6295,27 +6324,8 @@ def payroll_summ(input_date, output_date):
         retry=0
         while retry < 10:
             try:
-                inp_sht = wb.sheets["Detail"]
-                break
-            except Exception as e:
-                time.sleep(2)
-                retry+=1
-                if retry ==9:
-                    raise e
-        while retry < 10:
-            try:
-                t_wb=xw.Book(template_xl)
-                break
-            except Exception as e:
-                time.sleep(2)
-                retry+=1
-                if retry ==9:
-                    raise e
-
-        retry=0
-        while retry < 10:
-            try:
-                t_sht = t_wb.sheets["Detail"]
+                # t_sht = t_wb.sheets["Detail"]
+                t_sht = wb.sheets["PAYLOCITY"]
                 break
             except Exception as e:
                 time.sleep(2)
@@ -6324,56 +6334,169 @@ def payroll_summ(input_date, output_date):
                     raise e
         # inp_sht.range("F4:T4").expand("down").expand("down").delete()
         # inp_sht.range("A4:T4").expand("down").expand("down").delete()
-        last_row = inp_sht.range(f'A'+ str(inp_sht.cells.last_cell.row)).end('up').row
-        inp_sht.range(f"A4:T{last_row}").delete()
-        last_row=4
-        first_row = 4
-        init_chr = "F"
-        last_column = inp_sht.range("F3").end('right').column-6 #considering f as intial col
-        for pdf_data in range(len(data)-1,-1,-1):
-            t_sht.range(f"A4:T4").expand("down").copy(inp_sht.range(f"A{first_row}"))#copying data from template
-            last_row = inp_sht.range(f'A'+ str(inp_sht.cells.last_cell.row)).end('up').row
-            #inserting dates
-            inp_sht.range(f"C{first_row}:C{last_row}").value = list(data.keys())[pdf_data]
+
+        
+
+        first_row = t_sht.range(f"A2").end("down").row+1
+
+
+        column_list = t_sht.range(f"A{first_row-1}").expand('right').value
+        beg_date_col = num_to_col_letters(column_list.index('Pay Period Beginning Date')+1)
+        end_date_col = num_to_col_letters(column_list.index('Pay Period Ending Date')+1)
+        ledger_date_col = num_to_col_letters(column_list.index('Check/Ledger Date')+1)
+        gl_code_col = num_to_col_letters(column_list.index('GL')+1)
+        gross_col = num_to_col_letters(column_list.index('Gross Paid')+1)
+        ss_er_col = num_to_col_letters(column_list.index('SS - ER')+1)
+        med_er_col = num_to_col_letters(column_list.index('Medicare - ER')+1)
+        sui_col = num_to_col_letters(column_list.index('SUI')+1)
+        c_ded_col = num_to_col_letters(column_list.index('Cafeteria 125 Deductions')+1)
+        v_ded_col = num_to_col_letters(column_list.index('Voluntary Deductions')+1)
+        last_col = len(column_list)
+
+        col_data_list = [gross_col, ss_er_col, med_er_col, sui_col, c_ded_col, v_ded_col]
+
+
+
+
+        
+        last_column = t_sht.range(f'{beg_date_col}{first_row}').end('right').address.split("$")[1]
+        last_row = t_sht.range(f'{beg_date_col}'+ str(t_sht.cells.last_cell.row)).end('up').row
+        if len(data)>1:
+            i=0
+            for key in sorted(data.keys()):
+                last_row = t_sht.range(f'{beg_date_col}'+ str(t_sht.cells.last_cell.row)).end('up').row
+                first_key = list(data[key].keys())[0]
+                if i==0:
+                    t_sht.range(f'{beg_date_col}{first_row}').value = data[key][first_key]["Beggining Date"]
+                    t_sht.range(f'{end_date_col}{first_row}').value = data[key][first_key]["Ending Date"]
+                    i+=1
+                else:
+                    t_sht.range(f'{beg_date_col}{first_row}:{last_column}{last_row}').copy(t_sht.range(f'A{last_row+1}'))
+                    t_sht.range(f'{beg_date_col}{last_row+1}').value = data[key][first_key]["Beggining Date"]
+                    t_sht.range(f'{end_date_col}{last_row+1}').value = data[key][first_key]["Ending Date"]
+                
+
+                
+
+        else:
+            pass
+        last_row = t_sht.range(f'{beg_date_col}'+ str(t_sht.cells.last_cell.row)).end('up').row
+        for row in range(first_row, last_row+1):
+            gl_code = int(t_sht.range(f"{gl_code_col}{row}").value.split('-')[0])
+            ledger_date = datetime.strftime(t_sht.range(f'{ledger_date_col}{row}').value, "%d-%m-%Y")
+            for col in col_data_list:
+                
+                t_sht.range(f"{col}{row}").value = data[ledger_date][gl_code][t_sht.range(f"{gross_col}{first_row-1}").value]
+
+        print("Done")
+
+        
+
+        # inp_sht.range(f"A4:T{last_row}").delete()
+        # last_row=4
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+        # init_chr = "F"
+        # last_column = inp_sht.range("F3").end('right').column-6 #considering f as intial col
+        # for pdf_data in range(len(data)-1,-1,-1):
+        #     t_sht.range(f"A4:T4").expand("down").copy(inp_sht.range(f"A{first_row}"))#copying data from template
+        #     last_row = inp_sht.range(f'A'+ str(inp_sht.cells.last_cell.row)).end('up').row
+        #     #inserting dates
+        #     inp_sht.range(f"C{first_row}:C{last_row}").value = list(data.keys())[pdf_data]
             
-            for row in range(first_row,last_row+1):
-                for col in range(last_column):
-                    try:
-                        inp_sht.range(f"{chr(ord(init_chr)+col)}{row}").value = data[list(data.keys())[pdf_data]][inp_sht.range(f"A{row}").value][inp_sht.range(f"{chr(ord(init_chr)+col)}3").value]
-                    except:
-                        inp_sht.range(f"{chr(ord(init_chr)+col)}{row}").value = 0
-                    if row == last_row and pdf_data == 0:
-                        inp_sht.range(f"{chr(ord(init_chr)+col)}{row+2}").formula = f'=SUM({chr(ord(init_chr)+col)}4:{chr(ord(init_chr)+col)}{row})'
-                #updating first row as last row
-            first_row = last_row+1
-        inp_sht.range(f"F4:{chr(ord(init_chr)+last_column)}{row+2}").api.NumberFormat = '_(* #,##0.00_);_(* (#,##0.00);_(* "-"??_);_(@_)' #Standard format
+        #     for row in range(first_row,last_row+1):
+        #         for col in range(last_column):
+        #             try:
+        #                 inp_sht.range(f"{chr(ord(init_chr)+col)}{row}").value = data[list(data.keys())[pdf_data]][inp_sht.range(f"A{row}").value][inp_sht.range(f"{chr(ord(init_chr)+col)}3").value]
+        #             except:
+        #                 inp_sht.range(f"{chr(ord(init_chr)+col)}{row}").value = 0
+        #             if row == last_row and pdf_data == 0:
+        #                 inp_sht.range(f"{chr(ord(init_chr)+col)}{row+2}").formula = f'=SUM({chr(ord(init_chr)+col)}4:{chr(ord(init_chr)+col)}{row})'
+        #         #updating first row as last row
+        #     first_row = last_row+1
+        # inp_sht.range(f"F4:{chr(ord(init_chr)+last_column)}{row+2}").api.NumberFormat = '_(* #,##0.00_);_(* (#,##0.00);_(* "-"??_);_(@_)' #Standard format
         #Pivot part starts
         retry=0
         while retry < 10:
             try:
-                p_sht = wb.sheets["Pivot"]
+                # p_sht = wb.sheets["Pivot"]
+                p_sht = wb.sheets["JE"]
                 break
             except Exception as e:
                 time.sleep(2)
                 retry+=1
                 if retry ==9:
                     raise e
+
+
+        #Now update prior month end date and current month end date
+        #getting current file month last date as file is parked based on rueup month
+        nxt_mnth = input_datetime.replace(day=28) + timedelta(days=4)
+        curr_month_last_date = (nxt_mnth.replace(day=1) -timedelta(days=1)).date()
+        prev_month_last_date = (input_datetime.replace(day=1) -timedelta(days=1)).date()
+
+        p_sht.range(f"A1").value = prev_month_last_date
+        p_sht.range(f"A2").value = curr_month_last_date
+
+        
         p_sht.activate()
-        wb.api.ActiveSheet.PivotTables(1).PivotCache().SourceData = f"Detail!R3C1:R{last_row}C{last_column+6}" #Updateing data source, Removing initialization for f
+        # wb.api.ActiveSheet.PivotTables(1).PivotCache().SourceData = f"Detail!R3C1:R{last_row}C{last_column+6}" #Updateing data source, Removing initialization for f
+        wb.api.ActiveSheet.PivotTables(1).PivotCache().SourceData = f"PAYLOCITY!R3C1:R{last_row}C{len(column_list)}" #Updateing data source, Removing initialization for f
         wb.api.ActiveSheet.PivotTables(1).PivotCache().Refresh()  
 
-        p_last_row = p_sht.range(f'A'+ str(inp_sht.cells.last_cell.row)).end('up').row -1
-        p_sht.range(f"C5:D{p_last_row}").copy(p_sht.range("G5"))
 
-        #Updating Dates
-        p_sht.range("K1").value = datetime.strftime(input_datetime.replace(day=1)-timedelta(days=1), "%m/%d/%Y") #Last Monthend
-        p_sht.range("M1").value = datetime.strftime(input_datetime, "%m/%d/%Y") #Monthend
+        #getting gl entry first row AND COLUMN
+        pivot_header_row = p_sht.range(f"A2").end('down').end('down').row
+        data_col = num_to_col_letters(p_sht.range(f"A{pivot_header_row}").end('right').end('right').end('right').end('right').column) #Ignoring **RECLASS P&L FROM CORPORATE TO LOCATIONS present in firsdt row
+        data_last_col = num_to_col_letters(p_sht.range(f"{data_col}{pivot_header_row}").end('right').column)
+        data_last_row = p_sht.range(f'{data_col}'+ str(p_sht.cells.last_cell.row)).end('up').row
 
-        p_sht.range("L4").formula = "=C4" #take first date from pivot
-        p_sht.range("M4").formula = "=D4" #take second date from pivot
+       #Pivot part starts
+        retry=0
+        while retry < 10:
+            try:
+                # p_sht = wb.sheets["Pivot"]
+                entry_sht = wb.sheets["ENTRY"]
+                break
+            except Exception as e:
+                time.sleep(2)
+                retry+=1
+                if retry ==9:
+                    raise e
+        
+        entry_sht.clear()
+        p_sht.range(f"{data_col}{pivot_header_row}{data_last_col}{data_last_row}").copy(entry_sht.range("A1"))
 
-        p_sht.range("U5").expand("down").value = f"PAYROLL RECLASSIFICATION {monthYear}"
-        p_sht.range("V5").expand("down").value = f"PAYROLL {monthYear}"
+
+        # p_last_row = p_sht.range(f'A'+ str(inp_sht.cells.last_cell.row)).end('up').row -1
+        # p_sht.range(f"C5:D{p_last_row}").copy(p_sht.range("G5"))
+
+        # #Updating Dates
+        # p_sht.range("K1").value = datetime.strftime(input_datetime.replace(day=1)-timedelta(days=1), "%m/%d/%Y") #Last Monthend
+        # p_sht.range("M1").value = datetime.strftime(input_datetime, "%m/%d/%Y") #Monthend
+
+        # p_sht.range("L4").formula = "=C4" #take first date from pivot
+        # p_sht.range("M4").formula = "=D4" #take second date from pivot
+
+        # p_sht.range("U5").expand("down").value = f"PAYROLL RECLASSIFICATION {monthYear}"
+        # p_sht.range("V5").expand("down").value = f"PAYROLL {monthYear}"
         
         wb.save(output_location)
         print()
