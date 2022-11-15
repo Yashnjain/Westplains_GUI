@@ -36,7 +36,7 @@ from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.firefox import GeckoDriverManager
-
+from selenium.webdriver.firefox.options import Options
 
 
 
@@ -1818,7 +1818,9 @@ def mtm_pdf_data_extractor(input_date, f, hrw_pdf_loc, yc_pdf_loc ,ysb_pdf_loc):
         # n = reader.getNumPages() 
         inp_month_year = datetime.strptime(input_date,"%m.%d.%Y").replace(day=1)
         # data_list = []
-        driver=webdriver.Firefox(executable_path=GeckoDriverManager().install())
+        option = Options()
+        option.headless=True
+        driver=webdriver.Firefox(executable_path=GeckoDriverManager().install(),options=option)
         for loc in [hrw_pdf_loc, yc_pdf_loc , ysb_pdf_loc]:
             date_datetime = datetime.strptime(input_date,"%m.%d.%Y")
             dmonth = date_datetime.strftime("%m")
