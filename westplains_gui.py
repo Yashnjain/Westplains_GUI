@@ -6277,10 +6277,10 @@ def payroll_summ(input_date, output_date):
         # input_pdf = r"C:\Users\imam.khan\OneDrive - BioUrja Trading LLC\Documents\WEST PLAINS\REPORT\Macquaire Accrual Entry\Raw Files" +f"\\Macq Statement_{input_date}.pdf"
         # if not os.path.exists(input_pdf):
         #         return(f"{input_pdf} PDF file not present for date {input_date}")
-        input_xl = r"J:\WEST PLAINS\REPORT\Payroll summary accounting report\Raw Files" +f"\\Payroll by Dept - {monthYear}.xlsx"
+        # input_xl = r"J:\WEST PLAINS\REPORT\Payroll summary accounting report\Raw Files" +f"\\Payroll by Dept - {monthYear}.xlsx"
         # input_xl = r"C:\Users\imam.khan\OneDrive - BioUrja Trading LLC\Documents\WEST PLAINS\REPORT\Macquaire Accrual Entry\Raw Files" +f"\\Macq Accrual_{input_date}.xlsx"
-        if not os.path.exists(input_xl):
-                return(f"{input_xl} Excel file not present for date {input_date}")
+        # if not osE.path.exists(input_xl):
+        #         return(f"{input_xl} Excel file not present for date {input_date}")
         template_xl = r"J:\WEST PLAINS\REPORT\Payroll summary accounting report\Raw Files" +f"\\Template.xlsx"
         # input_xl = r"C:\Users\imam.khan\OneDrive - BioUrja Trading LLC\Documents\WEST PLAINS\REPORT\Macquaire Accrual Entry\Raw Files" +f"\\Macq Accrual_{input_date}.xlsx"
         if not os.path.exists(template_xl):
@@ -6386,7 +6386,7 @@ def payroll_summ(input_date, output_date):
             ledger_date = datetime.strftime(t_sht.range(f'{ledger_date_col}{row}').value, "%d-%m-%Y")
             for col in col_data_list:
                 
-                t_sht.range(f"{col}{row}").value = data[ledger_date][gl_code][t_sht.range(f"{gross_col}{first_row-1}").value]
+                t_sht.range(f"{col}{row}").value = data[ledger_date][gl_code][t_sht.range(f"{col}{first_row-1}").value]
 
         print("Done")
 
@@ -6482,7 +6482,8 @@ def payroll_summ(input_date, output_date):
                     raise e
         
         entry_sht.clear()
-        p_sht.range(f"{data_col}{pivot_header_row}{data_last_col}{data_last_row}").copy(entry_sht.range("A1"))
+        p_sht.range(f"{data_col}{pivot_header_row}:{data_last_col}{data_last_row}").api.Copy()
+        entry_sht.range("A1").paste(paste="values_and_number_formats")
 
 
         # p_last_row = p_sht.range(f'A'+ str(inp_sht.cells.last_cell.row)).end('up').row -1
