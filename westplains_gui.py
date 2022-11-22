@@ -945,6 +945,11 @@ def bbr_other_tabs(input_date, wb, input_ar, input_ctm):
         ##logger.info("Copy tier sheet AFTER the intercompany sheet of input book.")
         # num_row = excl_sht.range('A1').end('down').row
         num_row=excl_sht.range(f'A' + str(excl_sht.cells.last_cell.row)).end('up').row
+
+        #Condtion for removing only header line coming at last
+        if excl_sht.range(f'I{num_row}').value.upper()!="EQUIP":
+            num_row=excl_sht.range(f'A' + str(excl_sht.cells.last_cell.row)).end('up').end('up').row
+        
         last_column = excl_sht.range('A1').end('right').last_cell.column
         last_column_letter=num_to_col_letters(last_column)
         # excl_sht.range(f'A1:{last_column_letter}{num_row}').copy()
