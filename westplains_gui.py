@@ -6287,6 +6287,11 @@ def payroll_summ(input_date, output_date):
         # input_xl = r"C:\Users\imam.khan\OneDrive - BioUrja Trading LLC\Documents\WEST PLAINS\REPORT\Macquaire Accrual Entry\Raw Files" +f"\\Macq Accrual_{input_date}.xlsx"
         if not os.path.exists(template_xl):
                 return(f"{template_xl} Excel file not present")
+
+        gl_map_xl = r"J:\WEST PLAINS\REPORT\Payroll summary accounting report\Raw Files" +f"\\PayrollMapping.xlsx"
+        # input_xl = r"C:\Users\imam.khan\OneDrive - BioUrja Trading LLC\Documents\WEST PLAINS\REPORT\Macquaire Accrual Entry\Raw Files" +f"\\Macq Accrual_{input_date}.xlsx"
+        if not os.path.exists(gl_map_xl):
+            return(f"{gl_map_xl} Excel file not present")
         output_location = r'J:\WEST PLAINS\REPORT\Payroll summary accounting report\Output Files'+f"\\Payroll by Dept - {monthYear}.xlsx"
 
         data = payroll_pdf_extractor(input_pdf, input_datetime, monthYear)
@@ -6359,10 +6364,37 @@ def payroll_summ(input_date, output_date):
 
 
 
-
+        curr_gl_code_list = t_sht.range(f"{gl_code_col}{first_row}:{gl_code_col}{last_row}").value
+        curr_gl_code_list = list(map(lambda x:int(x.split('-')[0]),curr_gl_code_list))
         
         last_column = t_sht.range(f'{beg_date_col}{first_row}').end('right').address.split("$")[1]
         last_row = t_sht.range(f'{beg_date_col}'+ str(t_sht.cells.last_cell.row)).end('up').row
+
+        #Reading gl code mapping excel file
+        gl_map_df = pd.read_excel(gl_map_xl)
+        
+        gl_map_dict = gl_map_df.set_index(['GL-CODE'])["PDF CODE"].to_dict()
+
+        gl_map_keys = list(gl_map_dict.keys())
+        gl_map_values = list(gl_map_dict.values())
+
+        
+        new_key1 = set(data[list(data.keys())[0]].keys()).difference(curr_gl_code_list).difference(gl_map_values)
+        new_key2 = set(data[list(data.keys())[1]].keys()).difference(curr_gl_code_list).difference(gl_map_values)
+        if len(new_key1):
+            wb.app.quit()
+
+            return f"""Payroll Summary Report for {input_date} not generated, new key found in file {list(data.keys())[1]}, 
+            Please review, update new key: {new_key1} in template file and rerun the job"""
+        
+        elif len(new_key2):
+            wb.app.quit()
+
+            return f"""Payroll Summary Report for {input_date} not generated, new key found in file {list(data.keys())[1]}, 
+            Please review, update new key: {new_key2} in template file and rerun the job"""
+
+        
+
         if len(data)>1:
             i=0
             for key in sorted(data.keys()):
@@ -6382,13 +6414,26 @@ def payroll_summ(input_date, output_date):
 
         else:
             pass
+        
+       
         last_row = t_sht.range(f'{beg_date_col}'+ str(t_sht.cells.last_cell.row)).end('up').row
         for row in range(first_row, last_row+1):
             gl_code = int(t_sht.range(f"{gl_code_col}{row}").value.split('-')[0])
+            full_gl_code = t_sht.range(f"{gl_code_col}{row}").value
             ledger_date = datetime.strftime(t_sht.range(f'{ledger_date_col}{row}').value, "%d-%m-%Y")
-            for col in col_data_list:
-                
-                t_sht.range(f"{col}{row}").value = data[ledger_date][gl_code][t_sht.range(f"{col}{first_row-1}").value]
+            if full_gl_code in gl_map_keys:
+                gl_code = gl_map_dict[full_gl_code]
+            # for col in col_data_list:
+            #     try:
+            #         t_sht.range(f"{col}{row}").value = data[ledger_date][gl_map_dict[full_gl_code]][t_sht.range(f"{col}{first_row-1}").value]
+            #     except:
+            #         t_sht.range(f"{col}{row}").value = 0
+            # else:
+            try:
+                for col in col_data_list:
+                    t_sht.range(f"{col}{row}").value = data[ledger_date][gl_code][t_sht.range(f"{col}{first_row-1}").value]
+            except:
+                t_sht.range(f"{col}{row}").value = 0
 
         print("Done")
 
