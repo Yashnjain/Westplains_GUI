@@ -1385,6 +1385,9 @@ def inv_whre_n_in_trans(wb, mtm_loc, input_date):
         m_sht.range(f"C{other_loc_2}").expand("down").copy(whre_sht.range(f"C{other_loc_2}").options(transpose=True))
         m_sht.range(f"F{other_loc_2}").expand("down").copy(whre_sht.range(f"F{other_loc_2}").options(transpose=True))
 
+        #Logic for copy pasting new YSB vlaues in cell I58 and J58
+        m_sht.range(f"I{other_loc_2}").end("down").expand('right').copy(whre_sht.range(f"I{other_loc_2}").end("down").options(transpose=True))
+
 
         m_sht.range(f"C{other_loc}:C{int(sunflwr)-6}").copy(inv_oth_sht.range(f"C{int(other_loc)-64}").options(transpose=True))
         m_sht.range(f"F{other_loc}:F{int(sunflwr)-6}").copy(inv_oth_sht.range(f"F{int(other_loc)-64}").options(transpose=True))
