@@ -148,6 +148,7 @@ def payroll_pdf_extractor(input_pdf, input_datetime, monthYear):
                         futa_nesui = 0   #FUTA             NESUI
                         suta_cosui = 0   #SUTA             COSUI
                         suta_wysui = 0   #SUTA             WYSUI
+                        sui=0            #For all other sui
                         ffcra = 0        #FFCRA            Value Not Received Till Now ( Blank )
                         benefits = 0     #Benefits         Value Not Received Till Now ( Blank )
                         med_dent_vis = 0 # Med/Dent/Vis	   Total Value of Cafeteria 125 Deds
@@ -186,6 +187,12 @@ def payroll_pdf_extractor(input_pdf, input_datetime, monthYear):
                                     suta_wysui = float(state_taxable_df[state_taxable_df.columns[-1]][col].replace(",","").replace("(","").replace(")",""))*-1
                                 else:
                                     suta_wysui = float(state_taxable_df[state_taxable_df.columns[-1]][col].replace(",",""))
+
+                            elif "SUI" in state_taxable_df[state_taxable_df.columns[0]][col].upper():
+                                if "("  in state_taxable_df[state_taxable_df.columns[-1]][col] and ")" in state_taxable_df[state_taxable_df.columns[-1]][col]:
+                                    sui = float(state_taxable_df[state_taxable_df.columns[-1]][col].replace(",","").replace("(","").replace(")",""))*-1
+                                else:
+                                    sui = float(state_taxable_df[state_taxable_df.columns[-1]][col].replace(",",""))
                     
                         for col in range(len(deduc_ana_df)):
                             if deduc_ana_df[deduc_ana_df.columns[0]][col] == "Cafeteria 125":
@@ -193,7 +200,7 @@ def payroll_pdf_extractor(input_pdf, input_datetime, monthYear):
                                     while deduc_ana_df[deduc_ana_df.columns[0]][col] !="Total":
                                         col+=1
                                     if "("  in deduc_ana_df[deduc_ana_df.columns[-1]][col] and ")" in deduc_ana_df[deduc_ana_df.columns[-1]][col]:
-                                        med_dent_vis = float(deduc_ana_df[deduc_ana_df.columns[-1]][col].replace(",","").replace("(","").replace(")",""))
+                                        med_dent_vis = float(deduc_ana_df[deduc_ana_df.columns[-1]][col].replace(",","").replace("(","").replace(")",""))*-1
                                     else:    
                                         med_dent_vis = float(deduc_ana_df[deduc_ana_df.columns[-1]][col].replace(",",""))*-1
                                     break
@@ -235,7 +242,7 @@ def payroll_pdf_extractor(input_pdf, input_datetime, monthYear):
                             #     "Benefits":benefits, "Med/Dent/Vis":med_dent_vis, "Voluntary ":volutary, "Garnishment":garnish_chldi, "EE 401k ":ee_401k, "ER 401K":er_401k,
                             #     "EE Roth":ee_roth, "401KLN":kln_401}
 
-                            main_dict[file_date][ada_group] = {"Gross Paid":gross_value, "SS - ER":soc_sec_er, "Medicare - ER":medicare_ee, "SUI":futa_nesui+suta_cosui+suta_wysui,
+                            main_dict[file_date][ada_group] = {"Gross Paid":gross_value, "SS - ER":soc_sec_er, "Medicare - ER":medicare_ee, "SUI":futa_nesui+suta_cosui+suta_wysui+sui,
                              "Cafeteria 125 Deductions":med_dent_vis, "Voluntary Deductions":voluntary, "Beggining Date":beg_date, "Ending Date":end_date}
                         else:  
                             main_dict[file_date] = {}
@@ -243,7 +250,7 @@ def payroll_pdf_extractor(input_pdf, input_datetime, monthYear):
                             #         "Benefits":benefits, "Med/Dent/Vis":med_dent_vis, "Voluntary ":volutary, "Garnishment":garnish_chldi, "EE 401k ":ee_401k, "ER 401K":er_401k,
                             #         "EE Roth":ee_roth, "401KLN":kln_401}
 
-                            main_dict[file_date][ada_group] = {"Gross Paid":gross_value, "SS - ER":soc_sec_er, "Medicare - ER":medicare_ee, "SUI":futa_nesui+suta_cosui+suta_wysui,
+                            main_dict[file_date][ada_group] = {"Gross Paid":gross_value, "SS - ER":soc_sec_er, "Medicare - ER":medicare_ee, "SUI":futa_nesui+suta_cosui+suta_wysui+sui,
                              "Cafeteria 125 Deductions":med_dent_vis, "Voluntary Deductions":voluntary, "Beggining Date":beg_date, "Ending Date":end_date}
                         
                         
@@ -6362,13 +6369,13 @@ def payroll_summ(input_date, output_date):
 
         col_data_list = [gross_col, ss_er_col, med_er_col, sui_col, c_ded_col, v_ded_col]
 
-
+        last_column = t_sht.range(f'{beg_date_col}{first_row}').end('right').address.split("$")[1]
+        last_row = t_sht.range(f'{beg_date_col}'+ str(t_sht.cells.last_cell.row)).end('up').row
 
         curr_gl_code_list = t_sht.range(f"{gl_code_col}{first_row}:{gl_code_col}{last_row}").value
         curr_gl_code_list = list(map(lambda x:int(x.split('-')[0]),curr_gl_code_list))
         
-        last_column = t_sht.range(f'{beg_date_col}{first_row}').end('right').address.split("$")[1]
-        last_row = t_sht.range(f'{beg_date_col}'+ str(t_sht.cells.last_cell.row)).end('up').row
+        
 
         #Reading gl code mapping excel file
         gl_map_df = pd.read_excel(gl_map_xl)
@@ -6384,7 +6391,7 @@ def payroll_summ(input_date, output_date):
         if len(new_key1):
             wb.app.quit()
 
-            return f"""Payroll Summary Report for {input_date} not generated, new key found in file {list(data.keys())[1]}, 
+            return f"""Payroll Summary Report for {input_date} not generated, new key found in file {list(data.keys())[0]}, 
             Please review, update new key: {new_key1} in template file and rerun the job"""
         
         elif len(new_key2):
