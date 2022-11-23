@@ -233,7 +233,7 @@ def payroll_pdf_extractor(input_pdf, input_datetime, monthYear):
                             else:
                                 if deduc_ana_df[deduc_ana_df.columns[0]][col] != "Total":
                                     if "("  in deduc_ana_df[deduc_ana_df.columns[-1]][col] and ")" in deduc_ana_df[deduc_ana_df.columns[-1]][col]:
-                                        voluntary += float(deduc_ana_df[deduc_ana_df.columns[-1]][col].replace(",","").replace("(","").replace(")",""))
+                                        voluntary += float(deduc_ana_df[deduc_ana_df.columns[-1]][col].replace(",","").replace("(","").replace(")",""))*-1
                                     else:
                                         voluntary += float(deduc_ana_df[deduc_ana_df.columns[-1]][col].replace(",",""))*-1
                         if file_date in main_dict.keys():  
