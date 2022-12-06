@@ -691,9 +691,9 @@ def storage_je(strg_je_inp_loc, input_date, loc_dict):
         xl_inp_date = datetime.strftime(datetime.strptime(input_date, "%m.%d.%Y"), "%m/%d/%Y")
         output_location = r'J:\WEST PLAINS\REPORT\Storage Month End Report\Output Files'+"\\STORAGE ACCRUAL JE_" +f"{input_date}.xlsx"
         # output_location = r'C:\Users\imam.khan\OneDrive - BioUrja Trading LLC\Documents\WEST PLAINS\REPORT\Storage Month End Report\Output Files'+"\\STORAGE ACCRUAL JE_" +f"{input_date}.xlsx"
-        JE_dict = {'ALLIANCETE':'ALLIANCE TERMINAL','BATESLAND':'BATESLAND','CHADRON':'CHADRON','CLINTON':'CLINTON',
+        JE_dict = {'ALLIANCETE':'ALLIANCE TERMINAL','BATESLAND':'BATESLAND','BROWNSVILLE':'BROWNSVILL','CHADRON':'CHADRON','CLINTON':'CLINTON',
                     'CRAWFORD':'CRAWFORD','GERING':'GERING','HAYSPRG':'HAY SPRINGS','JTELEV':'JOHNSTOWN',
-                    'LINGLE':'LINGLE','MITCHELL':'MITCHELL','NGREEL':'NORTH GREELEY','PLATNER':'PLATNER','YUMA':'YUMA'}
+                    'LINGLE':'LINGLE','MITCHELL':'MITCHELL','NGREEL':'NORTH GREELEY','PLATNER':'PLATNER','TERMINAL':'OMAHA TERMINAL ELEVATOR','YUMA':'YUMA'}
                 
         retry=0
         while retry < 10:
@@ -948,7 +948,7 @@ def bbr_other_tabs(input_date, wb, input_ar, input_ctm):
 
         #Condtion for removing only header line coming at last
         if excl_sht.range(f'I{num_row}').value.upper()!="EQUIP":
-            num_row=excl_sht.range(f'A' + str(excl_sht.cells.last_cell.row)).end('up').end('up').row
+            excl_sht.range(f"{num_row}:{num_row}").delete()
         
         last_column = excl_sht.range('A1').end('right').last_cell.column
         last_column_letter=num_to_col_letters(last_column)
@@ -3034,7 +3034,15 @@ def ctm(input_date, output_date):
             x=last_row2+last_row
             intcomp_sht.range(f"A2:{last_column_letter}{last_row}").copy(ws2.range(f"A{last_row2}:{last_column_letter}{x}"))
             intcomp_sht.delete()
-                    
+
+            excl_sht = wb.sheets("Excl Macq & IC")
+            ##logger.info("Copy tier sheet AFTER the intercompany sheet of input book.")
+            # num_row = excl_sht.range('A1').end('down').row
+            num_row=excl_sht.range(f'A' + str(excl_sht.cells.last_cell.row)).end('up').row
+
+            #Condtion for removing only header line coming at last
+            if excl_sht.range(f'I{num_row}').value.upper()!="EQUIP":
+                excl_sht.range(f"{num_row}:{num_row}").delete()                   
         except Exception as e:
          print("No (INTER-COMPANY PURCH/SALES) Present ")
          print(e) 
@@ -5046,6 +5054,8 @@ def strg_month_end_report(input_date, output_date):
             location = loc.split("\\")[-1].split(".")[0]
             if location == "ALLIANCET":
                 location = "ALLIANCE TERMINAL"
+            if location == "BROWNSVILLE":
+                location = "BROWNSVILL"                              
             if location == "HAYSPRING":
                 location = "HAY SPRINGS"
             
