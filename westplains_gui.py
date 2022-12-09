@@ -1651,7 +1651,7 @@ def storage_je(strg_je_inp_loc, input_date, loc_dict):
         # output_location = r'C:\Users\imam.khan\OneDrive - BioUrja Trading LLC\Documents\WEST PLAINS\REPORT\Storage Month End Report\Output Files'+"\\STORAGE ACCRUAL JE_" +f"{input_date}.xlsx"
         JE_dict = {'ALLIANCETE':'ALLIANCE TERMINAL','BATESLAND':'BATESLAND','BROWNSVILLE':'BROWNSVILL','CHADRON':'CHADRON','CLINTON':'CLINTON',
                     'CRAWFORD':'CRAWFORD','GERING':'GERING','HAYSPRG':'HAY SPRINGS','JTELEV':'JOHNSTOWN',
-                    'LINGLE':'LINGLE','MITCHELL':'MITCHELL','NGREEL':'NORTH GREELEY','PLATNER':'PLATNER','TERMINAL':'OMAHA TERMINAL ELEVATOR','YUMA':'YUMA'}
+                    'LINGLE':'LINGLE','MITCHELL':'MITCHELL','NGREEL':'NORTH GREELEY','PLATNER':'PLATNER','TERMINAL':'TERMINAL','YUMA':'YUMA'}
                 
         retry=0
         while retry < 10:
@@ -6040,9 +6040,13 @@ def strg_month_end_report(input_date, output_date):
                     qty_loc_dict[location][commodity].append(qty_value)
                 else:
                     qty_loc_dict[location][commodity] = [qty_value]
-            else:  
-                qty_loc_dict[location] = {}
-                qty_loc_dict[location][commodity] = [qty_value]
+            else:
+                if location =="BROWNSVILL":
+                    qty_loc_dict["BROWNSVILLE"] = {}
+                    qty_loc_dict["BROWNSVILLE"][commodity] = [qty_value]
+                else:
+                    qty_loc_dict[location] = {}
+                    qty_loc_dict[location][commodity] = [qty_value]
 
 
         storage_accrual(input_date,strg_accr_inp_loc, monthYear, loc_dict)
