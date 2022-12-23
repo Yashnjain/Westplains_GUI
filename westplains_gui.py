@@ -4382,7 +4382,37 @@ def open_ar(input_date, output_date):
             #         i+=1
         except Exception as e:
             print("No (INTER-COMPANY PURCH/SALES) Present ")
-            print(e)   
+            print(e)
+        ######################New Renewble customer removal logic$##############################
+        try:
+            ws2.api.AutoFilterMode=False
+            ws2.api.Range(f"{Customer_column}1").AutoFilter(Feild:=Customer_column_num,Criteria1:="BIOURJA RENEWABLES, LLC") #Removing Intercompany
+            # renewable_sht = wb.sheets.add("Renewables", after=ws1)
+
+            # ws2.api.AutoFilter.Range.Copy()
+            # time.sleep(1)
+            # renewable_sht.range("A1").api.Select()
+            # while True:
+            #     try:
+            #         renewable_sht.api.Paste()
+            #         break
+            #     except:
+            #         time.sleep(1)
+            # wb.app.api.CutCopyMode=False
+            # time.sleep(1)
+            
+
+            filter_lst_row = ws2.range(f'A'+ str(ws2.cells.last_cell.row)).end('up').row
+            if filter_lst_row!=1:
+                filter_add = ws2.api.Range(f"A2:A{filter_lst_row}").SpecialCells(win32c.CellType.xlCellTypeVisible).EntireRow.Address
+                ws2.range(f"{filter_add}").delete()
+            ws2.api.AutoFilterMode=False
+
+        except Exception as e:
+            print("BIOURJA RENEWABLES, LLC")
+            print(e)
+
+        ####################################################################################
         ##logger.info("Copying tier column from previous output sheet")   
         retry=0
         while retry < 10:
