@@ -2098,6 +2098,7 @@ def bbr_other_tabs(input_date, wb, input_ar, input_ctm):
         ws6.range("A2").value = "Net Unrealized Gains on Forward Contracts - Non MCUI"
         ws6.range("A3").formula = "='Cash Collateral'!A3"
         ws6.api.Range("A3").NumberFormat = 'mm/dd/yyyy'
+        wb.sheets["BBR"].range(f'G32').formula = "=+'Unrlz- Gains- Contracts Non MC'!E58"
         print()
         # ws6.api.Range("A1:A3").Copy()
         # ws7.api.Paste()
