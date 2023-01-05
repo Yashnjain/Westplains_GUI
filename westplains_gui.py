@@ -864,7 +864,7 @@ def ar_reports_exposure(input_date, output_date):
 
         a = input_tab.range(f"{Ticket_column_letter}2:{Ticket_column_letter}{last_row}").value
         try:
-            b = [datetime.strftime(no,"%d-%m-%Y").strip().split(" ")[0] for no in a]
+            b = [datetime.strftime(no,"%d-%m-%Y").strip().split(" ")[0] if no!=None else no for no in a]
         except:
             print("Please check dates once")    
         input_tab.range(f"{Ticket_column_letter}2").options(transpose=True).value = b
