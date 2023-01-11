@@ -1983,7 +1983,8 @@ def bbr_other_tabs(input_date, wb, input_ar, input_ctm):
 
         #Condtion for removing only header line coming at last
         if excl_sht.range(f'I{num_row}').value.upper()!="EQUIP":
-            excl_sht.range(f"{num_row}:{num_row}").delete()
+            if excl_sht.range(f'I{num_row}').value.upper()=="Commodity Id".upper():
+                excl_sht.range(f"{num_row}:{num_row}").delete()
         
         last_column = excl_sht.range('A1').end('right').last_cell.column
         last_column_letter=num_to_col_letters(last_column)
