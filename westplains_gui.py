@@ -3300,12 +3300,16 @@ def bbr(input_date, output_date):
         prev_bbr = file_list[-1]
         output_location = r'J:\WEST PLAINS\REPORT\BBR Reports\Output files'+f"\\{input_date}_Borrowing Base Report.xlsx"
         input_date_date = datetime.strptime(input_date, "%m.%d.%Y").date()
-        prev_date = datetime.strptime(file_list[-1].split("_")[0].split("\\")[-1], "%m.%d.%Y").date()
-        i=2
-        while prev_date>=input_date_date:
-            prev_date = datetime.strptime(file_list[-i].split("_")[0].split("\\")[-1], "%m.%d.%Y").date()
-            prev_bbr = file_list[-i]
-            i+=1
+        # prev_date = datetime.strptime(file_list[-1].split("_")[0].split("\\")[-1], "%m.%d.%Y").date()
+        prev_bbr = prev_files_loc+f"\\{output_date}_Borrowing Base Report.xlsx"
+
+        if not os.path.exists(prev_bbr):
+            return(f"In Output Files {prev_bbr} Excel file not present for date {output_date}")
+        # i=2
+        # while prev_date>=input_date_date:
+        #     prev_date = datetime.strptime(file_list[-i].split("_")[0].split("\\")[-1], "%m.%d.%Y").date()
+        #     prev_bbr = file_list[-i]
+        #     i+=1
 
 
         prev_month_year = datetime.strftime((datetime.strptime(input_date, "%m.%d.%Y").replace(day=1)-timedelta(days=1)),"%b %Y").upper()
