@@ -41,9 +41,13 @@ import re
 
 
 # path = r'C:\Users\imam.khan\OneDrive - BioUrja Trading LLC\Documents\Revelio'
-path = r'J:\WEST PLAINS\REPORT\Westplains_gui'
+
 today = datetime.strftime(date.today(), format = "%d%m%Y")
 
+drive = r"I:\RPTWP_Swati"
+# drive2 = r"J:\WEST PLAINS"
+
+path = drive+r'\REPORT\Westplains_gui'
 
 
 root = Tk()
@@ -139,12 +143,12 @@ def interior_coloring_by_theme(pattern_tns,tintandshade,colour_value,cellrange:s
 def ar_exposure(input_date, output_date):
     try:       
         job_name = 'ar_exposure_automation'
-        input_sheet2 = r'J:\WEST PLAINS\REPORT\AR EXPOSURE\Output'+f'\\Open AR_{output_date}.xlsx'
-        input_sheet= r'J:\WEST PLAINS\REPORT\AR EXPOSURE\Output'+f'\\Unsettled AR_{output_date}.xlsx'
-        ap_ar_template = r'J:\WEST PLAINS\REPORT\AR EXPOSURE'+f'\\WPLLC - AP_AR_Template.xlsx'
-        ar_exposure_template = r'J:\WEST PLAINS\REPORT\AR EXPOSURE'+f'\\WPLLC - AR Exposure_Template.xlsm'
-        previous_sheet_ar_axposure = r'J:\WEST PLAINS\REPORT\AR EXPOSURE\Output'+f'\\AR Exposure {output_date.replace(".","")}.xlsm'
-        output_location = r'J:\WEST PLAINS\REPORT\AR EXPOSURE\Ar_exposure_reports' 
+        input_sheet2 = drive+r'\REPORT\AR EXPOSURE\Output'+f'\\Open AR_{output_date}.xlsx'
+        input_sheet= drive+r'\REPORT\AR EXPOSURE\Output'+f'\\Unsettled AR_{output_date}.xlsx'
+        ap_ar_template = drive+r'\REPORT\AR EXPOSURE'+f'\\WPLLC - AP_AR_Template.xlsx'
+        ar_exposure_template = drive+r'\REPORT\AR EXPOSURE'+f'\\WPLLC - AR Exposure_Template.xlsm'
+        previous_sheet_ar_axposure = drive+r'\REPORT\AR EXPOSURE\Output'+f'\\AR Exposure {output_date.replace(".","")}.xlsm'
+        output_location = drive+r'\REPORT\AR EXPOSURE\Ar_exposure_reports' 
         if not os.path.exists(input_sheet):
             return(f"{input_sheet} Excel file not present for date {output_date}")
         if not os.path.exists(input_sheet2):
@@ -773,13 +777,13 @@ def ar_exposure(input_date, output_date):
 def ar_reports_exposure(input_date, output_date):
     try:       
         job_name = 'exposure_ar_reports'
-        input_sheet2 = r'J:\WEST PLAINS\REPORT\Ar_Exposure(Open AR,Unsettled AR)\Input'+f'\\Open AR_{input_date}.xlsx'
-        input_sheet= r'J:\WEST PLAINS\REPORT\Ar_Exposure(Open AR,Unsettled AR)\Input'+f'\\Unsettled AR_{input_date}.xlsx'
-        previous_sheet_unsettled= r'J:\WEST PLAINS\REPORT\Ar_Exposure(Open AR,Unsettled AR)\Output'+f'\\Unsettled AR_{output_date}.xlsx'
-        ticket_summary_sheet = r'J:\WEST PLAINS\REPORT\Ar_Exposure(Open AR,Unsettled AR)\Summary_sheet'+f'\\ticket query elevator 2015.xlsx'
-        ap_ar_template = r'J:\WEST PLAINS\REPORT\Ar_Exposure(Open AR,Unsettled AR)'+f'\\WPLLC - AP_AR_Template.xlsx'
-        output_location = r'J:\WEST PLAINS\REPORT\AR EXPOSURE' 
-        output_location2 = r'J:\WEST PLAINS\REPORT\AR EXPOSURE\Output'
+        input_sheet2 = drive+r'\REPORT\Ar_Exposure(Open AR,Unsettled AR)\Input'+f'\\Open AR_{input_date}.xlsx'
+        input_sheet= drive+r'\REPORT\Ar_Exposure(Open AR,Unsettled AR)\Input'+f'\\Unsettled AR_{input_date}.xlsx'
+        previous_sheet_unsettled= drive+r'\REPORT\Ar_Exposure(Open AR,Unsettled AR)\Output'+f'\\Unsettled AR_{output_date}.xlsx'
+        ticket_summary_sheet = drive+r'\REPORT\Ar_Exposure(Open AR,Unsettled AR)\Summary_sheet'+f'\\ticket query elevator 2015.xlsx'
+        ap_ar_template = drive+r'\REPORT\Ar_Exposure(Open AR,Unsettled AR)'+f'\\WPLLC - AP_AR_Template.xlsx'
+        output_location = drive+r'\REPORT\AR EXPOSURE' 
+        output_location2 = drive+r'\REPORT\AR EXPOSURE\Output'
         if not os.path.exists(input_sheet):
             return(f"{input_sheet} Excel file not present for date {input_date}")
         if not os.path.exists(input_sheet2):
@@ -1534,7 +1538,7 @@ def inv_mtm_pdf_data_extractor(input_date, f, hrw_pdf_loc=None, yc_pdf_loc=None,
 
 def storage_qty(input_date,input_qty_pdf, input_qty_xl, monthYear2, qty_loc_dict):
     try:
-        output_loc = r'J:\WEST PLAINS\REPORT\Storage Month End Report\Output Files' + f'\\STORAGE QTY {monthYear2}.xlsx'
+        output_loc = drive+r'\REPORT\Storage Month End Report\Output Files' + f'\\STORAGE QTY {monthYear2}.xlsx'
         page_df = read_pdf(input_qty_pdf,pages = 1,guess = False,stream = True,
                         pandas_options={'header':0},area = ["65,630,600,735"],columns=["675"])[0]
         page_num = int(page_df['e Types'][3][-4:])
@@ -1675,7 +1679,7 @@ def storage_qty(input_date,input_qty_pdf, input_qty_xl, monthYear2, qty_loc_dict
 
 def storage_accrual(input_date,strg_accr_inp_loc, monthYear, loc_dict):
     try:
-        output_location = r'J:\WEST PLAINS\REPORT\Storage Month End Report\Output Files'+f"\\STORAGE ACCRUAL {monthYear}.xlsx"
+        output_location = drive+r'\REPORT\Storage Month End Report\Output Files'+f"\\STORAGE ACCRUAL {monthYear}.xlsx"
         # output_location = r'C:\Users\imam.khan\OneDrive - BioUrja Trading LLC\Documents\WEST PLAINS\REPORT\Storage Month End Report\Output Files'+f"\\{monthYear}.xlsx"
         retry=0
         while retry < 10:
@@ -1725,7 +1729,7 @@ def storage_accrual(input_date,strg_accr_inp_loc, monthYear, loc_dict):
 def storage_je(strg_je_inp_loc, input_date, loc_dict):
     try:
         xl_inp_date = datetime.strftime(datetime.strptime(input_date, "%m.%d.%Y"), "%m/%d/%Y")
-        output_location = r'J:\WEST PLAINS\REPORT\Storage Month End Report\Output Files'+"\\STORAGE ACCRUAL JE_" +f"{input_date}.xlsx"
+        output_location = drive+r'\REPORT\Storage Month End Report\Output Files'+"\\STORAGE ACCRUAL JE_" +f"{input_date}.xlsx"
         # output_location = r'C:\Users\imam.khan\OneDrive - BioUrja Trading LLC\Documents\WEST PLAINS\REPORT\Storage Month End Report\Output Files'+"\\STORAGE ACCRUAL JE_" +f"{input_date}.xlsx"
         JE_dict = {'ALLIANCETE':'ALLIANCE TERMINAL','BATESLAND':'BATESLAND','BROWNSVILLE':'BROWNSVILL','CHADRON':'CHADRON','CLINTON':'CLINTON',
                     'CRAWFORD':'CRAWFORD','GERING':'GERING','HAYSPRG':'HAY SPRINGS','JTELEV':'JOHNSTOWN',
@@ -1802,13 +1806,13 @@ def storage_je(strg_je_inp_loc, input_date, loc_dict):
 def bbr_other_tabs(input_date, wb, input_ar, input_ctm):
     try:
         # input_date = "02.07.2022"
-        # input_xl = r"J:\WEST PLAINS\REPORT\BBR Reports\Raw Files" +f"\\{input_date}_Borrowing Base Report.xlsx"
+        # input_xl = drive+r"\REPORT\BBR Reports\Raw Files" +f"\\{input_date}_Borrowing Base Report.xlsx"
         # input_xl = r"C:\Users\Yashn.jain\Desktop\WEST PLAINS\REPORT\BBR Reports\Raw Files"+f"\\{input_date}_Borrowing Base Report.xlsx"
-        # input_ar = r"J:\WEST PLAINS\REPORT\Open AR\Output files"+f"\\Open AR _{input_date} - Production.xlsx"
+        # input_ar = drive+r"\REPORT\Open AR\Output files"+f"\\Open AR _{input_date} - Production.xlsx"
         # input_ar = r"C:\Users\Yashn.jain\Desktop\WEST PLAINS\REPORT\Open AR\Output files"+f"\\Open AR _{input_date} - Production.xlsx"
-        # input_ctm = r"J:\WEST PLAINS\REPORT\CTM Combined report\Output files"+f"\\CTM Combined _{input_date}.xlsx"
+        # input_ctm = drive+r"\REPORT\CTM Combined report\Output files"+f"\\CTM Combined _{input_date}.xlsx"
         # input_ctm = r"C:\Users\Yashn.jain\Desktop\WEST PLAINS\REPORT\CTM Combined report\Output files"+f"\\CTM Combined _{input_date}.xlsx"
-        # output_location=r"J:\WEST PLAINS\REPORT\BBR Reports\Output files"
+        # output_location=drive+r"\REPORT\BBR Reports\Output files"
         # output_location=r"C:\Users\Yashn.jain\Desktop\Sample_BBR"
         retry=0
         while retry < 10:
@@ -3295,11 +3299,11 @@ def mtm_excel(input_date,input_xl,loc_dict,loc_sheet, output_location, hrw_fut, 
 
 def bbr(input_date, output_date):
     try:
-        prev_files_loc= r'J:\WEST PLAINS\REPORT\BBR Reports\Output files'
+        prev_files_loc= drive+r'\REPORT\BBR Reports\Output files'
         file_list = glob.glob(prev_files_loc+"\\*.xlsx")
         file_list.sort()
         prev_bbr = file_list[-1]
-        output_location = r'J:\WEST PLAINS\REPORT\BBR Reports\Output files'+f"\\{input_date}_Borrowing Base Report.xlsx"
+        output_location = drive+r'\REPORT\BBR Reports\Output files'+f"\\{input_date}_Borrowing Base Report.xlsx"
         input_date_date = datetime.strptime(input_date, "%m.%d.%Y").date()
         # prev_date = datetime.strptime(file_list[-1].split("_")[0].split("\\")[-1], "%m.%d.%Y").date()
         prev_bbr = prev_files_loc+f"\\{output_date}_Borrowing Base Report.xlsx"
@@ -3315,51 +3319,51 @@ def bbr(input_date, output_date):
 
         prev_month_year = datetime.strftime((datetime.strptime(input_date, "%m.%d.%Y").replace(day=1)-timedelta(days=1)),"%b %Y").upper()
         print(prev_month_year)
-        input_xl = r"J:\WEST PLAINS\REPORT\BBR Reports\Raw Files" +f"\\{input_date}_Borrowing Base Report.xlsx"
+        input_xl = drive+r"\REPORT\BBR Reports\Raw Files" +f"\\{input_date}_Borrowing Base Report.xlsx"
         if not os.path.exists(input_xl):
                 return(f"{input_xl} Excel file not present for date {input_date}")
         # account_lst = ["52311940", "523WP771", "523WP774", "523WP775", "523WP777", "523WP779", "523WP780", "523WP781", "523WP782", "523WP783", "523WP784", "523WP785", "523WP786", "523WP787", "523WP788", "523WP789", "523WP790", "523WP791", "523WP792", "523WP793", "523WP794", "523WP795", "523WPHLD"]
-        pdf_loc = r"J:\WEST PLAINS\REPORT\BBR Reports\Raw Files\Macquarie Statement_"+input_date+".pdf"
+        pdf_loc = drive+r"\REPORT\BBR Reports\Raw Files\Macquarie Statement_"+input_date+".pdf"
         if not os.path.exists(pdf_loc):
                 return(f"{pdf_loc} Pdf file not present for date {input_date}")
 
-        bank_recons_loc = r"J:\WEST PLAINS\REPORT\BBR Reports\Raw Files\BANK RECONS_"+input_date+".xls"
-        # bank_recons_loc = r"J:\WEST PLAINS\REPORT\Bank Recons\Output Files\BANK RECONS_"+input_date+".xls"
+        bank_recons_loc = drive+r"\REPORT\BBR Reports\Raw Files\BANK RECONS_"+input_date+".xls"
+        # bank_recons_loc = drive+r"\REPORT\Bank Recons\Output Files\BANK RECONS_"+input_date+".xls"
 
         if not os.path.exists(bank_recons_loc):
                 return(f"{bank_recons_loc} Excel file not present for date {input_date}")
 
-        # strg_accr_loc = r"J:\WEST PLAINS\REPORT\BBR Reports\Raw Files\STORAGE ACCRUAL "+prev_month_year+".xlsx"
-        strg_accr_loc = r"J:\WEST PLAINS\REPORT\Storage Month End Report\Output Files\STORAGE ACCRUAL "+prev_month_year+".xlsx"
+        # strg_accr_loc = drive+r"\REPORT\BBR Reports\Raw Files\STORAGE ACCRUAL "+prev_month_year+".xlsx"
+        strg_accr_loc = drive+r"\REPORT\Storage Month End Report\Output Files\STORAGE ACCRUAL "+prev_month_year+".xlsx"
 
         if not os.path.exists(strg_accr_loc):
                 return(f"{strg_accr_loc} Excel file not present for date {input_date}")
 
-        bbr_mapping_loc = r"J:\WEST PLAINS\REPORT\BBR Reports\bbr_payables_mapping.xlsx"
+        bbr_mapping_loc = drive+r"\REPORT\BBR Reports\bbr_payables_mapping.xlsx"
 
         if not os.path.exists(bbr_mapping_loc):
                 return(f"{bbr_mapping_loc} Excel file not present for date {input_date}")
 
-        input_ar = r"J:\WEST PLAINS\REPORT\Open AR\Output files"+f"\\Open AR _{input_date} - Production.xlsx"
+        input_ar = drive+r"\REPORT\Open AR\Output files"+f"\\Open AR _{input_date} - Production.xlsx"
         if not os.path.exists(input_ar):
             return(f"{input_ar} Excel file not present for date {input_date}")
-        input_ctm = r"J:\WEST PLAINS\REPORT\CTM Combined report\Output files"+f"\\CTM Combined _{input_date}.xlsx"
+        input_ctm = drive+r"\REPORT\CTM Combined report\Output files"+f"\\CTM Combined _{input_date}.xlsx"
         if not os.path.exists(input_ctm):
             return(f"{input_ctm} Excel file not present for date {input_date}")
 
-        unset_rec_loc = r'J:\WEST PLAINS\REPORT\Unsettled Receivables\Output files\Unsettled Receivables _'+input_date+'.xlsx'
+        unset_rec_loc = drive+r'\REPORT\Unsettled Receivables\Output files\Unsettled Receivables _'+input_date+'.xlsx'
         if not os.path.exists(unset_rec_loc):
             return(f"{unset_rec_loc} Excel file not present for date {input_date}")
-        mtm_loc = r'J:\WEST PLAINS\REPORT\MTM reports\Output files\Inventory MTM_'+input_date+".xlsx"
+        mtm_loc = drive+r'\REPORT\MTM reports\Output files\Inventory MTM_'+input_date+".xlsx"
         if not os.path.exists(mtm_loc):
             return(f"{mtm_loc} Excel file not present for date {input_date}")
 
-        open_ap_loc = r'J:\WEST PLAINS\REPORT\Open AP\Output files\Open AP _'+input_date+'.xlsx'
+        open_ap_loc = drive+r'\REPORT\Open AP\Output files\Open AP _'+input_date+'.xlsx'
 
         if not os.path.exists(open_ap_loc):
             return(f"{open_ap_loc} Excel file not present for date {input_date}")
 
-        unset_pay_loc = r'J:\WEST PLAINS\REPORT\Unsettled Payables\Output files\Unsettled Payables _'+input_date+'.xlsx'
+        unset_pay_loc = drive+r'\REPORT\Unsettled Payables\Output files\Unsettled Payables _'+input_date+'.xlsx'
 
         if not os.path.exists(unset_pay_loc):
             return(f"{unset_pay_loc} Excel file not present for date {input_date}")
@@ -3536,22 +3540,22 @@ def bbr(input_date, output_date):
 def cpr(input_date, output_date):
     try:
         cpr_file_date = input_date.replace('.','-')
-        output_cpr  = r'J:\WEST PLAINS\REPORT\CPR reports\Output files'+'\\Counter Party Risk Consolidated '+cpr_file_date+'.xlsx'
-        output_cpr_copy  = r'J:\WEST PLAINS\REPORT\CPR reports\Output files'+'\\Counter Party Risk Consolidated '+cpr_file_date+' Report Copy.xlsx'
+        output_cpr  = drive+r'\REPORT\CPR reports\Output files'+'\\Counter Party Risk Consolidated '+cpr_file_date+'.xlsx'
+        output_cpr_copy  = drive+r'\REPORT\CPR reports\Output files'+'\\Counter Party Risk Consolidated '+cpr_file_date+' Report Copy.xlsx'
         
-        input_cpr = r'J:\WEST PLAINS\REPORT\CPR reports\Raw Files\Counter Party Risk Consolidated '+cpr_file_date+'.xlsx'
+        input_cpr = drive+r'\REPORT\CPR reports\Raw Files\Counter Party Risk Consolidated '+cpr_file_date+'.xlsx'
 
-        input_cpr_copy = r'J:\WEST PLAINS\REPORT\CPR reports\Raw Files\Counter Party Risk Consolidated '+cpr_file_date+' Report Copy.xlsx'
+        input_cpr_copy = drive+r'\REPORT\CPR reports\Raw Files\Counter Party Risk Consolidated '+cpr_file_date+' Report Copy.xlsx'
 
-        UnsettledRec_book = r'J:\WEST PLAINS\REPORT\Unsettled Receivables\Output files\Unsettled Receivables _'+input_date+'.xlsx'
+        UnsettledRec_book = drive+r'\REPORT\Unsettled Receivables\Output files\Unsettled Receivables _'+input_date+'.xlsx'
 
-        UnsettledPay_book = r'J:\WEST PLAINS\REPORT\Unsettled Payables\Output files\Unsettled Payables _'+input_date+'.xlsx'
+        UnsettledPay_book = drive+r'\REPORT\Unsettled Payables\Output files\Unsettled Payables _'+input_date+'.xlsx'
 
-        Open_AR_book = r'J:\WEST PLAINS\REPORT\Open AR\Output files\Open AR _'+input_date+' - Production.xlsx'
+        Open_AR_book = drive+r'\REPORT\Open AR\Output files\Open AR _'+input_date+' - Production.xlsx'
 
-        Open_AP_book = r'J:\WEST PLAINS\REPORT\Open AP\Output files\Open AP _'+input_date+'.xlsx'
+        Open_AP_book = drive+r'\REPORT\Open AP\Output files\Open AP _'+input_date+'.xlsx'
 
-        CTM_book = r'J:\WEST PLAINS\REPORT\CTM Combined report\Output files\CTM Combined _'+input_date+'.xlsx'
+        CTM_book = drive+r'\REPORT\CTM Combined report\Output files\CTM Combined _'+input_date+'.xlsx'
 
         if not os.path.exists(input_cpr):
                 return(f"{input_cpr} Excel file not present for date {cpr_file_date}")
@@ -3910,9 +3914,9 @@ def cpr(input_date, output_date):
 
 def ctm(input_date, output_date):
     try:
-        input_sheet = r'J:\WEST PLAINS\REPORT\CTM Combined report\Raw Files\CTM Combined _'+input_date+'.xlsx' 
-        output_location = r'J:\WEST PLAINS\REPORT\CTM Combined report\Output files\CTM Combined _'+input_date+".xlsx"
-        # input_cpr = r'J:\WEST PLAINS\REPORT\CPR reports\Raw Files\Counter Party Risk Consolidated '+cpr_file_date+'.xlsx'    
+        input_sheet = drive+r'\REPORT\CTM Combined report\Raw Files\CTM Combined _'+input_date+'.xlsx' 
+        output_location = drive+r'\REPORT\CTM Combined report\Output files\CTM Combined _'+input_date+".xlsx"
+        # input_cpr = drive+r'\REPORT\CPR reports\Raw Files\Counter Party Risk Consolidated '+cpr_file_date+'.xlsx'    
         if not os.path.exists(input_sheet):
             return(f"{input_sheet} Excel file not present for date {input_date}")
 
@@ -4199,10 +4203,10 @@ def ctm(input_date, output_date):
             pass
 def freight_analysis(input_date, output_date):
     try:
-        inp_formula_sht = r'J:\WEST PLAINS\REPORT\Freight analysis reports\Col_N_Formulas.xlsx'
+        inp_formula_sht = drive+r'\REPORT\Freight analysis reports\Col_N_Formulas.xlsx'
         
-        output_location = r'J:\WEST PLAINS\REPORT\Freight analysis reports\Output files'
-        raw_input = r'J:\WEST PLAINS\REPORT\Freight analysis reports\Raw files'
+        output_location = drive+r'\REPORT\Freight analysis reports\Output files'
+        raw_input = drive+r'\REPORT\Freight analysis reports\Raw files'
 
         Input_Sheets = ['Inbound','Outbound', 'DS Outbound', 'DS Inbound']
 
@@ -4337,30 +4341,30 @@ def mtm_report(input_date, output_date):
         print(input_date)
         # print(output_date)
 
-        input_xl = r'J:\WEST PLAINS\REPORT\MTM reports\Raw Files\Inventory MTM_'+input_date+".xlsx"
+        input_xl = drive+r'\REPORT\MTM reports\Raw Files\Inventory MTM_'+input_date+".xlsx"
         if not os.path.exists(input_xl):
             return(f"{input_xl} Excel file not present for date {input_date}")
         
-        pdf_loc = r'J:\WEST PLAINS\REPORT\MTM reports\Raw Files\Inventory Market Valuation _'+input_date+'.pdf'
+        pdf_loc = drive+r'\REPORT\MTM reports\Raw Files\Inventory Market Valuation _'+input_date+'.pdf'
         if not os.path.exists(pdf_loc):
             return(f"{pdf_loc} Pdf file not present for date {input_date}")
 
         hrw_pdf_loc = 'HRW_loc'
-        # hrw_pdf_loc = r'J:\WEST PLAINS\REPORT\MTM reports\Raw Files\HRW_'+input_date+'.pdf'
+        # hrw_pdf_loc = drive+r'\REPORT\MTM reports\Raw Files\HRW_'+input_date+'.pdf'
         # if not os.path.exists(hrw_pdf_loc):
         #     return(f"{hrw_pdf_loc} Pdf file not present for date {input_date}")
         yc_pdf_loc = 'YC_loc'
-        # yc_pdf_loc = r'J:\WEST PLAINS\REPORT\MTM reports\Raw Files\YC_'+input_date+'.pdf'
+        # yc_pdf_loc = drive+r'\REPORT\MTM reports\Raw Files\YC_'+input_date+'.pdf'
         # if not os.path.exists(yc_pdf_loc):
         #     return(f"{yc_pdf_loc} Pdf file not present for date {input_date}")
         ysb_pdf_loc = 'YSB_loc'
 
-        loc_sheet = r'J:\WEST PLAINS\REPORT\MTM reports\Loc_Abbr.xlsx'
+        loc_sheet = drive+r'\REPORT\MTM reports\Loc_Abbr.xlsx'
         if not os.path.exists(loc_sheet):
             return(f"{loc_sheet}Excel file not present for date {input_date}")
 
         loc_dict, hrw_fut, yc_fut, ysb_fut = mtm_pdf_data_extractor(input_date,pdf_loc, hrw_pdf_loc, yc_pdf_loc ,ysb_pdf_loc)
-        output_location = r'J:\WEST PLAINS\REPORT\MTM reports\Output files\Inventory MTM_'+input_date+".xlsx"
+        output_location = drive+r'\REPORT\MTM reports\Output files\Inventory MTM_'+input_date+".xlsx"
         mtm_excel(input_date, input_xl,loc_dict,loc_sheet, output_location, hrw_fut, yc_fut , ysb_fut)
 
         print("Done")
@@ -4371,14 +4375,14 @@ def mtm_report(input_date, output_date):
 
 def open_ar(input_date, output_date):
     try:
-        input_sheet = r'J:\WEST PLAINS\REPORT\Open AR\Raw files'+f'\\Open AR _{input_date} - Production.xlsx' 
+        input_sheet = drive+r'\REPORT\Open AR\Raw files'+f'\\Open AR _{input_date} - Production.xlsx' 
         if not os.path.exists(input_sheet):
             return(f"{input_sheet} Excel file not present for date {input_date}")
-        prev_output=r'J:\WEST PLAINS\REPORT\Open AR\Output files'+f'\\Open AR _{output_date} - Production.xlsx'
+        prev_output=drive+r'\REPORT\Open AR\Output files'+f'\\Open AR _{output_date} - Production.xlsx'
         if not os.path.exists(prev_output):
             return(f"{prev_output} Excel file not present for date {output_date}")  
 
-        output_location = r'J:\WEST PLAINS\REPORT\Open AR\Output files'  
+        output_location = drive+r'\REPORT\Open AR\Output files'  
         prev_month = datetime.strftime(datetime.strptime(input_date, "%m.%d.%Y"), "%B")
         ##logger.info("Opening operating workbook instance of excel")
         retry=0
@@ -4894,8 +4898,8 @@ def open_ar(input_date, output_date):
 
 def open_ap(input_date, output_date):
     try:
-        input_sheet = r'J:\WEST PLAINS\REPORT\Open AP\Raw files'+f'\\Open AP _{input_date}.xlsx' 
-        output_location = r'J:\WEST PLAINS\REPORT\Open AP\Output files'
+        input_sheet = drive+r'\REPORT\Open AP\Raw files'+f'\\Open AP _{input_date}.xlsx' 
+        output_location = drive+r'\REPORT\Open AP\Output files'
         if not os.path.exists(input_sheet):
             return(f"{input_sheet} Excel file not present for date {input_date}")
         #logger.info("Opening operating workbook instance of excel")
@@ -5110,8 +5114,8 @@ def open_ap(input_date, output_date):
 
 def unsetteled_payables(input_date, output_date):
     try:
-        input_xl = r'J:\WEST PLAINS\REPORT\Unsettled Payables\Raw Files\Unsettled Payables _'+input_date+".xlsx"
-        output_location = r'J:\WEST PLAINS\REPORT\Unsettled Payables\Output files\Unsettled Payables _'+input_date+".xlsx"
+        input_xl = drive+r'\REPORT\Unsettled Payables\Raw Files\Unsettled Payables _'+input_date+".xlsx"
+        output_location = drive+r'\REPORT\Unsettled Payables\Output files\Unsettled Payables _'+input_date+".xlsx"
         
         if not os.path.exists(input_xl):
             return(f"Excel file not present for date {input_date}")
@@ -5250,9 +5254,9 @@ def unsetteled_receivables(input_date, output_date):
     try:
         
 
-        input_xl = r'J:\WEST PLAINS\REPORT\Unsettled Receivables\Raw Files\Unsettled Receivables _'+input_date+".xlsx"
-        prev_output_location = r'J:\WEST PLAINS\REPORT\Unsettled Receivables\Output files\Unsettled Receivables _'+output_date+".xlsx"
-        output_location = r'J:\WEST PLAINS\REPORT\Unsettled Receivables\Output files\Unsettled Receivables _'+input_date+".xlsx"
+        input_xl = drive+r'\REPORT\Unsettled Receivables\Raw Files\Unsettled Receivables _'+input_date+".xlsx"
+        prev_output_location = drive+r'\REPORT\Unsettled Receivables\Output files\Unsettled Receivables _'+output_date+".xlsx"
+        output_location = drive+r'\REPORT\Unsettled Receivables\Output files\Unsettled Receivables _'+input_date+".xlsx"
         
         if not os.path.exists(input_xl):
             return(f"{input_xl} Excel file not present for date {input_date}")
@@ -5476,33 +5480,33 @@ def unsetteled_receivables(input_date, output_date):
 
 def moc_interest_alloc(input_date, output_date):
     try:
-        # input_xl = r"J:\WEST PLAINS\REPORT\MOC Interest allocation\Raw files\Inventory MTM Excel Report " + input_date + ".xlsx"
+        # input_xl = drive+r"\REPORT\MOC Interest allocation\Raw files\Inventory MTM Excel Report " + input_date + ".xlsx"
         # if not os.path.exists(input_xl):
         #         return(f"{input_xl} Excel file not present for date {input_date}")
         dt = datetime.strptime(input_date,"%m.%d.%Y")
         mtm_input_date = dt.strftime("%B %Y")
 
-        # mtm_file = r"J:\WEST PLAINS\REPORT\MOC Interest allocation\Raw files\Inventory MTM Excel Report " + mtm_input_date +'.xlsx'
-        mtm_file = r"J:\WEST PLAINS\REPORT\FIFO reports\Output files\Inventory MTM Excel Report " + mtm_input_date +'.xlsx'
+        # mtm_file = drive+r"\REPORT\MOC Interest allocation\Raw files\Inventory MTM Excel Report " + mtm_input_date +'.xlsx'
+        mtm_file = drive+r"\REPORT\FIFO reports\Output files\Inventory MTM Excel Report " + mtm_input_date +'.xlsx'
         if not os.path.exists(mtm_file):
                 return(f"{mtm_file} Excel file not present for date {input_date}")
 
-        unsettled_recev_file = r'J:\WEST PLAINS\REPORT\Unsettled Receivables\Output files\Unsettled Receivables _'+input_date+'.xlsx'
+        unsettled_recev_file = drive+r'\REPORT\Unsettled Receivables\Output files\Unsettled Receivables _'+input_date+'.xlsx'
 
         if not os.path.exists(unsettled_recev_file):
                 return(f"{unsettled_recev_file} Excel file not present for date {input_date}")
 
-        unsettled_pay_file = r'J:\WEST PLAINS\REPORT\Unsettled Payables\Output files\Unsettled Payables _'+input_date+'.xlsx'
+        unsettled_pay_file = drive+r'\REPORT\Unsettled Payables\Output files\Unsettled Payables _'+input_date+'.xlsx'
 
         if not os.path.exists(unsettled_pay_file):
                 return(f"{unsettled_pay_file} Excel file not present for date {input_date}")
 
-        open_ar_file = r'J:\WEST PLAINS\REPORT\Open AR\Output files\Open AR _'+input_date+' - Production.xlsx'
+        open_ar_file = drive+r'\REPORT\Open AR\Output files\Open AR _'+input_date+' - Production.xlsx'
 
         if not os.path.exists(open_ar_file):
                 return(f"{open_ar_file} Excel file not present for date {input_date}")
 
-        open_ap_file = r'J:\WEST PLAINS\REPORT\Open AP\Output files\Open AP _'+input_date+'.xlsx'
+        open_ap_file = drive+r'\REPORT\Open AP\Output files\Open AP _'+input_date+'.xlsx'
 
         if not os.path.exists(open_ap_file):
                 return(f"{open_ap_file} Excel file not present for date {input_date}")
@@ -5510,8 +5514,8 @@ def moc_interest_alloc(input_date, output_date):
         
 
 
-        output_dir = r"J:\WEST PLAINS\REPORT\MOC Interest allocation\Output Files"
-        template_dir = r"J:\WEST PLAINS\REPORT\MOC Interest allocation\Raw files\template"
+        output_dir = drive+r"\REPORT\MOC Interest allocation\Output Files"
+        template_dir = drive+r"\REPORT\MOC Interest allocation\Raw files\template"
 
 
           
@@ -5524,12 +5528,12 @@ def moc_interest_alloc(input_date, output_date):
 def bbr_monthEnd(input_date, output_date):
     try:
         monthYear = datetime.strftime(datetime.strptime(input_date, "%m.%d.%Y"), "%b %Y").upper()
-        input_bbr = r"J:\WEST PLAINS\REPORT\BBR Reports\Output files" +f"\\{input_date}_Borrowing Base Report.xlsx"
-        output_loc = r"J:\WEST PLAINS\REPORT\BBR Reports\Output files\Month_End" +f"\\{input_date}_Borrowing Base Report.xlsx"
+        input_bbr = drive+r"\REPORT\BBR Reports\Output files" +f"\\{input_date}_Borrowing Base Report.xlsx"
+        output_loc = drive+r"\REPORT\BBR Reports\Output files\Month_End" +f"\\{input_date}_Borrowing Base Report.xlsx"
         if not os.path.exists(input_bbr):
             return(f"{input_bbr} Excel file not present for date {input_date}")
 
-        strg_accr = r'J:\WEST PLAINS\REPORT\Storage Month End Report\Output Files'+f"\\STORAGE ACCRUAL {monthYear}.xlsx" #f"\\{monthYear}.xlsx"
+        strg_accr = drive+r'\REPORT\Storage Month End Report\Output Files'+f"\\STORAGE ACCRUAL {monthYear}.xlsx" #f"\\{monthYear}.xlsx"
         if not os.path.exists(strg_accr):
             return(f"{strg_accr} Excel file not present for date {input_date}")
 
@@ -5579,17 +5583,17 @@ def bbr_monthEnd(input_date, output_date):
 def inv_mtm_excel_summ(input_date, output_date):
     try:
         monthYear = datetime.strftime(datetime.strptime(input_date, "%m.%d.%Y"), "%B %Y")
-        pdf_loc = r'J:\WEST PLAINS\REPORT\MTM reports\Raw Files\Inventory Market Valuation _'+input_date+'.pdf'
+        pdf_loc = drive+r'\REPORT\MTM reports\Raw Files\Inventory Market Valuation _'+input_date+'.pdf'
         # pdf_loc = r'C:\Users\imam.khan\OneDrive - BioUrja Trading LLC\Documents\WEST PLAINS\REPORT\MTM reports\Raw Files\Inventory Market Valuation _'+input_date+'.pdf'
         if not os.path.exists(pdf_loc):
             return(f"{pdf_loc} Pdf file not present for date {input_date}")
-        input_xl = r'J:\WEST PLAINS\REPORT\Inv_MTM_Excel_Report_Summ\Raw Files\Inventory_MTMExcel_SummTemplate.xlsx'
+        input_xl = drive+r'\REPORT\Inv_MTM_Excel_Report_Summ\Raw Files\Inventory_MTMExcel_SummTemplate.xlsx'
         # input_xl = r'C:\Users\imam.khan\OneDrive - BioUrja Trading LLC\Documents\WEST PLAINS\REPORT\Inv_MTM_Excel_Report_Summ\Raw Files\Inventory_MTMExcel_SummTemplate.xlsx'
         if not os.path.exists(input_xl):
             return(f"{input_xl} Excel file not present for date {input_date}")
 
         # output_loc = r"C:\Users\imam.khan\OneDrive - BioUrja Trading LLC\Documents\WEST PLAINS\REPORT\FIFO reports\Output files" +f"\\Inventory MTM Excel Report {monthYear}.xlsx"
-        output_loc = r'J:\WEST PLAINS\REPORT\Inv_MTM_Excel_Report_Summ\Output files' +f"\\Inventory MTM Excel Report {monthYear}.xlsx"
+        output_loc = drive+r'\REPORT\Inv_MTM_Excel_Report_Summ\Output files' +f"\\Inventory MTM Excel Report {monthYear}.xlsx"
 
 
 
@@ -5689,36 +5693,36 @@ def fifo(input_date, output_date):
         inp_date = datetime.strftime(datetime.strptime(input_date, "%m.%d.%Y"), "%m.%d.%y")
         monthYear = datetime.strftime(datetime.strptime(input_date, "%m.%d.%Y"), "%B %Y")
         for loc in location:
-            input_xl = r"J:\WEST PLAINS\REPORT\FIFO reports\Raw Files" +f"\\Inventory on site {loc}_{inp_date}.xlsx"
+            input_xl = drive+r"\REPORT\FIFO reports\Raw Files" +f"\\Inventory on site {loc}_{inp_date}.xlsx"
             # input_xl = r"C:\Users\imam.khan\OneDrive - BioUrja Trading LLC\Documents\WEST PLAINS\REPORT\FIFO reports\Raw Files" +f"\\Inventory on site {loc}_{inp_date}.xlsx"
             if not os.path.exists(input_xl):
                     return(f"{input_xl} Excel file not present for date {input_date}")
             
-            # input_mtm = r"J:\WEST PLAINS\REPORT\MOC Interest allocation\Raw Files" +f"\\Inventory MTM Excel Report {monthYear}.xlsx"
-            input_mtm = r'J:\WEST PLAINS\REPORT\Inv_MTM_Excel_Report_Summ\Output files' +f"\\Inventory MTM Excel Report {monthYear}.xlsx"
+            # input_mtm = drive+r"\REPORT\MOC Interest allocation\Raw Files" +f"\\Inventory MTM Excel Report {monthYear}.xlsx"
+            input_mtm = drive+r'\REPORT\Inv_MTM_Excel_Report_Summ\Output files' +f"\\Inventory MTM Excel Report {monthYear}.xlsx"
             # input_mtm = r"C:\Users\imam.khan\OneDrive - BioUrja Trading LLC\Documents\WEST PLAINS\REPORT\FIFO reports\Output files" +f"\\Inventory MTM Excel Report {monthYear}.xlsx"
             if not os.path.exists(input_mtm):
                     return(f"{input_mtm} Excel file not present for date {input_date}")
 
-            input_mapping = r"J:\WEST PLAINS\REPORT\FIFO reports" +f"\\Sub_Loc_Mapping.xlsx"
+            input_mapping = drive+r"\REPORT\FIFO reports" +f"\\Sub_Loc_Mapping.xlsx"
             # input_mapping = r"C:\Users\imam.khan\OneDrive - BioUrja Trading LLC\Documents\WEST PLAINS\REPORT\FIFO reports" +f"\\Sub_Loc_Mapping.xlsx"
             if not os.path.exists(input_mapping):
                     return(f"{input_mapping} Excel file not present for date")
             
-            input_pdf = r"J:\WEST PLAINS\REPORT\FIFO reports\Raw Files" +f"\\Inventory Trial Balance_{inp_date}.pdf"
+            input_pdf = drive+r"\REPORT\FIFO reports\Raw Files" +f"\\Inventory Trial Balance_{inp_date}.pdf"
             # input_pdf = r"C:\Users\imam.khan\OneDrive - BioUrja Trading LLC\Documents\WEST PLAINS\REPORT\FIFO reports\Raw Files" +f"\\Inventory Trial Balance_{inp_date}.pdf"
             if not os.path.exists(input_pdf):
                     return(f"{input_pdf} Excel file not present for date {input_date}")
 
-            # input_yc = r"J:\WEST PLAINS\REPORT\FIFO reports\Raw Files" +f"\\Inventory on site YC_{inp_date}.xlsx"
+            # input_yc = drive+r"\REPORT\FIFO reports\Raw Files" +f"\\Inventory on site YC_{inp_date}.xlsx"
             # if not os.path.exists(input_yc):
             #         return(f"{input_yc} Excel file not present for date {input_date}")
 
-            output_loc = r"J:\WEST PLAINS\REPORT\FIFO reports\Output files" +f"\\Inventory on site {loc}_{inp_date}.xlsx"
+            output_loc = drive+r"\REPORT\FIFO reports\Output files" +f"\\Inventory on site {loc}_{inp_date}.xlsx"
             
             # output_loc = r"C:\Users\imam.khan\OneDrive - BioUrja Trading LLC\Documents\WEST PLAINS\REPORT\FIFO reports\Output files" +f"\\Inventory on site {loc}_{inp_date}.xlsx"
-            # ouput_yc = r"J:\WEST PLAINS\REPORT\FIFO reports\Output files" +f"\\Inventory on site YC_{inp_date}.xlsx"
-            mtm_ouput_loc = r"J:\WEST PLAINS\REPORT\FIFO reports\Output files" +f"\\Inventory MTM Excel Report {monthYear}.xlsx"
+            # ouput_yc = drive+r"\REPORT\FIFO reports\Output files" +f"\\Inventory on site YC_{inp_date}.xlsx"
+            mtm_ouput_loc = drive+r"\REPORT\FIFO reports\Output files" +f"\\Inventory MTM Excel Report {monthYear}.xlsx"
             # mtm_ouput_loc = r"C:\Users\imam.khan\OneDrive - BioUrja Trading LLC\Documents\WEST PLAINS\REPORT\FIFO reports\Output files" +f"\\Inventory MTM Excel Report {monthYear}.xlsx"
 
             
@@ -5990,17 +5994,17 @@ def fifo(input_date, output_date):
     
 def bank_recons_rep(input_date,output_date):
     try:
-        input_sheet = r'J:\WEST PLAINS\REPORT\Bank Recons\Raw Files\Raw Template'+f'\\template.xls'
+        input_sheet = drive+r'\REPORT\Bank Recons\Raw Files\Raw Template'+f'\\template.xls'
         if not os.path.exists(input_sheet):
             return(f"{input_sheet} Excel file not present for date {input_date}")
-        pdf_input=r'J:\WEST PLAINS\REPORT\Bank Recons\Raw Files'+f'\\Outstanding Checks Report_{input_date}.pdf'
+        pdf_input=drive+r'\REPORT\Bank Recons\Raw Files'+f'\\Outstanding Checks Report_{input_date}.pdf'
         if not os.path.exists(pdf_input):
                 return(f"{pdf_input} Excel file not present for date {input_date}")
-        pdf_input2=r'J:\WEST PLAINS\REPORT\Bank Recons\Raw Files'+f'\\BOA 4003_{input_date}.pdf'
+        pdf_input2=drive+r'\REPORT\Bank Recons\Raw Files'+f'\\BOA 4003_{input_date}.pdf'
         if not os.path.exists(pdf_input2):
                 return(f"{pdf_input2} Excel file not present for date {input_date}")
         # job_name = "BANK_RECONS_Automation"
-        output_location = r'J:\WEST PLAINS\REPORT\Bank Recons\Output Files'
+        output_location = drive+r'\REPORT\Bank Recons\Output Files'
         with open(pdf_input, 'rb') as f:
                     pdf = PyPDF2.PdfFileReader(f)
                     number_of_pages = pdf.getNumPages()
@@ -6093,30 +6097,30 @@ def strg_month_end_report(input_date, output_date):
         monthYear = datetime.strftime(datetime.strptime(input_date, "%m.%d.%Y"), "%b%Y").upper()
         monthYear2 = datetime.strftime(datetime.strptime(input_date, "%m.%d.%Y"), "%b %Y").upper()
         
-        pdf_loc = r'J:\WEST PLAINS\REPORT\Storage Month End Report\Raw Files'+f"\\{monthYear}\\PDF"
+        pdf_loc = drive+r'\REPORT\Storage Month End Report\Raw Files'+f"\\{monthYear}\\PDF"
         # pdf_loc = r'C:\Users\imam.khan\OneDrive - BioUrja Trading LLC\Documents\WEST PLAINS\REPORT\Storage Month End Report\Raw Files'+f"\\{monthYear}\\PDF"
         if not os.path.exists(pdf_loc):
             return(f"{pdf_loc} Excel file not present for date {input_date}")
-        strg_accr_inp_loc = r'J:\WEST PLAINS\REPORT\Storage Month End Report\Raw Files\STORAGE ACCRUAL.xlsx'
+        strg_accr_inp_loc = drive+r'\REPORT\Storage Month End Report\Raw Files\STORAGE ACCRUAL.xlsx'
         # strg_accr_inp_loc = r'C:\Users\imam.khan\OneDrive - BioUrja Trading LLC\Documents\WEST PLAINS\REPORT\Storage Month End Report\Raw Files\STORAGE ACCRUAL.xlsx'
         if not os.path.exists(strg_accr_inp_loc):
             return(f"{strg_accr_inp_loc} Excel file not present for date {input_date}")
-        strg_je_inp_loc = r'J:\WEST PLAINS\REPORT\Storage Month End Report\Raw Files\STORAGE ACCRUAL JE.xlsx'
+        strg_je_inp_loc = drive+r'\REPORT\Storage Month End Report\Raw Files\STORAGE ACCRUAL JE.xlsx'
         # strg_je_inp_loc = r'C:\Users\imam.khan\OneDrive - BioUrja Trading LLC\Documents\WEST PLAINS\REPORT\Storage Month End Report\Raw Files\STORAGE ACCRUAL JE.xlsx'
         if not os.path.exists(strg_je_inp_loc):
             return(f"{strg_je_inp_loc} Excel file not present for date {input_date}")
 
-        input_qty_xl = r'J:\WEST PLAINS\REPORT\Storage Month End Report\Raw Files\STORAGE QTY.xlsx'
+        input_qty_xl = drive+r'\REPORT\Storage Month End Report\Raw Files\STORAGE QTY.xlsx'
         # input_qty_xl = r'C:\Users\imam.khan\OneDrive - BioUrja Trading LLC\Documents\WEST PLAINS\REPORT\Storage Month End Report\Raw Files\STORAGE QTY.xlsx'
 
-        input_qty_pdf = r'J:\WEST PLAINS\REPORT\Storage Month End Report\Raw Files'f'\\{monthYear}\\DailyPositionRecordForm2539A.pdf'
+        input_qty_pdf = drive+r'\REPORT\Storage Month End Report\Raw Files'f'\\{monthYear}\\DailyPositionRecordForm2539A.pdf'
         # input_qty_pdf = r'C:\Users\imam.khan\OneDrive - BioUrja Trading LLC\Documents\WEST PLAINS\REPORT\Storage Month End Report\Raw Files'f'\\{monthYear}\\DailyPositionRecordForm2539A.pdf'
         
         loc_dict = {}
         qty_loc_dict = {}
 
         for loc in glob.glob(pdf_loc+"\\*.pdf"):
-            # loc =  r'J:\WEST PLAINS\REPORT\Storage Month End Report\Raw Files\FEB2022\DailyPositionRecordForm2539A.pdf'
+            # loc =  drive+r'\REPORT\Storage Month End Report\Raw Files\FEB2022\DailyPositionRecordForm2539A.pdf'
             # df = read_pdf(loc, pages = 'all', guess = False, stream = True,
             #                                 pandas_options={'header':0}, area = ["65,630,590,735"], columns=["680"])
             df = read_pdf(loc, pages = 'all', guess = False, stream = True,
@@ -6174,14 +6178,14 @@ def strg_month_end_report(input_date, output_date):
 def payables_gl_entry_monthly(input_date, output_date):
     try:
         job_name = "Payables_GL_Entry_Monthly"
-        input_sheet = r'J:\WEST PLAINS\REPORT\Unsettled Payables\Output files'+f'\\Unsettled Payables _{input_date}.xlsx' 
+        input_sheet = drive+r'\REPORT\Unsettled Payables\Output files'+f'\\Unsettled Payables _{input_date}.xlsx' 
         if not os.path.exists(input_sheet):
             return(f"{input_sheet} Excel file not present for date {input_date}")
-        template_file=r'J:\WEST PLAINS\REPORT\Month End GL Entries\Raw Files\template'+f'\\template2.xlsx'
+        template_file=drive+r'\REPORT\Month End GL Entries\Raw Files\template'+f'\\template2.xlsx'
         if not os.path.exists(template_file):
             return(f"{template_file} Excel file not present for date {input_date}")
         
-        output_location = r'J:\WEST PLAINS\REPORT\Month End GL Entries\Output Files'
+        output_location = drive+r'\REPORT\Month End GL Entries\Output Files'
         xw.App.display_alerts = False
         retry=0
         while retry < 10:
@@ -6301,13 +6305,13 @@ def payables_gl_entry_monthly(input_date, output_date):
 def receivables_gl_entry_monthly(input_date, output_date):
     job_name = "Receivables_GL_Entry_Monthly"
     try:    
-        input_sheet = r'J:\WEST PLAINS\REPORT\Unsettled Receivables\Output files'+f'\\Unsettled Receivables _{input_date}.xlsx' 
+        input_sheet = drive+r'\REPORT\Unsettled Receivables\Output files'+f'\\Unsettled Receivables _{input_date}.xlsx' 
         if not os.path.exists(input_sheet):
             return(f"{input_sheet} Excel file not present for date {input_date}")
-        template_file=r'J:\WEST PLAINS\REPORT\Month End GL Entries\Raw Files\template'+f'\\template3.xlsx'
+        template_file=drive+r'\REPORT\Month End GL Entries\Raw Files\template'+f'\\template3.xlsx'
         if not os.path.exists(template_file):
             return(f"{template_file} Excel file not present for date {input_date}")
-        output_location = r'J:\WEST PLAINS\REPORT\Month End GL Entries\Output Files'
+        output_location = drive+r'\REPORT\Month End GL Entries\Output Files'
         xw.App.display_alerts = False
         retry=0
         while retry < 10:
@@ -6419,13 +6423,13 @@ def receivables_gl_entry_monthly(input_date, output_date):
 def ctm_gl_entry_monthly(input_date, output_date):
     try:    
         job_name = "CTM_GL_Entry_Monthly"
-        input_sheet = r'J:\WEST PLAINS\REPORT\CTM Combined report\Output files'+f'\\CTM Combined _{input_date}.xlsx' 
+        input_sheet = drive+r'\REPORT\CTM Combined report\Output files'+f'\\CTM Combined _{input_date}.xlsx' 
         if not os.path.exists(input_sheet):
             return(f"{input_sheet} Excel file not present for date {input_date}")
-        template_file=r'J:\WEST PLAINS\REPORT\Month End GL Entries\Raw Files\template'+f'\\template.xlsx'
+        template_file=drive+r'\REPORT\Month End GL Entries\Raw Files\template'+f'\\template.xlsx'
         if not os.path.exists(template_file):
             return(f"{template_file} Excel file not present for date {input_date}")
-        output_location = r'J:\WEST PLAINS\REPORT\Month End GL Entries\Output Files'
+        output_location = drive+r'\REPORT\Month End GL Entries\Output Files'
         xw.App.display_alerts = False
         retry=0
         while retry < 10:
@@ -6555,17 +6559,17 @@ def macq_accr_entry(input_date, output_date):
     try:
         xl_date = datetime.strftime(datetime.strptime(input_date, "%m.%d.%Y"), "%Y%m%d")
         next_date =datetime.strftime((datetime.strptime(input_date, "%m.%d.%Y")+timedelta(days=1)), "%Y%m%d")
-        output_loc =  r"J:\WEST PLAINS\REPORT\Macquaire Accrual Entry\Output Files" +f"\\Macq Statement_{input_date}.xlsx"
-        input_pdf = r"J:\WEST PLAINS\REPORT\Macquaire Accrual Entry\Raw Files" +f"\\Macq Statement_{input_date}.pdf"
+        output_loc =  drive+r"\REPORT\Macquaire Accrual Entry\Output Files" +f"\\Macq Statement_{input_date}.xlsx"
+        input_pdf = drive+r"\REPORT\Macquaire Accrual Entry\Raw Files" +f"\\Macq Statement_{input_date}.pdf"
         # input_pdf = r"C:\Users\imam.khan\OneDrive - BioUrja Trading LLC\Documents\WEST PLAINS\REPORT\Macquaire Accrual Entry\Raw Files" +f"\\Macq Statement_{input_date}.pdf"
         if not os.path.exists(input_pdf):
                 return(f"{input_pdf} PDF file not present for date {input_date}")
-        input_xl = r"J:\WEST PLAINS\REPORT\Macquaire Accrual Entry\Raw Files" +f"\\Macq Accrual_{input_date}.xlsx"
+        input_xl = drive+r"\REPORT\Macquaire Accrual Entry\Raw Files" +f"\\Macq Accrual_{input_date}.xlsx"
         # input_xl = r"C:\Users\imam.khan\OneDrive - BioUrja Trading LLC\Documents\WEST PLAINS\REPORT\Macquaire Accrual Entry\Raw Files" +f"\\Macq Accrual_{input_date}.xlsx"
         if not os.path.exists(input_xl):
                 return(f"{input_xl} Excel file not present for date {input_date}")
 
-        mapping_loc = r"J:\WEST PLAINS\REPORT\Macquaire Accrual Entry\Mapping.xlsx"
+        mapping_loc = drive+r"\REPORT\Macquaire Accrual Entry\Mapping.xlsx"
 
         df = pd.read_excel(mapping_loc)
         # map_dict = {k : g["Mapping( Open Trade Equity)"].to_dict() for k, g in df.set_index('Location as per Macquarie').groupby('GL')}
@@ -6632,28 +6636,28 @@ def tkt_n_settlement_summ(input_date, output_date):
         input_datetime = datetime.strptime(input_date, "%m.%d.%Y")
         end_date = datetime.strftime(input_datetime+timedelta(days=1), "%m-%d-%Y")#
         st_date = datetime.strftime(input_datetime.replace(day=1), "%m-%d-%Y")
-        tkt_query_xl = r"J:\WEST PLAINS\REPORT\Ticket And Settlement Summary\Raw Files" +f"\\Ticket Query {Year}.xlsx"
+        tkt_query_xl = drive+r"\REPORT\Ticket And Settlement Summary\Raw Files" +f"\\Ticket Query {Year}.xlsx"
         # input_xl = r"C:\Users\imam.khan\OneDrive - BioUrja Trading LLC\Documents\WEST PLAINS\REPORT\Macquaire Accrual Entry\Raw Files" +f"\\Macq Accrual_{input_date}.xlsx"
         if not os.path.exists(tkt_query_xl):
             return(f"{tkt_query_xl} Excel file not present for year {Year}")
 
-        settlement_xl = r"J:\WEST PLAINS\REPORT\Ticket And Settlement Summary\Raw Files\SETTLEMENT MAKER.xlsx"
+        settlement_xl = drive+r"\REPORT\Ticket And Settlement Summary\Raw Files\SETTLEMENT MAKER.xlsx"
         if not os.path.exists(settlement_xl):
             return(f"{settlement_xl} Excel file not present")
 
 
-        template_xl = r"J:\WEST PLAINS\REPORT\Ticket And Settlement Summary\Raw Files\Ticket Query monYearTemplate.xlsx"
-        # template_xl = r"J:\WEST PLAINS\REPORT\Ticket And Settlement Summary\Raw Files\Test.xlsx"
+        template_xl = drive+r"\REPORT\Ticket And Settlement Summary\Raw Files\Ticket Query monYearTemplate.xlsx"
+        # template_xl = drive+r"\REPORT\Ticket And Settlement Summary\Raw Files\Test.xlsx"
         if not os.path.exists(template_xl):
             return(f"{template_xl} Excel file not present")
 
-        final_input = r"J:\WEST PLAINS\REPORT\Ticket And Settlement Summary\Output Files\Tickets and Settlement.xlsx"
-        # template_xl = r"J:\WEST PLAINS\REPORT\Ticket And Settlement Summary\Raw Files\Test.xlsx"
+        final_input = drive+r"\REPORT\Ticket And Settlement Summary\Output Files\Tickets and Settlement.xlsx"
+        # template_xl = drive+r"\REPORT\Ticket And Settlement Summary\Raw Files\Test.xlsx"
         if not os.path.exists(final_input):
             return(f"{final_input} Excel file not present")
 
-        output_file =  r"J:\WEST PLAINS\REPORT\Ticket And Settlement Summary\Output Files"+f"\\Tickets and Settlement.xlsx"
-        det_output_file = r"J:\WEST PLAINS\REPORT\Ticket And Settlement Summary\Output Files"+f"\\Ticket Query {monthYear} Details.xlsx"
+        output_file =  drive+r"\REPORT\Ticket And Settlement Summary\Output Files"+f"\\Tickets and Settlement.xlsx"
+        det_output_file = drive+r"\REPORT\Ticket And Settlement Summary\Output Files"+f"\\Ticket Query {monthYear} Details.xlsx"
 
 
         #getting data from ticket query file till M column
@@ -7103,11 +7107,11 @@ def credit_card_entry(input_date, output_date):
         date=datetime_input.replace(day=1)-timedelta(1)
         previous_month=datetime.strftime(date,"%B")
         previous_year=datetime.strftime(date,"%Y")
-        input_csv = r'J:\WEST PLAINS\REPORT\Credit Card Entry\Raw Files'+f'\\Credit_Card_{input_month_no}.{input_year}.csv' 
-        input_sheet = r'J:\WEST PLAINS\REPORT\Credit Card Entry\Output files'+f'\\{previous_month} {previous_year} Credit Card expense.xlsx' 
+        input_csv = drive+r'\REPORT\Credit Card Entry\Raw Files'+f'\\Credit_Card_{input_month_no}.{input_year}.csv' 
+        input_sheet = drive+r'\REPORT\Credit Card Entry\Output files'+f'\\{previous_month} {previous_year} Credit Card expense.xlsx' 
 
         working_sheet = f'{input_month} {input_year}'           # current month sheet name
-        output_location = r'J:\WEST PLAINS\REPORT\Credit Card Entry\Output files'               
+        output_location = drive+r'\REPORT\Credit Card Entry\Output files'               
         
         
         cardName_df = pd.read_excel(input_sheet,sheet_name='Card List', usecols="C,D",index_col = 0)       #Data Frame of Card List
@@ -7376,24 +7380,24 @@ def payroll_summ(input_date, output_date):
     try:
         input_datetime = datetime.strptime(input_date,"%m.%d.%Y")
         monthYear = datetime.strftime(datetime.strptime(input_date, "%m.%d.%Y"), "%b %y")
-        input_pdf = r"J:\WEST PLAINS\REPORT\Payroll summary accounting report\Raw Files" +f"\\Payroll Summary By Cost Center *.pdf"
+        input_pdf = drive+r"\REPORT\Payroll summary accounting report\Raw Files" +f"\\Payroll Summary By Cost Center *.pdf"
         # input_pdf = r"C:\Users\imam.khan\OneDrive - BioUrja Trading LLC\Documents\WEST PLAINS\REPORT\Macquaire Accrual Entry\Raw Files" +f"\\Macq Statement_{input_date}.pdf"
         # if not os.path.exists(input_pdf):
         #         return(f"{input_pdf} PDF file not present for date {input_date}")
-        # input_xl = r"J:\WEST PLAINS\REPORT\Payroll summary accounting report\Raw Files" +f"\\Payroll by Dept - {monthYear}.xlsx"
+        # input_xl = drive+r"\REPORT\Payroll summary accounting report\Raw Files" +f"\\Payroll by Dept - {monthYear}.xlsx"
         # input_xl = r"C:\Users\imam.khan\OneDrive - BioUrja Trading LLC\Documents\WEST PLAINS\REPORT\Macquaire Accrual Entry\Raw Files" +f"\\Macq Accrual_{input_date}.xlsx"
         # if not osE.path.exists(input_xl):
         #         return(f"{input_xl} Excel file not present for date {input_date}")
-        template_xl = r"J:\WEST PLAINS\REPORT\Payroll summary accounting report\Raw Files" +f"\\Template.xlsx"
+        template_xl = drive+r"\REPORT\Payroll summary accounting report\Raw Files" +f"\\Template.xlsx"
         # input_xl = r"C:\Users\imam.khan\OneDrive - BioUrja Trading LLC\Documents\WEST PLAINS\REPORT\Macquaire Accrual Entry\Raw Files" +f"\\Macq Accrual_{input_date}.xlsx"
         if not os.path.exists(template_xl):
                 return(f"{template_xl} Excel file not present")
 
-        gl_map_xl = r"J:\WEST PLAINS\REPORT\Payroll summary accounting report\Raw Files" +f"\\PayrollMapping.xlsx"
+        gl_map_xl = drive+r"\REPORT\Payroll summary accounting report\Raw Files" +f"\\PayrollMapping.xlsx"
         # input_xl = r"C:\Users\imam.khan\OneDrive - BioUrja Trading LLC\Documents\WEST PLAINS\REPORT\Macquaire Accrual Entry\Raw Files" +f"\\Macq Accrual_{input_date}.xlsx"
         if not os.path.exists(gl_map_xl):
             return(f"{gl_map_xl} Excel file not present")
-        output_location = r'J:\WEST PLAINS\REPORT\Payroll summary accounting report\Output Files'+f"\\Payroll by Dept - {monthYear}.xlsx"
+        output_location = drive+r'\REPORT\Payroll summary accounting report\Output Files'+f"\\Payroll by Dept - {monthYear}.xlsx"
 
         data = payroll_pdf_extractor(input_pdf, input_datetime, monthYear)
 
@@ -7673,7 +7677,7 @@ def credit_card_gl(input_date, output_date):
         input_month_no=datetime.strftime(datetime_input,"%m")
         insertdate=f'{input_year}{input_month_no}{lastday}'
 
-        template_sheet=r'J:\WEST PLAINS\REPORT\\Credit_Card_GL\Raw Files\template'+f'\\template.xlsx'
+        template_sheet=drive+r'\REPORT\Credit_Card_GL\Raw Files\template'+f'\\template.xlsx'
         retry=0
         if not os.path.exists(template_sheet):
             return(f"{template_sheet} Excel file not present in template folder") 
@@ -7690,10 +7694,10 @@ def credit_card_gl(input_date, output_date):
         tlast_row = sht.range(f'A'+ str(sht.cells.last_cell.row)).end('up').row
         dict1=sht.range(f'A1:B{tlast_row}').options(dict).value
         template_wb.close()
-        input_sheet = r'J:\WEST PLAINS\REPORT\\Credit_Card_GL\Raw Files'+f'\\{input_month} {input_year} Credit Card expense.xlsx' 
+        input_sheet = drive+r'\REPORT\Credit_Card_GL\Raw Files'+f'\\{input_month} {input_year} Credit Card expense.xlsx' 
         if not os.path.exists(input_sheet):
             return(f"{input_sheet} Excel file not present for date {input_date}")           
-        output_location = r'J:\WEST PLAINS\REPORT\\Credit_Card_GL\Output files'
+        output_location = drive+r'\REPORT\Credit_Card_GL\Output files'
         output_location_file=f'{output_location}'+f'\\{input_month} {input_year} Credit Card expense.xlsx'
         if os.path.exists(output_location_file):
             input_sheet=output_location_file
@@ -7830,15 +7834,15 @@ def unsettled_ar_by_location_part1(input_date, output_date):
         output_date=datetime.strftime(output_raw_date,"%m.%d.%y")   
         input_raw_date=datetime.strptime(input_date,"%m.%d.%Y")
         input_date_short=datetime.strftime(input_raw_date,"%m.%d.%y") 
-        input_sheet = r'J:\WEST PLAINS\REPORT\Unsettled AR By Location - Part 1\Raw Files'+f'\\Unsettled AR_{input_date}.xlsx'
-        previous_output= r'J:\WEST PLAINS\REPORT\Unsettled AR By Location - Part 1\Output_Files'+f'\\Unsettled AR {output_date}_with reason.xlsx'
+        input_sheet = drive+r'\REPORT\Unsettled AR By Location - Part 1\Raw Files'+f'\\Unsettled AR_{input_date}.xlsx'
+        previous_output= drive+r'\REPORT\Unsettled AR By Location - Part 1\Output_Files'+f'\\Unsettled AR {output_date}_with reason.xlsx'
         if not os.path.exists(input_sheet):
             return(f"{input_sheet} Excel file not present for date {input_date}")
         if not os.path.exists(previous_output):
             return(f"{previous_output} Excel file not present") 
 
-        source_folder = r"J:\WEST PLAINS\REPORT\Unsettled AR By Location - Part 1\Output_Files"
-        destination_folder = r"J:\WEST PLAINS\REPORT\Unsettled AR By Location - Part 1\Output_Files"
+        source_folder = drive+r"\REPORT\Unsettled AR By Location - Part 1\Output_Files"
+        destination_folder = drive+r"\REPORT\Unsettled AR By Location - Part 1\Output_Files"
         file_name=f"Unsettled AR {output_date}_with reason.xlsx"
         file_name2=f"Unsettled AR {input_date_short}_with reason.xlsx"
         source = source_folder + "\\"+ file_name
@@ -7961,9 +7965,9 @@ def unsettled_ar_by_location_part2(input_date, output_date):
         job_name = 'unsettled_ar_by_location_part2'  
         input_raw_date=datetime.strptime(input_date,"%m.%d.%Y")
         input_date_short=datetime.strftime(input_raw_date,"%m.%d.%y") 
-        input_sheet = r'J:\WEST PLAINS\REPORT\Unsettled AR By Location - Part 2\Raw Files'+f'\\Unsettled AR {input_date_short}_with reason.xlsx'
-        template_sheet= r'J:\WEST PLAINS\REPORT\Unsettled AR By Location - Part 2\Raw Files\Template'+f'\\Template.xlsx'
-        output_location=r"J:\WEST PLAINS\REPORT\Unsettled AR By Location - Part 2\Output_Files"        
+        input_sheet = drive+r'\REPORT\Unsettled AR By Location - Part 2\Raw Files'+f'\\Unsettled AR {input_date_short}_with reason.xlsx'
+        template_sheet= drive+r'\REPORT\Unsettled AR By Location - Part 2\Raw Files\Template'+f'\\Template.xlsx'
+        output_location=drive+r"\REPORT\Unsettled AR By Location - Part 2\Output_Files"        
         if not os.path.exists(input_sheet):
             return(f"{input_sheet} Excel file not present for date {input_date}")
         if not os.path.exists(template_sheet):
@@ -8038,8 +8042,8 @@ def unsettled_ar_by_location_part2(input_date, output_date):
 def open_ar_monthly(input_date, output_date):
     try:       
         job_name = 'open_ar_v2'
-        input_sheet = r'J:\WEST PLAINS\REPORT\Open AR New\Raw Files'+f'\\Open AR_{input_date}.xlsx'
-        input_sheet2= r'J:\WEST PLAINS\REPORT\Open AR New\Raw Files'+f'\\Profile.xls'
+        input_sheet = drive+r'\REPORT\Open AR New\Raw Files'+f'\\Open AR_{input_date}.xlsx'
+        input_sheet2= drive+r'\REPORT\Open AR New\Raw Files'+f'\\Profile.xls'
         if not os.path.exists(input_sheet):
             return(f"{input_sheet} Excel file not present for date {input_date}")
         if not os.path.exists(input_sheet2):
@@ -8238,7 +8242,7 @@ def open_ar_monthly(input_date, output_date):
         ws2.activate()
         wb.app.api.ActiveSheet.PivotTables("PivotTable1").TableStyle2 = "PivotStyleLight16"
         ws3.api.Range(f"{last_row_3}:{last_row_3}").Font.Bold = True
-        output_location = r'J:\WEST PLAINS\REPORT\Open AR New\Output Files'   
+        output_location = drive+r'\REPORT\Open AR New\Output Files'   
         wb.save(f"{output_location}\\Open AR_"+input_date+' updated.xlsx')
         wb.app.quit()
         return f"{job_name} Report for {input_date} generated succesfully"
