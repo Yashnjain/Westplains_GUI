@@ -853,6 +853,7 @@ def ar_reports_exposure(input_date, output_date):
 
         initial_row = re.findall("\d+",input_tab.api.Range(f"{Ticket_column_letter}2:{Ticket_column_letter}{last_row}").SpecialCells(win32c.CellType.xlCellTypeVisible).Address.split(',')[0].replace('$',""))[0]
         input_tab.range(f"{Ticket_column_letter}{initial_row}").number_format="dd-mm-yyyy"
+        # input_tab.api.Range(f"{Ticket_column_letter}{initial_row}").Value = f"=VLOOKUP(S{initial_row},'[{wb2.name}]MASTER'!$S:$T,2,0)"
         input_tab.api.Range(f"{Ticket_column_letter}{initial_row}").Value = f"=VLOOKUP(S{initial_row},'[ticket query elevator 2015.xlsx]Sheet1'!$G:$Q,11,0)"
         input_tab.api.Range(f"{Ticket_column_letter}{initial_row}:{Ticket_column_letter}{last_row}").SpecialCells(win32c.CellType.xlCellTypeVisible).Select()
         wb.app.api.Selection.FillDown()
@@ -862,12 +863,12 @@ def ar_reports_exposure(input_date, output_date):
         input_tab.api.Range(f"{Ticket_column_letter}2:{Ticket_column_letter}{last_row}").Copy()
         input_tab.api.Range(f"{Ticket_column_letter}2")._PasteSpecial(Paste=win32c.PasteType.xlPasteValues)
 
-        a = input_tab.range(f"{Ticket_column_letter}2:{Ticket_column_letter}{last_row}").value
-        try:
-            b = [datetime.strftime(no,"%d-%m-%Y").strip().split(" ")[0] if no!=None else no for no in a]
-        except:
-            print("Please check dates once")    
-        input_tab.range(f"{Ticket_column_letter}2").options(transpose=True).value = b
+        # a = input_tab.range(f"{Ticket_column_letter}2:{Ticket_column_letter}{last_row}").value
+        # try:
+        #     b = [datetime.strftime(no,"%d-%m-%Y").strip().split(" ")[0] if no!=None else no for no in a]
+        # except:
+        #     print("Please check dates once")    
+        # input_tab.range(f"{Ticket_column_letter}2").options(transpose=True).value = b
 
         input_tab.api.Select()
         input_tab.api.Copy(None, After=input_tab.api)
