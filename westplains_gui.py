@@ -44,8 +44,8 @@ import re
 
 today = datetime.strftime(date.today(), format = "%d%m%Y")
 
-drive = r"I:\RPTWP_Swati"
-# drive2 = r"J:\WEST PLAINS"
+# drive = r"I:\RPTWP_Swati"
+drive = r"J:\WEST PLAINS"
 
 path = drive+r'\REPORT\Westplains_gui'
 
