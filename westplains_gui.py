@@ -6613,7 +6613,18 @@ def macq_accr_entry(input_date, output_date):
         for i in range(inp_sht.range("A2").end("down").row, last_acc_row+1):
             if inp_sht.range(f"A{i}").value is not None:
                 try:
-                    inp_sht.range(f"C{i}").value = -1 * (acc_dict[str(int(inp_sht.range(f"A{i}").value))][lookup_dict[int(inp_sht.range(f"A{i}").value)][inp_sht.range(f"B{i}").value]])
+                    if int(inp_sht.range(f"A{i}").value)==775 and inp_sht.range(f"B{i}").value == '0010000-5005-9100':
+                        try:
+                            wheat_value =    -1 * (acc_dict[str(int(inp_sht.range(f"A{i}").value))]['CBT Wheat Futures'])
+                        except:
+                            wheat_value = 0
+                        try:
+                            wheat_future_value = -1 * (acc_dict[str(int(inp_sht.range(f"A{i}").value))]['KANSAS HARD RED WINTER WHEAT Futures'])
+                        except:
+                            wheat_future_value = 0
+                        inp_sht.range(f"C{i}").value = wheat_value + wheat_future_value
+                    else:
+                        inp_sht.range(f"C{i}").value = -1 * (acc_dict[str(int(inp_sht.range(f"A{i}").value))][lookup_dict[int(inp_sht.range(f"A{i}").value)][inp_sht.range(f"B{i}").value]])
                 except:
                     inp_sht.range(f"C{i}").value = 0
 
