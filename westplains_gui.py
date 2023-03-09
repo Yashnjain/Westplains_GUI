@@ -7905,13 +7905,23 @@ def unsettled_ar_by_location_part1(input_date, output_date):
         last_column_letter2=num_to_col_letters(wss1.range('A1').end('right').end('right').last_cell.column)
         time.sleep(1)
         wb.app.DisplayAlerts = False
-        ws1.api.Range(f"A2:{last_column_letter}{last_row}").Copy(wss1.api.Range(f"{PurchaseSale_column_letter}2:{last_column_letter2}{last_row2}"))  
+        wss1.api.AutoFilterMode=False
+        cnt1 = ws1.api.UsedRange.Rows.Count
+        cnt2 = wss1.api.UsedRange.Rows.Count
+        ws1.api.Range(f"A2:{last_column_letter}{last_row}").Copy(wss1.api.Range(f"{PurchaseSale_column_letter}2"))  
         wb.app.DisplayAlerts = True
         time.sleep(1)
         wss1.activate()
-        Reason_column_no = column_list2.index("Reason")+1
-        Reason_column_letter=num_to_col_letters(Reason_column_no)
-        wss1.range(f"A{last_row2}:{Reason_column_letter}{last_row2}").copy(wss1.range(f"A{last_row2}:{Reason_column_letter}{last_row}"))
+        try:
+            Reason_column_no = column_list2.index("Reason")+1
+            Reason_column_letter=num_to_col_letters(Reason_column_no)
+        except:
+            Reason_column_no = column_list2.index("Reasons")+1
+            Reason_column_letter=num_to_col_letters(Reason_column_no) 
+        if cnt1>cnt2:
+            wss1.range(f"A{last_row2}:{Reason_column_letter}{last_row2}").copy(wss1.range(f"A{last_row2}:{Reason_column_letter}{last_row}"))
+        else:
+            wss1.range(f"A{cnt1+1}").expand('table').delete()
         retry=0
         while retry < 10:
             try:
