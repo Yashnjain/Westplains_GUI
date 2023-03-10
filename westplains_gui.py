@@ -1995,7 +1995,7 @@ def bbr_other_tabs(input_date, wb, input_ar, input_ctm):
         last_column_letter=num_to_col_letters(last_column)
         # excl_sht.range(f'A1:{last_column_letter}{num_row}').copy()
         wb.activate()
-        ws5 = wb.sheets['Detail CTM Non MCUI']
+        ws5 = wb.sheets['Detail CTM Non MBL']
         ws5.clear_contents()
         excl_sht.range(f'A1:{last_column_letter}{num_row}').copy()
         wb.activate()
@@ -2004,7 +2004,7 @@ def bbr_other_tabs(input_date, wb, input_ar, input_ctm):
         wb1.activate()
         wb1.close()
         wb.activate()
-        ws6 = wb.sheets['Unrlz- Gains- Contracts Non MC']
+        ws6 = wb.sheets['Unrlz Gains Contracts Non MBL']
         ws6.select()
         ws6.clear_contents()
 
@@ -2018,8 +2018,8 @@ def bbr_other_tabs(input_date, wb, input_ar, input_ctm):
         last_column_letter=num_to_col_letters(ws5.range('A1').end('right').last_cell.column)
         num_row = ws5.range('A1').end('down').row
         #logger.info("Creating Pivot table")
-        PivotCache=wb.api.PivotCaches().Create(SourceType=win32c.PivotTableSourceType.xlDatabase, SourceData=f"\'Detail CTM Non MCUI\'!R1C1:R{num_row}C{last_column}", Version=win32c.PivotTableVersionList.xlPivotTableVersion14)
-        PivotTable = PivotCache.CreatePivotTable(TableDestination="'Unrlz- Gains- Contracts Non MC'!R7C1", TableName="PivotTable1", DefaultVersion=win32c.PivotTableVersionList.xlPivotTableVersion14)
+        PivotCache=wb.api.PivotCaches().Create(SourceType=win32c.PivotTableSourceType.xlDatabase, SourceData=f"\'Detail CTM Non MBL\'!R1C1:R{num_row}C{last_column}", Version=win32c.PivotTableVersionList.xlPivotTableVersion14)
+        PivotTable = PivotCache.CreatePivotTable(TableDestination="'Unrlz Gains Contracts Non MBL'!R7C1", TableName="PivotTable1", DefaultVersion=win32c.PivotTableVersionList.xlPivotTableVersion14)
         #logger.info("Adding particular Row Data in Pivot Table")
         PivotTable.PivotFields('Location Id').Orientation = win32c.PivotFieldOrientation.xlRowField
         PivotTable.PivotFields('Location Id').Position = 1
@@ -2047,8 +2047,8 @@ def bbr_other_tabs(input_date, wb, input_ar, input_ctm):
         last_row2 = ws6.range(f'A'+ str(ws6.cells.last_cell.row)).end('up').row
         last_row2+=10
         #logger.info("Creating Pivot table")
-        PivotCache=wb.api.PivotCaches().Create(SourceType=win32c.PivotTableSourceType.xlDatabase, SourceData=f"\'Detail CTM Non MCUI\'!R1C1:R{num_row}C{last_column}", Version=win32c.PivotTableVersionList.xlPivotTableVersion14)
-        PivotTable = PivotCache.CreatePivotTable(TableDestination=f"'Unrlz- Gains- Contracts Non MC'!R{last_row2}C1", TableName="PivotTable2", DefaultVersion=win32c.PivotTableVersionList.xlPivotTableVersion14)
+        PivotCache=wb.api.PivotCaches().Create(SourceType=win32c.PivotTableSourceType.xlDatabase, SourceData=f"\'Detail CTM Non MBL\'!R1C1:R{num_row}C{last_column}", Version=win32c.PivotTableVersionList.xlPivotTableVersion14)
+        PivotTable = PivotCache.CreatePivotTable(TableDestination=f"'Unrlz Gains Contracts Non MBL'!R{last_row2}C1", TableName="PivotTable2", DefaultVersion=win32c.PivotTableVersionList.xlPivotTableVersion14)
         #logger.info("Adding particular Row Data in Pivot Table")
         PivotTable.PivotFields('Location Id').Orientation = win32c.PivotFieldOrientation.xlRowField
         PivotTable.PivotFields('Location Id').Position = 1
@@ -2104,7 +2104,7 @@ def bbr_other_tabs(input_date, wb, input_ar, input_ctm):
         ws6.range("A2").value = "Net Unrealized Gains on Forward Contracts - Non MCUI"
         ws6.range("A3").formula = "='Cash Collateral'!A3"
         ws6.api.Range("A3").NumberFormat = 'mm/dd/yyyy'
-        wb.sheets["BBR"].range(f'G32').formula = "=+'Unrlz- Gains- Contracts Non MC'!E58"
+        wb.sheets["BBR"].range(f'G32').formula = "=+'Unrlz Gains Contracts Non MBL'!E58"
         print()
         # ws6.api.Range("A1:A3").Copy()
         # ws7.api.Paste()
@@ -3421,11 +3421,13 @@ def bbr(input_date, output_date):
         
         try:
             # wb.sheets['Unrld Gains-Contracts MCUI'].name = "Unrld Gains Org"
-            wb.sheets['Unrld Gains-Contracts MCUI'].clear_contents()
+            # wb.sheets['Unrld Gains-Contracts MCUI'].clear_contents()
+            wb.sheets['Unrld Gains-Contracts MBL'].clear_contents()
         except:
             try:
                 # wb.sheets["Unrld Gains-Contracts MCUI "].name = "Unrld Gains Org"
-                wb.sheets["Unrld Gains-Contracts MCUI "].clear_contents()
+                # wb.sheets["Unrld Gains-Contracts MCUI "].clear_contents()
+                wb.sheets["Unrld Gains-Contracts MBL "].clear_contents()
             except Exception as e:
                 raise e
         
@@ -3478,13 +3480,13 @@ def bbr(input_date, output_date):
             wb.app.api.CutCopyMode=False
             p_wb.app.api.CutCopyMode=False
             # p_wb.sheets['AR-Re-Purchase Storage Rcbl'].copy(before = wb.sheets["AR-Re-Purch Org"])
-            p_wb.sheets['Unrld Gains-Contracts MCUI'].api.Range(p_wb.sheets['Unrld Gains-Contracts MCUI'].api.Cells.SpecialCells(12).Address).Copy()
-            wb.sheets['Unrld Gains-Contracts MCUI'].api.Activate()
-            wb.sheets['Unrld Gains-Contracts MCUI'].api.Range("A1").Select()
-            wb.sheets['Unrld Gains-Contracts MCUI'].api.Paste()
+            p_wb.sheets['Unrld Gains-Contracts MBL'].api.Range(p_wb.sheets['Unrld Gains-Contracts MBL'].api.Cells.SpecialCells(12).Address).Copy()
+            wb.sheets['Unrld Gains-Contracts MBL'].api.Activate()
+            wb.sheets['Unrld Gains-Contracts MBL'].api.Range("A1").Select()
+            wb.sheets['Unrld Gains-Contracts MBL'].api.Paste()
             
-            wb.sheets['Unrld Gains-Contracts MCUI'].api.Range("A3").Formula = "='Cash Collateral'!A3"
-            wb.sheets['Unrld Gains-Contracts MCUI'].api.Range("A3").NumberFormat = 'mm/dd/yyyy'
+            wb.sheets['Unrld Gains-Contracts MBL'].api.Range("A3").Formula = "='Cash Collateral'!A3"
+            wb.sheets['Unrld Gains-Contracts MBL'].api.Range("A3").NumberFormat = 'mm/dd/yyyy'
 
             wb.app.api.CutCopyMode=False
             p_wb.app.api.CutCopyMode=False
@@ -3494,13 +3496,13 @@ def bbr(input_date, output_date):
                 wb.app.api.CutCopyMode=False
                 p_wb.app.api.CutCopyMode=False
                 # p_wb.sheets['AR-Re-Purchase Storage Rcbl'].copy(before = wb.sheets["AR-Re-Purch Org"])
-                p_wb.sheets['Unrld Gains-Contracts MCUI '].api.Range(p_wb.sheets['Unrld Gains-Contracts MCUI '].api.Cells.SpecialCells(12).Address).Copy()
-                wb.sheets['Unrld Gains-Contracts MCUI '].api.Activate()
-                wb.sheets['Unrld Gains-Contracts MCUI '].api.Range("A1").Select()
-                wb.sheets['Unrld Gains-Contracts MCUI '].api.Paste()
+                p_wb.sheets['Unrld Gains-Contracts MBL '].api.Range(p_wb.sheets['Unrld Gains-Contracts MBL '].api.Cells.SpecialCells(12).Address).Copy()
+                wb.sheets['Unrld Gains-Contracts MBL '].api.Activate()
+                wb.sheets['Unrld Gains-Contracts MBL '].api.Range("A1").Select()
+                wb.sheets['Unrld Gains-Contracts MBL '].api.Paste()
 
-                wb.sheets['Unrld Gains-Contracts MCUI '].api.Range("A3").Formula = "='Cash Collateral'!A3"
-                wb.sheets['Unrld Gains-Contracts MCUI '].api.Range("A3").NumberFormat = 'mm/dd/yyyy'
+                wb.sheets['Unrld Gains-Contracts MBL '].api.Range("A3").Formula = "='Cash Collateral'!A3"
+                wb.sheets['Unrld Gains-Contracts MBL '].api.Range("A3").NumberFormat = 'mm/dd/yyyy'
 
 
                 wb.app.api.CutCopyMode=False
