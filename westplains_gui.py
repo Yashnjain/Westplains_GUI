@@ -2101,7 +2101,7 @@ def bbr_other_tabs(input_date, wb, input_ar, input_ctm):
         ws6.range(f"E58").api.NumberFormat= '_(* #,##0.00_);_(* (#,##0.00);_(* "-"??_);_(@_)'
 
         ws6.range("A1").value = "West Plains, LLC"  
-        ws6.range("A2").value = "Net Unrealized Gains on Forward Contracts - Non MCUI"
+        ws6.range("A2").value = "Net Unrealized Gains on Forward Contracts - Non MBL"
         ws6.range("A3").formula = "='Cash Collateral'!A3"
         ws6.api.Range("A3").NumberFormat = 'mm/dd/yyyy'
         wb.sheets["BBR"].range(f'G32').formula = "=+'Unrlz Gains Contracts Non MBL'!E58"
@@ -2199,6 +2199,8 @@ def ar_unsettled_by_tier(wb, unset_rec_loc, input_date):
         
           #f'Details!R1C1:R{len(new_rows)+1}C18' #Updateing data source
         wb.api.ActiveSheet.PivotTables(1).PivotCache().Refresh()
+        for pf in wb.api.ActiveSheet.PivotTables(1).DataFields:
+            pf.NumberFormat = '_("$"* #,##0.00_);_("$"* (#,##0.00);_("$"* "-"??_);_(@_)'
 
         ar_unsettled_by_tier_sht.api.Range("A3").Formula = "='Cash Collateral'!A3"
         ar_unsettled_by_tier_sht.api.Range("A3").NumberFormat = 'mm/dd/yyyy'
@@ -4103,7 +4105,7 @@ def ctm(input_date, output_date):
         wb.sheets["Pivot BB"].clear_contents()
         ws3=wb.sheets["Pivot BB"]
         ws3.range("A1").value="West Plains, LLC"
-        ws3.range("A2").value="Net Unrealized Gains on Forward Contracts - Non MCUI"
+        ws3.range("A2").value="Net Unrealized Gains on Forward Contracts - Non MBL"
         ws3.range("A2").api.Font.Bold = True
         ws3.range('A2').color ="#fffff"
         ws3.range("A3").value=input_date
@@ -5439,13 +5441,13 @@ def unsetteled_receivables(input_date, output_date):
         
         ######logger.info("Adding particular Column in Pivot Table")
         PivotTable.PivotFields('Net').Orientation = win32c.PivotFieldOrientation.xlDataField
-        PivotTable.PivotFields('Sum of Net').NumberFormat= '0.00'
+        PivotTable.PivotFields('Sum of Net').NumberFormat= '_("$"* #,##0.00_);_("$"* (#,##0.00);_("$"* "-"??_);_(@_)'
         PivotTable.PivotFields('Ticket Date <=30 Days').Orientation = win32c.PivotFieldOrientation.xlDataField
-        PivotTable.PivotFields('Sum of Ticket Date <=30 Days').NumberFormat= '0.00'
+        PivotTable.PivotFields('Sum of Ticket Date <=30 Days').NumberFormat= '_("$"* #,##0.00_);_("$"* (#,##0.00);_("$"* "-"??_);_(@_)'
         PivotTable.PivotFields('Ticket Date 31-60 Days').Orientation = win32c.PivotFieldOrientation.xlDataField
-        PivotTable.PivotFields('Sum of Ticket Date 31-60 Days').NumberFormat= '0.00'
+        PivotTable.PivotFields('Sum of Ticket Date 31-60 Days').NumberFormat= '_("$"* #,##0.00_);_("$"* (#,##0.00);_("$"* "-"??_);_(@_)'
         PivotTable.PivotFields('Ticket Date +60 Days').Orientation = win32c.PivotFieldOrientation.xlDataField
-        PivotTable.PivotFields('Sum of Ticket Date +60 Days').NumberFormat= '0.00'
+        PivotTable.PivotFields('Sum of Ticket Date +60 Days').NumberFormat= '_("$"* #,##0.00_);_("$"* (#,##0.00);_("$"* "-"??_);_(@_)'
 
         ######logger.info("Changing Layout")
         PivotTable.RowAxisLayout(1)
