@@ -6720,6 +6720,10 @@ def tkt_n_settlement_summ(input_date, output_date):
                     raise e
         last_row = tkt_sht.range(f'A'+ str(tkt_sht.cells.last_cell.row)).end('up').row
         tkt_ent_sht.cells.clear_contents()
+
+        tkt_wb.activate()
+        tkt_sht.activate()
+        tkt_wb.api.ActiveSheet.ListObjects(1).ShowAutoFilter=False
         tkt_sht.api.AutoFilterMode=False
         # tkt_sht.api.Range(f"L1").AutoFilter(Field:=12,Criteria1:=f">={st_date}", Operator:=1, Criteria2:=f"<={end_date}")
         tkt_sht.api.Range(f"L1").AutoFilter(Field:=12,Criteria1:=f">={datetime.strptime(st_date, '%m-%d-%Y')}", Operator:=1, Criteria2:=f"<={datetime.strptime(end_date, '%m-%d-%Y')}")
