@@ -262,12 +262,18 @@ def ar_exposure(input_date, output_date):
         credit_over_utilized_tab.api.Range(f"A1:H{last_row_cou}").AutoFilter(Field:=5, Criteria1:=["<0"], Operator:=1) 
         credit_over_utilized_tab.api.Range(f"A1:H{last_row_cou}").AutoFilter(Field:=6, Criteria1:=["<0"], Operator:=1) 
 
-        credit_over_utilized_tab.api.Range(f"A:H").SpecialCells(win32c.CellType.xlCellTypeVisible).Copy()
+        sp_lst_row = credit_over_utilized_tab.range(f'A'+ str(credit_over_utilized_tab.cells.last_cell.row)).end('up').row
+        sp_address= credit_over_utilized_tab.api.Range(f"A2:A{sp_lst_row}").SpecialCells(win32c.CellType.xlCellTypeVisible).EntireRow.Address
+        sp_initial_rw = re.findall("\d+",sp_address.replace("$","").split(":")[0])[0]
+       
+
+        credit_over_utilized_tab.api.Range(f"A1:H{sp_lst_row}").SpecialCells(win32c.CellType.xlCellTypeVisible).Copy()
         unapplied_credit_tab.api.Range(f"A1")._PasteSpecial(Paste=win32c.PasteType.xlPasteAllUsingSourceTheme,Operation=win32c.Constants.xlNone)
         unapplied_credit_tab.autofit()
         unapplied_credit_tab.activate()
 
-        unapplied_credit_tab.api.Range(f"A:H").SpecialCells(win32c.CellType.xlCellTypeVisible).Copy()
+        slst_row = unapplied_credit_tab.range(f'A'+ str(unapplied_credit_tab.cells.last_cell.row)).end('up').row
+        unapplied_credit_tab.api.Range(f"A1:H{slst_row}").SpecialCells(win32c.CellType.xlCellTypeVisible).Copy()
         unsettled_receivables_tab.api.Range(f"A1")._PasteSpecial(Paste=win32c.PasteType.xlPasteAllUsingSourceTheme,Operation=win32c.Constants.xlNone)
 
         unsettled_receivables_tab.activate()
@@ -366,7 +372,12 @@ def ar_exposure(input_date, output_date):
          
         credit_over_utilized_tab.activate() 
         credit_over_utilized_tab.api.Range(f"A1:H{last_row_cou}").AutoFilter(Field:=4, Criteria1:=[">0"]) 
-        credit_over_utilized_tab.api.Range(f"A:H").SpecialCells(win32c.CellType.xlCellTypeVisible).Copy()
+
+        sp_lst_row = credit_over_utilized_tab.range(f'A'+ str(credit_over_utilized_tab.cells.last_cell.row)).end('up').row
+        sp_address= credit_over_utilized_tab.api.Range(f"A2:A{sp_lst_row}").SpecialCells(win32c.CellType.xlCellTypeVisible).EntireRow.Address
+        sp_initial_rw = re.findall("\d+",sp_address.replace("$","").split(":")[0])[0]
+
+        credit_over_utilized_tab.api.Range(f"A1:H{sp_lst_row}").SpecialCells(win32c.CellType.xlCellTypeVisible).Copy()
         unsettled_receivables_tab.api.Range(f"A1")._PasteSpecial(Paste=win32c.PasteType.xlPasteAllUsingSourceTheme,Operation=win32c.Constants.xlNone) 
         unsettled_receivables_tab.api.Range(f"A1")._PasteSpecial(Paste=-4163,Operation=win32c.Constants.xlNone)     
 
