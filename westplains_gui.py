@@ -1491,7 +1491,15 @@ def inv_mtm_pdf_data_extractor(input_date, f, hrw_pdf_loc=None, yc_pdf_loc=None,
                         pandas_options={'header':None}, area = ["30,15,50,120"])
         com_loc = pd.concat(com_loc, ignore_index=True)
 
-        com_loc = list(com_loc[0].str.split('Commodity: ',expand=True)[1])
+        try:
+            old_pdf=True
+            com_loc = list(com_loc[0].str.split('Commodity: ',expand=True)[1])
+        except:
+            try:
+                old_pdf=False
+                com_loc = list(com_loc[1])
+            except Exception as e:
+                raise e
         # loc_dict = dict(zip(com_loc, [[]]*len(com_loc)))
         loc_dict = defaultdict(list)
         for page in range(1,len(com_loc)+1):
@@ -2899,7 +2907,7 @@ def num_to_col_letters(num):
     except Exception as e:
         raise e
 
-def mtm_pdf_data_extractor(input_date, f, hrw_pdf_loc, yc_pdf_loc ,ysb_pdf_loc):
+def mtm_pdf_data_extractor(input_date, f, hrw_pdf_loc=None, yc_pdf_loc=None ,ysb_pdf_loc=None, mtm_excel_summ=False):
     try:
         # reader = PyPDF2.PdfFileReader(open(f, mode='rb' ))
         # n = reader.getNumPages() 
@@ -3046,8 +3054,10 @@ def mtm_pdf_data_extractor(input_date, f, hrw_pdf_loc, yc_pdf_loc ,ysb_pdf_loc):
                 loc_dict[key] = key_value
                 # print(len(value))
                 # print()
-        
-        return loc_dict, hrw_fut, yc_fut ,ysb_fut
+        if mtm_excel_summ:
+            return loc_dict
+        else:
+            return loc_dict, hrw_fut, yc_fut ,ysb_fut
     except Exception as e:
         raise e
 
@@ -5642,7 +5652,8 @@ def inv_mtm_excel_summ(input_date, output_date):
 
 
 
-        loc_dict = inv_mtm_pdf_data_extractor(input_date,pdf_loc)
+        # loc_dict = inv_mtm_pdf_data_extractor(input_date,pdf_loc)
+        loc_dict = mtm_pdf_data_extractor(input_date,pdf_loc, mtm_excel_summ=True)
 
         retry=0
         while retry < 10:
