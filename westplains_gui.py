@@ -2957,12 +2957,17 @@ def mtm_pdf_data_extractor(input_date, f, hrw_pdf_loc, yc_pdf_loc ,ysb_pdf_loc):
                         pandas_options={'header':None}, area = ["30,15,50,120"])
         com_loc = pd.concat(com_loc, ignore_index=True)
 
-        com_loc = list(com_loc[0].str.split('Commodity: ',expand=True)[1])
+        try:
+            com_loc = list(com_loc[0].str.split('Commodity: ',expand=True)[1])
+        except:
+            com_loc = list(com_loc[1])
         # loc_dict = dict(zip(com_loc, [[]]*len(com_loc)))
         loc_dict = defaultdict(list)
         for page in range(1,len(com_loc)+1):
-            df = read_pdf(f, pages = page, guess = False, stream = True ,
-                            pandas_options={'header':0}, area = ["75,10,580,850"], columns=["50,85, 180,225, 260, 280,300,360,400,430,480,525,570,620,665,720"])
+            # df = read_pdf(f, pages = page, guess = True, stream = True ,
+            #                 pandas_options={'header':0}, area = ["75,10,580,850"], columns=["50,85, 180,225, 260, 280,300,360,400,430,480,525,570,620,665,720"])
+            df = read_pdf(f, pages = page, guess = True, stream = True ,
+                            pandas_options={'header':0}, area = ["75,10,580,850"], columns=["46,85, 180,225, 260, 275,300,360,400,430,480,525,570,620,665,713"])
             df = pd.concat(df, ignore_index=True)
             ########logger.info("Filtering only required columns")
             df = df.iloc[:,[0,1,2,3,-2,-1]]
@@ -2974,6 +2979,7 @@ def mtm_pdf_data_extractor(input_date, f, hrw_pdf_loc, yc_pdf_loc ,ysb_pdf_loc):
             df["Value.5"].fillna(0, inplace=True)
 
             df["Quantity.5"] = df["Quantity.5"].astype(str).str.replace("(","-").str.replace(",","").str.replace(")","").astype(float)
+            # df["Value.5"] = df["Value.5"].astype(str).str.replace("(","-").str.replace(",","").str.replace(")","").astype(float)
             df["Value.5"] = df["Value.5"].astype(str).str.replace("(","-").str.replace(",","").str.replace(")","").astype(float)
             
             for i in range(len(df)):
