@@ -2999,7 +2999,7 @@ def mtm_pdf_data_extractor(input_date, f, hrw_pdf_loc=None, yc_pdf_loc=None ,ysb
                             pandas_options={'header':0}, area = ["75,10,580,850"], columns=["50,85, 180,225, 260, 280,300,360,400,430,480,525,570,620,665,720"])
             else:
                 df = read_pdf(f, pages = page, guess = True, stream = True ,
-                                pandas_options={'header':0}, area = ["75,10,580,850"], columns=["46,85, 180,225, 260, 275,300,360,400,430,480,525,570,620,665,713"])
+                                pandas_options={'header':0}, area = ["75,10,580,850"], columns=["46,85, 180,225, 255, 275,300,360,400,430,480,525,570,620,665,713"])
             df = pd.concat(df, ignore_index=True)
             ########logger.info("Filtering only required columns")
             df = df.iloc[:,[0,1,2,3,-2,-1]]
