@@ -1552,7 +1552,18 @@ def storage_qty(input_date,input_qty_pdf, input_qty_xl, monthYear2, qty_loc_dict
         output_loc = drive+r'\REPORT\Storage Month End Report\Output Files' + f'\\STORAGE QTY {monthYear2}.xlsx'
         page_df = read_pdf(input_qty_pdf,pages = 1,guess = False,stream = True,
                         pandas_options={'header':0},area = ["65,630,600,735"],columns=["675"])[0]
-        page_num = int(page_df['e Types'][3][-4:])
+        try:
+            old_file = True
+            page_num = int(page_df['e Types'][3][-4:])
+        except:
+            try:
+                old_file = False
+                page_df = read_pdf(input_qty_pdf,pages = 1,guess = False,stream = True,
+                            pandas_options={'header':0},area = ["65,630,600,735"],columns=["670"])[0]
+                page_num = int(page_df['e Types'][3][-4:])
+            except Exception as e:
+                raise e
+
         
         loc_dict = {}
         
@@ -1562,12 +1573,18 @@ def storage_qty(input_date,input_qty_pdf, input_qty_xl, monthYear2, qty_loc_dict
             
             # location_df = read_pdf(input_qty_pdf,pages = i,guess = False,stream = True,
             #                 pandas_options={'header':0},area = ["5,15,80,300"],columns=["60"])[0]
-
-        df = read_pdf(input_qty_pdf,pages = f"1-{page_num}",guess = False,stream = True,
-                pandas_options={'header':0},area = ["65,630,580,735"],columns=["680"])
-        
-        location_df = read_pdf(input_qty_pdf,pages = f"1-{page_num}",guess = False,stream = True,
-                        pandas_options={'header':0},area = ["5,15,80,300"],columns=["60"])
+        if old_file:
+            df = read_pdf(input_qty_pdf,pages = f"1-{page_num}",guess = False,stream = True,
+                    pandas_options={'header':0},area = ["65,630,580,735"],columns=["680"])
+            
+            location_df = read_pdf(input_qty_pdf,pages = f"1-{page_num}",guess = False,stream = True,
+                            pandas_options={'header':0},area = ["5,15,80,300"],columns=["60"])
+        else:
+            df = read_pdf(input_qty_pdf,pages = f"1-{page_num}",guess = False,stream = True,
+                    pandas_options={'header':0},area = ["65,630,580,735"],columns=["672"])
+            
+            location_df = read_pdf(input_qty_pdf,pages = f"1-{page_num}",guess = False,stream = True,
+                            pandas_options={'header':0},area = ["5,15,80,295"],columns=["53"])
         for i in range(page_num):
 
             # loc_lst.append(location_df['Daily Position R'][0])
@@ -2961,8 +2978,11 @@ def mtm_pdf_data_extractor(input_date, f, hrw_pdf_loc, yc_pdf_loc ,ysb_pdf_loc):
             old_pdf=True
             com_loc = list(com_loc[0].str.split('Commodity: ',expand=True)[1])
         except:
-            old_pdf=False
-            com_loc = list(com_loc[1])
+            try:
+                old_pdf=False
+                com_loc = list(com_loc[1])
+            except Exception as e:
+                raise e
         # loc_dict = dict(zip(com_loc, [[]]*len(com_loc)))
         loc_dict = defaultdict(list)
         for page in range(1,len(com_loc)+1):
