@@ -2958,16 +2958,20 @@ def mtm_pdf_data_extractor(input_date, f, hrw_pdf_loc, yc_pdf_loc ,ysb_pdf_loc):
         com_loc = pd.concat(com_loc, ignore_index=True)
 
         try:
+            old_pdf=True
             com_loc = list(com_loc[0].str.split('Commodity: ',expand=True)[1])
         except:
+            old_pdf=False
             com_loc = list(com_loc[1])
         # loc_dict = dict(zip(com_loc, [[]]*len(com_loc)))
         loc_dict = defaultdict(list)
         for page in range(1,len(com_loc)+1):
-            # df = read_pdf(f, pages = page, guess = True, stream = True ,
-            #                 pandas_options={'header':0}, area = ["75,10,580,850"], columns=["50,85, 180,225, 260, 280,300,360,400,430,480,525,570,620,665,720"])
-            df = read_pdf(f, pages = page, guess = True, stream = True ,
-                            pandas_options={'header':0}, area = ["75,10,580,850"], columns=["46,85, 180,225, 260, 275,300,360,400,430,480,525,570,620,665,713"])
+            if old_pdf:
+                df = read_pdf(f, pages = page, guess = True, stream = True ,
+                            pandas_options={'header':0}, area = ["75,10,580,850"], columns=["50,85, 180,225, 260, 280,300,360,400,430,480,525,570,620,665,720"])
+            else:
+                df = read_pdf(f, pages = page, guess = True, stream = True ,
+                                pandas_options={'header':0}, area = ["75,10,580,850"], columns=["46,85, 180,225, 260, 275,300,360,400,430,480,525,570,620,665,713"])
             df = pd.concat(df, ignore_index=True)
             ########logger.info("Filtering only required columns")
             df = df.iloc[:,[0,1,2,3,-2,-1]]
