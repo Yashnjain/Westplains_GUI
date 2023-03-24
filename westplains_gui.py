@@ -2999,7 +2999,7 @@ def mtm_pdf_data_extractor(input_date, f, hrw_pdf_loc=None, yc_pdf_loc=None ,ysb
                             pandas_options={'header':0}, area = ["75,10,580,850"], columns=["50,85, 180,225, 260, 280,300,360,400,430,480,525,570,620,665,720"])
             else:
                 df = read_pdf(f, pages = page, guess = True, stream = True ,
-                                pandas_options={'header':0}, area = ["75,10,580,850"], columns=["46,85, 180,225, 255, 275,300,360,400,430,480,525,570,620,665,713"])
+                                pandas_options={'header':0}, area = ["75,10,580,850"], columns=["46,85, 180,225, 255,275,300,360,400,430,480,525,570,620,665,713"])
             df = pd.concat(df, ignore_index=True)
             ########logger.info("Filtering only required columns")
             df = df.iloc[:,[0,1,2,3,-2,-1]]
@@ -3008,7 +3008,17 @@ def mtm_pdf_data_extractor(input_date, f, hrw_pdf_loc=None, yc_pdf_loc=None ,ysb
             # for i in df.loc[:,"Offsite Name Cont. No."]:
 
             df["Quantity.5"].fillna(0, inplace=True)
-            df["Value.5"].fillna(0, inplace=True)
+            try:
+                df["Value.5"].fillna(0, inplace=True)
+            except:
+                try:
+                    df = read_pdf(f, pages = page, guess = True, stream = True ,
+                                pandas_options={'header':0}, area = ["75,10,580,850"], columns=["46,85, 180,225, 255,275,300,360,400,430,480,525,570,620,665,713"])
+                    df = pd.concat(df, ignore_index=True)
+                    df["Value.5"].fillna(0, inplace=True)
+                    old_pdf=False
+                except Exception as e:
+                    raise e
 
             df["Quantity.5"] = df["Quantity.5"].astype(str).str.replace("(","-").str.replace(",","").str.replace(")","").astype(float)
             # df["Value.5"] = df["Value.5"].astype(str).str.replace("(","-").str.replace(",","").str.replace(")","").astype(float)
@@ -8375,6 +8385,7 @@ def main():
             print()
         
         elif 'Select' in Rep_variable.get():
+            text_box.delete(1.0, "end")
             text_box.insert("end", f"Please select job first", "center")
 
 
