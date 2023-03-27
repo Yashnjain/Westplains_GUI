@@ -1502,9 +1502,14 @@ def inv_mtm_pdf_data_extractor(input_date, f, hrw_pdf_loc=None, yc_pdf_loc=None,
                 raise e
         # loc_dict = dict(zip(com_loc, [[]]*len(com_loc)))
         loc_dict = defaultdict(list)
+            
         for page in range(1,len(com_loc)+1):
-            df = read_pdf(f, pages = page, guess = False, stream = True ,
+            if old_pdf:
+                df = read_pdf(f, pages = page, guess = False, stream = True ,
                             pandas_options={'header':0}, area = ["75,10,580,850"], columns=["65,85, 180,225, 260, 280,300,360,400,430,480,525,570,620,665,720"])
+            else:
+                df = read_pdf(f, pages = page, guess = False, stream = True ,
+                            pandas_options={'header':0}, area = ["75,10,580,850"], columns=["65,85, 180,225, 260, 275,300,360,400,430,480,525,570,620,665,713"])
             df = pd.concat(df, ignore_index=True)
             ########logger.info("Filtering only required columns")
             df = df.iloc[:,[0,1,2,3,-2,-1]]
@@ -1513,7 +1518,17 @@ def inv_mtm_pdf_data_extractor(input_date, f, hrw_pdf_loc=None, yc_pdf_loc=None,
             # for i in df.loc[:,"Offsite Name Cont. No."]:
 
             df["Quantity.5"].fillna(0, inplace=True)
-            df["Value.5"].fillna(0, inplace=True)
+            try:
+                df["Value.5"].fillna(0, inplace=True)
+            except:
+                try:
+                    df = read_pdf(f, pages = page, guess = False, stream = True ,
+                            pandas_options={'header':0}, area = ["75,10,580,850"], columns=["65,85, 180,225, 260, 275,300,360,400,430,480,525,570,620,665,713"])
+                    df = pd.concat(df, ignore_index=True)
+                    df["Value.5"].fillna(0, inplace=True)
+                    old_pdf=False
+                except Exception as e:
+                    raise e
 
             df["Quantity.5"] = df["Quantity.5"].astype(str).str.replace("(","-").str.replace(",","").str.replace(")","").astype(float)
             df["Value.5"] = df["Value.5"].astype(str).str.replace("(","-").str.replace(",","").str.replace(")","").astype(float)
@@ -2917,58 +2932,59 @@ def mtm_pdf_data_extractor(input_date, f, hrw_pdf_loc=None, yc_pdf_loc=None ,ysb
         option.headless=True
         driver=webdriver.Firefox(executable_path=GeckoDriverManager().install(),options=option)
         for loc in [hrw_pdf_loc, yc_pdf_loc , ysb_pdf_loc]:
-            date_datetime = datetime.strptime(input_date,"%m.%d.%Y")
-            dmonth = date_datetime.strftime("%m")
-            dday = date_datetime.strftime("%d")
-            dyear = date_datetime.strftime("%Y")
-            if loc == hrw_pdf_loc:
-                driver.get(f"https://www.cmegroup.com/markets/agriculture/grains/kc-wheat.settlements.html#tradeDate={dmonth}%2F{dday}%2F{dyear}")
-            elif loc == yc_pdf_loc:   
-                driver.get(f"https://www.cmegroup.com/markets/agriculture/grains/corn.settlements.html#tradeDate={dmonth}%2F{dday}%2F{dyear}")
-            elif loc == ysb_pdf_loc:
-                driver.get(f"https://www.cmegroup.com/markets/agriculture/oilseeds/soybean.settlements.html#tradeDate={dmonth}%2F{dday}%2F{dyear}")                
-            time.sleep(5)
-            table_element=WebDriverWait(driver, 90, poll_frequency=1).until(EC.element_to_be_clickable((By.CLASS_NAME, "table-wrapper")))
-            df=pd.read_html(table_element.get_attribute('outerHTML'),header=0,skiprows=[0])[0]      
-            # df = read_pdf(loc, pages = 1, guess = False, stream = True ,
-            #                         pandas_options={'header':0}, area = ["700,70,1000,1200"], columns=['150','480','550','650', '700','800','900'])
-            # df = pd.concat(df, ignore_index=True)
-            if df.iloc[0,0]=="Month":
-                df.columns = df.iloc[0]
-                df = df[1:]
-                df = df.reset_index(drop=True)
-            df = df[["Month","Settle"]]
-            df.columns = ["MONTH","SETTLE"]
-            form_dict = {"'6":"75", "'4":"50", "'2":"25", "'0":"00"}
-            for month in range(len(df)):
-                if "JLY" in df["MONTH"][month]:
-                    df["MONTH"][month] = df["MONTH"][month].replace("JLY","JUL")
-                if inp_month_year == datetime.strptime(df["MONTH"][month], "%b %y"):
-                    settle_price = df.loc[:,'SETTLE'][month+1]
-                    for key in form_dict:
-                        if key in settle_price:
-                            if 'HRW' in loc.upper():
-                                hrw_fut = int(settle_price.replace(key,form_dict[key]))/10000  
-                            elif 'YC' in loc.upper():
-                                yc_fut =  int(settle_price.replace(key,form_dict[key]))/10000
-                            elif 'YSB' in loc.upper():
-                                ysb_fut =  int(settle_price.replace(key,form_dict[key]))/10000                                
-                            break
-                    break
-                elif inp_month_year < datetime.strptime(df["MONTH"][month], "%b %y"):
-                    settle_price = df.loc[:,'SETTLE'][month]
-                    for key in form_dict:
-                        if key in settle_price:
-                            if 'HRW' in loc.upper():
-                                hrw_fut = int(settle_price.replace(key,form_dict[key]))/10000  
-                            elif 'YC' in loc.upper():
-                                yc_fut =  int(settle_price.replace(key,form_dict[key]))/10000
-                            elif 'YSB' in loc.upper():
-                                ysb_fut =  int(settle_price.replace(key,form_dict[key]))/10000                                
-                            break
-                    break
-                
-                
+            if loc is not None:
+                date_datetime = datetime.strptime(input_date,"%m.%d.%Y")
+                dmonth = date_datetime.strftime("%m")
+                dday = date_datetime.strftime("%d")
+                dyear = date_datetime.strftime("%Y")
+                if loc == hrw_pdf_loc:
+                    driver.get(f"https://www.cmegroup.com/markets/agriculture/grains/kc-wheat.settlements.html#tradeDate={dmonth}%2F{dday}%2F{dyear}")
+                elif loc == yc_pdf_loc:   
+                    driver.get(f"https://www.cmegroup.com/markets/agriculture/grains/corn.settlements.html#tradeDate={dmonth}%2F{dday}%2F{dyear}")
+                elif loc == ysb_pdf_loc:
+                    driver.get(f"https://www.cmegroup.com/markets/agriculture/oilseeds/soybean.settlements.html#tradeDate={dmonth}%2F{dday}%2F{dyear}")                
+                time.sleep(5)
+                table_element=WebDriverWait(driver, 90, poll_frequency=1).until(EC.element_to_be_clickable((By.CLASS_NAME, "table-wrapper")))
+                df=pd.read_html(table_element.get_attribute('outerHTML'),header=0,skiprows=[0])[0]      
+                # df = read_pdf(loc, pages = 1, guess = False, stream = True ,
+                #                         pandas_options={'header':0}, area = ["700,70,1000,1200"], columns=['150','480','550','650', '700','800','900'])
+                # df = pd.concat(df, ignore_index=True)
+                if df.iloc[0,0]=="Month":
+                    df.columns = df.iloc[0]
+                    df = df[1:]
+                    df = df.reset_index(drop=True)
+                df = df[["Month","Settle"]]
+                df.columns = ["MONTH","SETTLE"]
+                form_dict = {"'6":"75", "'4":"50", "'2":"25", "'0":"00"}
+                for month in range(len(df)):
+                    if "JLY" in df["MONTH"][month]:
+                        df["MONTH"][month] = df["MONTH"][month].replace("JLY","JUL")
+                    if inp_month_year == datetime.strptime(df["MONTH"][month], "%b %y"):
+                        settle_price = df.loc[:,'SETTLE'][month+1]
+                        for key in form_dict:
+                            if key in settle_price:
+                                if 'HRW' in loc.upper():
+                                    hrw_fut = int(settle_price.replace(key,form_dict[key]))/10000  
+                                elif 'YC' in loc.upper():
+                                    yc_fut =  int(settle_price.replace(key,form_dict[key]))/10000
+                                elif 'YSB' in loc.upper():
+                                    ysb_fut =  int(settle_price.replace(key,form_dict[key]))/10000                                
+                                break
+                        break
+                    elif inp_month_year < datetime.strptime(df["MONTH"][month], "%b %y"):
+                        settle_price = df.loc[:,'SETTLE'][month]
+                        for key in form_dict:
+                            if key in settle_price:
+                                if 'HRW' in loc.upper():
+                                    hrw_fut = int(settle_price.replace(key,form_dict[key]))/10000  
+                                elif 'YC' in loc.upper():
+                                    yc_fut =  int(settle_price.replace(key,form_dict[key]))/10000
+                                elif 'YSB' in loc.upper():
+                                    ysb_fut =  int(settle_price.replace(key,form_dict[key]))/10000                                
+                                break
+                        break
+                    
+                    
         try:
             driver.quit() 
         except:
@@ -2999,7 +3015,7 @@ def mtm_pdf_data_extractor(input_date, f, hrw_pdf_loc=None, yc_pdf_loc=None ,ysb
                             pandas_options={'header':0}, area = ["75,10,580,850"], columns=["50,85, 180,225, 260, 280,300,360,400,430,480,525,570,620,665,720"])
             else:
                 df = read_pdf(f, pages = page, guess = True, stream = True ,
-                                pandas_options={'header':0}, area = ["75,10,580,850"], columns=["46,85, 180,225, 255,275,300,360,400,430,480,525,570,620,665,713"])
+                                pandas_options={'header':0}, area = ["75,10,580,850"], columns=["47,85, 180,225, 255,275,300,360,400,430,480,525,570,620,665,713"])
             df = pd.concat(df, ignore_index=True)
             ########logger.info("Filtering only required columns")
             df = df.iloc[:,[0,1,2,3,-2,-1]]
@@ -5662,8 +5678,8 @@ def inv_mtm_excel_summ(input_date, output_date):
 
 
 
-        # loc_dict = inv_mtm_pdf_data_extractor(input_date,pdf_loc)
-        loc_dict = mtm_pdf_data_extractor(input_date,pdf_loc, mtm_excel_summ=True)
+        loc_dict = inv_mtm_pdf_data_extractor(input_date,pdf_loc)
+        # loc_dict = mtm_pdf_data_extractor(input_date,pdf_loc, mtm_excel_summ=True)
 
         retry=0
         while retry < 10:
