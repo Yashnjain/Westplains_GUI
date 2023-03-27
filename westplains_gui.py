@@ -1491,7 +1491,15 @@ def inv_mtm_pdf_data_extractor(input_date, f, hrw_pdf_loc=None, yc_pdf_loc=None,
                         pandas_options={'header':None}, area = ["30,15,50,120"])
         com_loc = pd.concat(com_loc, ignore_index=True)
 
-        com_loc = list(com_loc[0].str.split('Commodity: ',expand=True)[1])
+        try:
+            old_pdf=True
+            com_loc = list(com_loc[0].str.split('Commodity: ',expand=True)[1])
+        except:
+            try:
+                old_pdf=False
+                com_loc = list(com_loc[1])
+            except Exception as e:
+                raise e
         # loc_dict = dict(zip(com_loc, [[]]*len(com_loc)))
         loc_dict = defaultdict(list)
         for page in range(1,len(com_loc)+1):
@@ -1552,7 +1560,18 @@ def storage_qty(input_date,input_qty_pdf, input_qty_xl, monthYear2, qty_loc_dict
         output_loc = drive+r'\REPORT\Storage Month End Report\Output Files' + f'\\STORAGE QTY {monthYear2}.xlsx'
         page_df = read_pdf(input_qty_pdf,pages = 1,guess = False,stream = True,
                         pandas_options={'header':0},area = ["65,630,600,735"],columns=["675"])[0]
-        page_num = int(page_df['e Types'][3][-4:])
+        try:
+            old_file = True
+            page_num = int(page_df['e Types'][3][-4:])
+        except:
+            try:
+                old_file = False
+                page_df = read_pdf(input_qty_pdf,pages = 1,guess = False,stream = True,
+                            pandas_options={'header':0},area = ["65,630,600,735"],columns=["670"])[0]
+                page_num = int(page_df['e Types'][3][-4:])
+            except Exception as e:
+                raise e
+
         
         loc_dict = {}
         
@@ -1562,12 +1581,18 @@ def storage_qty(input_date,input_qty_pdf, input_qty_xl, monthYear2, qty_loc_dict
             
             # location_df = read_pdf(input_qty_pdf,pages = i,guess = False,stream = True,
             #                 pandas_options={'header':0},area = ["5,15,80,300"],columns=["60"])[0]
-
-        df = read_pdf(input_qty_pdf,pages = f"1-{page_num}",guess = False,stream = True,
-                pandas_options={'header':0},area = ["65,630,580,735"],columns=["680"])
-        
-        location_df = read_pdf(input_qty_pdf,pages = f"1-{page_num}",guess = False,stream = True,
-                        pandas_options={'header':0},area = ["5,15,80,300"],columns=["60"])
+        if old_file:
+            df = read_pdf(input_qty_pdf,pages = f"1-{page_num}",guess = False,stream = True,
+                    pandas_options={'header':0},area = ["65,630,580,735"],columns=["680"])
+            
+            location_df = read_pdf(input_qty_pdf,pages = f"1-{page_num}",guess = False,stream = True,
+                            pandas_options={'header':0},area = ["5,15,80,300"],columns=["60"])
+        else:
+            df = read_pdf(input_qty_pdf,pages = f"1-{page_num}",guess = False,stream = True,
+                    pandas_options={'header':0},area = ["65,630,580,735"],columns=["672"])
+            
+            location_df = read_pdf(input_qty_pdf,pages = f"1-{page_num}",guess = False,stream = True,
+                            pandas_options={'header':0},area = ["5,15,80,295"],columns=["53"])
         for i in range(page_num):
 
             # loc_lst.append(location_df['Daily Position R'][0])
@@ -2882,7 +2907,7 @@ def num_to_col_letters(num):
     except Exception as e:
         raise e
 
-def mtm_pdf_data_extractor(input_date, f, hrw_pdf_loc, yc_pdf_loc ,ysb_pdf_loc):
+def mtm_pdf_data_extractor(input_date, f, hrw_pdf_loc=None, yc_pdf_loc=None ,ysb_pdf_loc=None, mtm_excel_summ=False):
     try:
         # reader = PyPDF2.PdfFileReader(open(f, mode='rb' ))
         # n = reader.getNumPages() 
@@ -2957,12 +2982,24 @@ def mtm_pdf_data_extractor(input_date, f, hrw_pdf_loc, yc_pdf_loc ,ysb_pdf_loc):
                         pandas_options={'header':None}, area = ["30,15,50,120"])
         com_loc = pd.concat(com_loc, ignore_index=True)
 
-        com_loc = list(com_loc[0].str.split('Commodity: ',expand=True)[1])
+        try:
+            old_pdf=True
+            com_loc = list(com_loc[0].str.split('Commodity: ',expand=True)[1])
+        except:
+            try:
+                old_pdf=False
+                com_loc = list(com_loc[1])
+            except Exception as e:
+                raise e
         # loc_dict = dict(zip(com_loc, [[]]*len(com_loc)))
         loc_dict = defaultdict(list)
         for page in range(1,len(com_loc)+1):
-            df = read_pdf(f, pages = page, guess = False, stream = True ,
+            if old_pdf:
+                df = read_pdf(f, pages = page, guess = True, stream = True ,
                             pandas_options={'header':0}, area = ["75,10,580,850"], columns=["50,85, 180,225, 260, 280,300,360,400,430,480,525,570,620,665,720"])
+            else:
+                df = read_pdf(f, pages = page, guess = True, stream = True ,
+                                pandas_options={'header':0}, area = ["75,10,580,850"], columns=["46,85, 180,225, 255,275,300,360,400,430,480,525,570,620,665,713"])
             df = pd.concat(df, ignore_index=True)
             ########logger.info("Filtering only required columns")
             df = df.iloc[:,[0,1,2,3,-2,-1]]
@@ -2971,9 +3008,20 @@ def mtm_pdf_data_extractor(input_date, f, hrw_pdf_loc, yc_pdf_loc ,ysb_pdf_loc):
             # for i in df.loc[:,"Offsite Name Cont. No."]:
 
             df["Quantity.5"].fillna(0, inplace=True)
-            df["Value.5"].fillna(0, inplace=True)
+            try:
+                df["Value.5"].fillna(0, inplace=True)
+            except:
+                try:
+                    df = read_pdf(f, pages = page, guess = True, stream = True ,
+                                pandas_options={'header':0}, area = ["75,10,580,850"], columns=["46,85, 180,225, 255,275,300,360,400,430,480,525,570,620,665,713"])
+                    df = pd.concat(df, ignore_index=True)
+                    df["Value.5"].fillna(0, inplace=True)
+                    old_pdf=False
+                except Exception as e:
+                    raise e
 
             df["Quantity.5"] = df["Quantity.5"].astype(str).str.replace("(","-").str.replace(",","").str.replace(")","").astype(float)
+            # df["Value.5"] = df["Value.5"].astype(str).str.replace("(","-").str.replace(",","").str.replace(")","").astype(float)
             df["Value.5"] = df["Value.5"].astype(str).str.replace("(","-").str.replace(",","").str.replace(")","").astype(float)
             
             for i in range(len(df)):
@@ -3016,8 +3064,10 @@ def mtm_pdf_data_extractor(input_date, f, hrw_pdf_loc, yc_pdf_loc ,ysb_pdf_loc):
                 loc_dict[key] = key_value
                 # print(len(value))
                 # print()
-        
-        return loc_dict, hrw_fut, yc_fut ,ysb_fut
+        if mtm_excel_summ:
+            return loc_dict
+        else:
+            return loc_dict, hrw_fut, yc_fut ,ysb_fut
     except Exception as e:
         raise e
 
@@ -5612,7 +5662,8 @@ def inv_mtm_excel_summ(input_date, output_date):
 
 
 
-        loc_dict = inv_mtm_pdf_data_extractor(input_date,pdf_loc)
+        # loc_dict = inv_mtm_pdf_data_extractor(input_date,pdf_loc)
+        loc_dict = mtm_pdf_data_extractor(input_date,pdf_loc, mtm_excel_summ=True)
 
         retry=0
         while retry < 10:
@@ -8334,6 +8385,7 @@ def main():
             print()
         
         elif 'Select' in Rep_variable.get():
+            text_box.delete(1.0, "end")
             text_box.insert("end", f"Please select job first", "center")
 
 
