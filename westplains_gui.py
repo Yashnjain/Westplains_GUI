@@ -3352,19 +3352,20 @@ def mtm_excel(input_date,input_xl,loc_dict,loc_sheet, output_location, hrw_fut, 
         i=int(other_loc_2.replace("A", ""))
         for location in other_loc_2_lst:
             try:
-                if location == 'YSB':
-                    m_sht.range(f"I{i}").value = ysb_fut
-                    m_sht.range(f"J{i}").formula = f"=F{i}-I{i}"
+               
                 m_sht.range(f"F{i}").value = loc_dict[loc_abbr[location]][0].iloc[-1,-1]/loc_dict[loc_abbr[location]][0].iloc[-1,-2] #Price
                 # m_sht.range(f"F{i}").value = loc_dict[loc_abbr[location]][0].iloc[-1,-2]
                 m_sht.range(f"C{i}").value = loc_dict[loc_abbr[location]][0].iloc[-1,-2] #Quantity
                 # m_sht.range(f"C{i}").value = loc_dict[loc_abbr[location]][0].iloc[-1,-1]
-                i+=1
+                
             except:
                 m_sht.range(f"F{i}").value = 0
                 m_sht.range(f"C{i}").value = 0
-                i+=1
-        
+                
+            if location == 'YSB' and (m_sht.range(f"F{i}").value != 0 and m_sht.range(f"C{i}").value != 0):
+                    m_sht.range(f"I{i}").value = ysb_fut
+                    m_sht.range(f"J{i}").formula = f"=F{i}-I{i}"
+            i+=1
         print()
         wb.save(output_location)
     except Exception as e:
