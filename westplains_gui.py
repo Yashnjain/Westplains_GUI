@@ -3969,16 +3969,51 @@ def cpr(input_date, output_date):
         BB_Master25ws.range(f'C:H').api.NumberFormat = '_("$"* #,##0.00_);_("$"* (#,##0.00);_("$"* "-"??_);_(@_)'
         ####logger.info('Refreshing all tab')  
         BB_wb.api.RefreshAll()
+        BB_wb.activate()
         BB_wb.sheets[2].select()
-        BB_wb.api.ActiveSheet.PivotTables("PivotTable2").PivotFields('Cust Type').CurrentPage = "E"
+        try:
+            BB_wb.api.ActiveSheet.PivotTables("PivotTable2").PivotFields('Cust Type').CurrentPage = "E"
+        except:
+            try:
+                BB_wb.api.ActiveSheet.PivotTables("PivotTable7").PivotFields('Cust Type').CurrentPage = "(blank)"
+            except Exception as e:
+                raise e
+        BB_wb.activate()
         BB_wb.sheets[3].select()
-        BB_wb.api.ActiveSheet.PivotTables("PivotTable4").PivotFields('Cust Type').CurrentPage = "F"
+        try:
+            BB_wb.api.ActiveSheet.PivotTables("PivotTable4").PivotFields('Cust Type').CurrentPage = "F"
+        except:
+            try:
+                BB_wb.api.ActiveSheet.PivotTables("PivotTable7").PivotFields('Cust Type').CurrentPage = "(blank)"
+            except Exception as e:
+                raise e
+        BB_wb.activate()
         BB_wb.sheets[4].select()
-        BB_wb.api.ActiveSheet.PivotTables("PivotTable5").PivotFields('Cust Type').CurrentPage = "R"
+        try:
+            BB_wb.api.ActiveSheet.PivotTables("PivotTable5").PivotFields('Cust Type').CurrentPage = "R"
+        except:
+            try:
+                BB_wb.api.ActiveSheet.PivotTables("PivotTable7").PivotFields('Cust Type').CurrentPage = "(blank)"
+            except Exception as e:
+                raise e
+        BB_wb.activate()
         BB_wb.sheets[5].select()
-        BB_wb.api.ActiveSheet.PivotTables("PivotTable6").PivotFields('Cust Type').CurrentPage = "P"
+        try:
+            BB_wb.api.ActiveSheet.PivotTables("PivotTable6").PivotFields('Cust Type').CurrentPage = "P"
+        except:
+            try:
+                BB_wb.api.ActiveSheet.PivotTables("PivotTable7").PivotFields('Cust Type').CurrentPage = "(blank)"
+            except Exception as e:
+                raise e
+        BB_wb.activate()
         BB_wb.sheets[6].select()
-        BB_wb.api.ActiveSheet.PivotTables("PivotTable7").PivotFields('Cust Type').CurrentPage = "T"
+        try:
+            BB_wb.api.ActiveSheet.PivotTables("PivotTable7").PivotFields('Cust Type').CurrentPage = "T"
+        except:
+            try:
+                BB_wb.api.ActiveSheet.PivotTables("PivotTable7").PivotFields('Cust Type').CurrentPage = "(blank)"
+            except Exception as e:
+                raise e
         print()
         BB_Master25ws.activate()
         wb.save(output_cpr)
