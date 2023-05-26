@@ -844,7 +844,7 @@ def ar_reports_exposure(input_date, output_date):
             if values == 'Diff':
                 input_tab.range(f"{last_column_letter}2:{last_column_letter}{last_row}").number_format="General"
             if values == 'Ticket Add Date':
-                input_tab.range(f"{last_column_letter}2:{last_column_letter}{last_row}").number_format="dd-mm-yyyy"
+                input_tab.range(f"{last_column_letter}2:{last_column_letter}{last_row}").number_format="mm-dd-yyyy"
             i+=1
             Quantity_Name_column_no+=1
 
@@ -867,7 +867,7 @@ def ar_reports_exposure(input_date, output_date):
         last_column_letter=num_to_col_letters(input_tab.range('A1').end('right').last_cell.column)
 
         initial_row = re.findall("\d+",input_tab.api.Range(f"{Ticket_column_letter}2:{Ticket_column_letter}{last_row}").SpecialCells(win32c.CellType.xlCellTypeVisible).Address.split(',')[0].replace('$',""))[0]
-        input_tab.range(f"{Ticket_column_letter}{initial_row}").number_format="dd-mm-yyyy"
+        input_tab.range(f"{Ticket_column_letter}{initial_row}").number_format="mm-dd-yyyy"
         # input_tab.api.Range(f"{Ticket_column_letter}{initial_row}").Value = f"=VLOOKUP(S{initial_row},'[{wb2.name}]MASTER'!$S:$T,2,0)"
         input_tab.api.Range(f"{Ticket_column_letter}{initial_row}").Value = f"=VLOOKUP(S{initial_row},'[ticket query elevator 2015.xlsx]Sheet1'!$G:$Q,11,0)"
         input_tab.api.Range(f"{Ticket_column_letter}{initial_row}:{Ticket_column_letter}{last_row}").SpecialCells(win32c.CellType.xlCellTypeVisible).Select()
