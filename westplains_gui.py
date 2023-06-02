@@ -8041,8 +8041,9 @@ def unsettled_ar_by_location_part1(input_date, output_date):
         except:
             Reason_column_no = column_list2.index("Reasons")+1
             Reason_column_letter=num_to_col_letters(Reason_column_no) 
-        if cnt1>cnt2:
-            wss1.range(f"A{last_row2}:{Reason_column_letter}{last_row2}").copy(wss1.range(f"A{last_row2}:{Reason_column_letter}{last_row}"))
+        if cnt2>cnt1:
+            wss1.range(f"A{last_row2}:{Reason_column_letter}{last_row2}").copy(wss1.range(f"A{last_row2}:{Reason_column_letter}{last_row}")) #old change
+            # wss1.range(f"F{last_row2+1}:AK{last_row}").delete()  #new change
         else:
             wss1.range(f"A{cnt1+1}").expand('table').delete()
         retry=0
