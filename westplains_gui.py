@@ -8417,13 +8417,18 @@ def weekly_estimate(input_date, output_date):
         inp_open_futures = drive + f'\\REPORT\\Macquarie P & L\\FromEmail\\{input_date2}\\{input_month_date}F\\OC{input_month_date}F.csv'
         if not os.path.exists(inp_open_futures):
             return(f"{inp_open_futures} CSV file not present for date {input_date}")
-        inp_payables = drive +f'\\REPORT\\Unsettled Payables\\Output files\\Unsettled Payables _'+input_date+'.xlsx'
+        # inp_payables = drive +f'\\REPORT\\Unsettled Payables\\Output files\\Unsettled Payables _'+input_date+'.xlsx'
+        inp_payables = drive+r'\REPORT\Unsettled Payables\Raw Files\Unsettled Payables _'+input_date+".xlsx"        
+        if not os.path.exists(input_xl):
+            return(f"Excel file not present for date {input_date}")
         if not os.path.exists(inp_payables):
             return(f"{inp_payables} Excel file not present for date {input_date}")
-        inp_receivables = drive +f'\\REPORT\\Unsettled Receivables\\Output files\\Unsettled Receivables _'+input_date+'.xlsx'
+        # inp_receivables = drive +f'\\REPORT\\Unsettled Receivables\\Output files\\Unsettled Receivables _'+input_date+'.xlsx'
+        inp_receivables = drive+r'\REPORT\Unsettled Receivables\Raw Files\Unsettled Receivables _'+input_date+".xlsx"
         if not os.path.exists(inp_receivables):
             return(f"{inp_receivables} Excel file not present for date {input_date}")
-        inp_ctm = drive +f'\\REPORT\\CTM Combined report\\Output files\\CTM Combined _{input_date}.xlsx'
+        # inp_ctm = drive +f'\\REPORT\\CTM Combined report\\Output files\\CTM Combined _{input_date}.xlsx'
+        inp_ctm = drive+r'\REPORT\CTM Combined report\Raw Files\CTM Combined _'+input_date+'.xlsx' 
         if not os.path.exists(inp_ctm):
             return(f"{inp_ctm} Excel file not present for date {input_date}")
         inp_inventory = drive +f'\\REPORT\\Inv_MTM_Excel_Report_Summ\\Output Files\\Inventory MTM Excel Report_'+input_date+".xlsx"
@@ -8521,30 +8526,151 @@ def weekly_estimate(input_date, output_date):
         open_futures_sht.range(f'AX2:AY{last_row_open_futures}').select()
         wb.app.selection.api.FillDown()
         ############Unsettled payable part##################################
-        payables_df = pd.read_excel(inp_payables, sheet_name="Excl Macq & IC")
-        #Replacing data in Open Futures Sheet
+        
+        
+        
+        retry=0
+        while retry<10:
+            try:
+                
+                payables_wb = xw.Book(inp_payables, update_links=True)
+                break
+            except Exception as e:
+                time.sleep(2)
+                retry+=1
+                if retry==9:
+                    raise e
+        
+        #######logger.info("Sheet Opened")
+        # time.sleep(10)
+        while True:
+            try:
+                # inp_sht = wb.sheets[0]
+                inp_payables_sht = payables_wb.sheets[f"Unsettled Payables _{input_date}"]
+                break
+            except:
+                time.sleep(10)
+        
+
+        # inp_sht.range('AB2').formula = '=O2+Q2'
+        
+
+        column_list = inp_payables_sht.range("A1").expand('right').value
+        vendor_column = num_to_col_letters(column_list.index('Customer/Vendor Name')+1)
+        vendor_column_num = column_list.index('Customer/Vendor Name')+1
+        locationId_column = num_to_col_letters(column_list.index('Location Id')+1)
+        locationId_column_num = column_list.index('Location Id')+1
+        payab_last_column = num_to_col_letters(len(column_list))
+        if payab_last_column != "AH":
+            return "Input Payables column count change found, last column is not AH. Please fix and rerrun the job"
+
+        inp_payables_sht.api.AutoFilterMode=False
+        #Removing  MACQUARIE COMMODITIES (USA) INC. and all INTER-COMPANY PURCH/SALES vendor
+        inp_payables_sht.api.Range(f"{vendor_column}1").AutoFilter(Feild:=vendor_column_num,Criteria1:="<>MACQUARIE COMMODITIES (USA) INC", Operator:=1, Criteria2:="<>INTER-COMPANY PURCH/SALES") #Removing macquarie and intercompany
+        #Removing WPMEXICO Location ID
+        inp_payables_sht.api.Range(f"{locationId_column}1").AutoFilter(Feild:=locationId_column_num,Criteria1:="<>WPMEXICO", Operator:=7) #Removing WPMEXICO
         last_row_payables = payab_sht.range(f'AI'+ str(payab_sht.cells.last_cell.row)).end('up').row
         payab_sht.range(f'A2:AH{last_row_payables}').clear_contents()
-        payab_sht.range(f'A2').options(pd.DataFrame, header=False, index=False).value = payables_df
-        #Now calculating last row based on pasted data
+        inp_payables_sht.api.AutoFilter.Range.Copy()
+        payab_sht.range("A1").api._PasteSpecial(Paste=win32c.PasteType.xlPasteValues)
         last_row_payables = payab_sht.range(f'A'+ str(payab_sht.cells.last_cell.row)).end('up').row
         wb.activate()
         payab_sht.activate()
         payab_sht.range(f'AI2:AK{last_row_payables}').select()
         wb.app.selection.api.FillDown()
-        ############Unsettled Receivables part##################################
-        receivables_df = pd.read_excel(inp_receivables, sheet_name="Excl Macq & IC")
-        #Replacing data in Open Futures Sheet
-        last_row_receivables = receivables_sht.range(f'AF'+ str(receivables_sht.cells.last_cell.row)).end('up').row
-        receivables_sht.range(f'A2:AE{last_row_receivables}').clear_contents()
-        receivables_sht.range(f'A2').options(pd.DataFrame, header=False, index=False).value = receivables_df
-        #Now calculating last row based on pasted data
+        
+        payables_wb.close()
+        #################################Old code############################################
+        # payables_df = pd.read_excel(inp_payables, sheet_name="Excl Macq & IC")
+        # #Replacing data in Open Futures Sheet
+        # last_row_payables = payab_sht.range(f'AI'+ str(payab_sht.cells.last_cell.row)).end('up').row
+        # payab_sht.range(f'A2:AH{last_row_payables}').clear_contents()
+        # payab_sht.range(f'A2').options(pd.DataFrame, header=False, index=False).value = payables_df
+        # #Now calculating last row based on pasted data
+        # last_row_payables = payab_sht.range(f'A'+ str(payab_sht.cells.last_cell.row)).end('up').row
+        # wb.activate()
+        # payab_sht.activate()
+        # payab_sht.range(f'AI2:AK{last_row_payables}').select()
+        # wb.app.selection.api.FillDown()
+        # ############Unsettled Receivables part##################################
+        # receivables_df = pd.read_excel(inp_receivables, sheet_name="Excl Macq & IC")
+        # #Replacing data in Open Futures Sheet
+        # last_row_receivables = receivables_sht.range(f'AF'+ str(receivables_sht.cells.last_cell.row)).end('up').row
+        # receivables_sht.range(f'A2:AE{last_row_receivables}').clear_contents()
+        # receivables_sht.range(f'A2').options(pd.DataFrame, header=False, index=False).value = receivables_df
+        # #Now calculating last row based on pasted data
+        # last_row_receivables = receivables_sht.range(f'A'+ str(receivables_sht.cells.last_cell.row)).end('up').row
+        # wb.activate()
+        # receivables_sht.activate()
+        # receivables_sht.range(f'AF2:AH{last_row_receivables}').select()
+        # wb.app.selection.api.FillDown()
+        ##################################Unsettled Receivables Part###########################################
+        retry=0
+        while retry<10:
+            try:
+                receivables_wb = xw.Book(inp_receivables, update_links=False)
+                break
+            except Exception as e:
+                time.sleep(2)
+                retry+=1
+                if retry==9:
+                    raise e
+
+        inp_receivables_sht = receivables_wb.sheets[0] #wb.sheets[0].name in 'Unsettled Receivables _'+input_date
+
+        column_list = inp_receivables_sht.range("A1").expand('right').value
+        vendor_column = num_to_col_letters(column_list.index('Customer/Vendor Name')+1)
+        vendor_column_num = column_list.index('Customer/Vendor Name')+1
+        locationId_column = num_to_col_letters(column_list.index('Location Id')+1)
+        locationId_column_num = column_list.index('Location Id')+1
+        receivable_last_column = num_to_col_letters(len(column_list))
+        if receivable_last_column != "AE":
+            return "Input Receivables column count change found, last column is not AE. Please fix and rerrun the job"
+               
+        inp_receivables_sht.api.AutoFilterMode=False
+        ######logger.info("Removing  MACQUARIE COMMODITIES (USA) INC. and all INTER-COMPANY PURCH/SALES vendor")
+        inp_receivables_sht.api.Range(f"{vendor_column}1").AutoFilter(Feild:=vendor_column_num,Criteria1:="<>MACQUARIE COMMODITIES (USA) INC", Operator:=1, Criteria2:="<>INTER-COMPANY PURCH/SALES") #Removing macquarie and intercompany
+        ######logger.info("Removing WPMEXICO Location ID")
+        inp_receivables_sht.api.Range(f"{locationId_column}1").AutoFilter(Feild:=locationId_column_num,Criteria1:="<>WPMEXICO", Operator:=7) #Removing WPMEXICO
+        ######logger.info("Creating Excl IC & Macq and pasting data")
+        inp_receivables_sht.api.AutoFilter.Range.Copy()
+        receivables_sht.range("A1").api._PasteSpecial(Paste=win32c.PasteType.xlPasteValues)
         last_row_receivables = receivables_sht.range(f'A'+ str(receivables_sht.cells.last_cell.row)).end('up').row
         wb.activate()
         receivables_sht.activate()
         receivables_sht.range(f'AF2:AH{last_row_receivables}').select()
         wb.app.selection.api.FillDown()
-        
+        receivables_wb.close()
+        ###################CTM Part#############################
+        retry=0
+        while retry<10:
+            try: 
+                ctm_wb = xw.Book(inp_ctm, update_links=False)
+                break
+            except Exception as e:
+                time.sleep(2)
+                retry+=1
+                if retry==9:
+                    raise e
+        inp_ctm_sht = ctm_wb.sheets[0]
+        column_list = inp_ctm_sht.range("A1").expand('right').value
+        Customer_no_column=column_list.index('Customer')+1
+        Customer_letter_column = num_to_col_letters(column_list.index('Customer')+1)
+        Location_no_column=column_list.index('Location Id')+1
+        Location_letter_column = num_to_col_letters(column_list.index('Location Id')+1)
+        ctm_last_column = num_to_col_letters(len(column_list))
+        if ctm_last_column != "AO":
+            return "Input CTM column count change found, last column is not AO. Please fix and rerrun the job"
+        inp_ctm_sht.api.Range(f"{Customer_letter_column}1").AutoFilter(Field:=f'{Customer_no_column}', Criteria1:=["<>MACQUARIE COMMODITIES (USA) INC."], Operator:=1,Criteria2=["<>INTER-COMPANY PURCH/SALES"])
+        inp_ctm_sht.api.Range(f"{Location_letter_column}1").AutoFilter(Field:=f'{Location_no_column}', Criteria1:=["<>WPMEXICO"], Operator:=1)
+        inp_ctm_sht.api.AutoFilter.Range.Copy()
+        ctm_sht.range("A1").api._PasteSpecial(Paste=win32c.PasteType.xlPasteValues)
+        last_row_ctm = ctm_sht.range(f'A'+ str(ctm_sht.cells.last_cell.row)).end('up').row
+        wb.activate()
+        ctm_sht.activate()
+        ctm_sht.range(f'AP2:AQ{last_row_ctm}').select()
+        wb.app.selection.api.FillDown()
+        ctm_wb.close()
         return f"{job_name} Report for {input_date} generated succesfully"
     except Exception as e:
         raise e
@@ -8641,7 +8767,7 @@ def main():
                     'Storage Month End Report':strg_month_end_report, "Month End BBR":bbr_monthEnd, "Bank Recons Report":bank_recons_rep, "Payables_GL_Entry_Monthly":payables_gl_entry_monthly,
                     "Receivables_GL_Entry_Monthly":receivables_gl_entry_monthly,"CTM_GL_Entry_Monthly":ctm_gl_entry_monthly, "Macquarie Accrual Entry":macq_accr_entry, "Ticket_N_Settlement_Report":tkt_n_settlement_summ,
                     "Payroll_Summary":payroll_summ,"Credit_Card_Entry":credit_card_entry, "Credit_Card_GL_Entry_Monthly":credit_card_gl,"Unsettled_AR_By_Reason":unsettled_ar_by_location_part1,
-                    "Unsettled_AR_By_Location_with_Location":unsettled_ar_by_location_part2,"Open_AR_Monthly":open_ar_monthly}#,"Weekly_Estimate":weekly_estimate}
+                    "Unsettled_AR_By_Location_with_Location":unsettled_ar_by_location_part2,"Open_AR_Monthly":open_ar_monthly,"Weekly_Estimate":weekly_estimate}
     # wp_job_ids = {'ABS':1,'BBR':bbr,'CPR Report':cpr, 'Freight analysis':freight_analysis, 'CTM combined':ctm,'MTM Report':mtm_report,
     #                 'MOC Interest Allocation':moc_interest_alloc,'Open AR':open_ar,'Open AP':open_ap, 'Unsettled Payable Report':unsetteled_payables,'Unsettled Receivable Report':unsetteled_receivables,
     #                 'Storage Month End Report':strg_month_end_report, "Month End BBR":bbr_monthEnd, "Bank Recons Report":bank_recons_rep}
