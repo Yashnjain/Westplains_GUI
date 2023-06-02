@@ -5710,7 +5710,7 @@ def inv_mtm_excel_summ(input_date, output_date):
             return(f"{input_xl} Excel file not present for date {input_date}")
 
         # output_loc = r"C:\Users\imam.khan\OneDrive - BioUrja Trading LLC\Documents\WEST PLAINS\REPORT\FIFO reports\Output files" +f"\\Inventory MTM Excel Report {monthYear}.xlsx"
-        output_loc = drive+r'\REPORT\Inv_MTM_Excel_Report_Summ\Output files' +f"\\Inventory MTM Excel Report {monthYear}.xlsx"
+        output_loc = drive+r'\REPORT\Inv_MTM_Excel_Report_Summ\Output files' +f"\\Inventory MTM Excel Report_{input_date}.xlsx"
 
 
 
@@ -8402,6 +8402,165 @@ def open_ar_monthly(input_date, output_date):
 
 
 
+def weekly_estimate(input_date, output_date):
+    try:
+        job_name = "Weekly Estimate"
+
+        input_datetime = datetime.strptime(input_date, "%m.%d.%Y")
+        input_date2 = datetime.strftime(input_datetime, "%m%d%Y")
+        input_month_date = datetime.strftime(input_datetime, "%d%m")
+
+        input_xl = drive+r'\REPORT\Weekly_Estimate'+f'\\Weekly_Estimate_Template.xlsx'
+        if not os.path.exists(input_xl):
+            return(f"{input_xl} Excel Template file not present")
+        inp_open_futures = drive + f'\\REPORT\\Macquarie P & L\\FromEmail\\{input_date2}\\{input_month_date}F\\OC{input_month_date}F.csv'
+        if not os.path.exists(inp_open_futures):
+            return(f"{inp_open_futures} CSV file not present for date {input_date}")
+        inp_payables = drive +f'\\REPORT\\Unsettled Payables\\Output files\\Unsettled Payables _'+input_date+'.xlsx'
+        if not os.path.exists(inp_payables):
+            return(f"{inp_payables} Excel file not present for date {input_date}")
+        inp_receivables = drive +f'\\REPORT\\Unsettled Receivables\\Output files\\Unsettled Receivables _'+input_date+'.xlsx'
+        if not os.path.exists(inp_receivables):
+            return(f"{inp_receivables} Excel file not present for date {input_date}")
+        inp_ctm = drive +f'\\REPORT\\CTM Combined report\\Output files\\CTM Combined _{input_date}.xlsx'
+        if not os.path.exists(inp_ctm):
+            return(f"{inp_ctm} Excel file not present for date {input_date}")
+        inp_inventory = drive +f'\\REPORT\\Inv_MTM_Excel_Report_Summ\\Output Files\\Inventory MTM Excel Report_'+input_date+".xlsx"
+        if not os.path.exists(inp_inventory):
+            return(f"{inp_inventory} Excel file not present for date {input_date}")
+        mapping_loc = drive+r'\REPORT\Weekly_Estimate\Mapping.xlsx'
+        if not os.path.exists(mapping_loc):
+                return(f"{mapping_loc} Excel file not present for date {input_date}")
+        
+        retry=0
+        while retry < 10:
+            try:
+                wb=xw.Book(input_xl, update_links=False)
+                break
+            except Exception as e:
+                time.sleep(2)
+                retry+=1
+                if retry ==9:
+                    raise e
+                
+        # retry=0
+        # while retry < 10:
+        #     try:
+        #         open_fut_wb=xw.Book(inp_open_futures, update_links=False)
+        #         break
+        #     except Exception as e:
+        #         time.sleep(2)
+        #         retry+=1
+        #         if retry ==9:
+        #             raise e
+                
+        # retry=0
+        # while retry < 10:
+        #     try:
+        #         payab_wb=xw.Book(inp_payables, update_links=False)
+        #         break
+        #     except Exception as e:
+        #         time.sleep(2)
+        #         retry+=1
+        #         if retry ==9:
+        #             raise e
+
+        # retry=0
+        # while retry < 10:
+        #     try:
+        #         unset_rec_wb=xw.Book(inp_receivables, update_links=False)
+        #         break
+        #     except Exception as e:
+        #         time.sleep(2)
+        #         retry+=1
+        #         if retry ==9:
+        #             raise e
+                
+        # retry=0
+        # while retry < 10:
+        #     try:
+        #         ctm_wb=xw.Book(inp_ctm, update_links=False)
+        #         break
+        #     except Exception as e:
+        #         time.sleep(2)
+        #         retry+=1
+        #         if retry ==9:
+        #             raise e
+                
+        # retry=0
+        # while retry < 10:
+        #     try:
+        #         inventory_wb=xw.Book(inp_inventory, update_links=False)
+        #         break
+        #     except Exception as e:
+        #         time.sleep(2)
+        #         retry+=1
+        #         if retry ==9:
+        #             raise e
+                
+        open_futures_sht = wb.sheets("OPEN FUTURES")
+        payab_sht = wb.sheets("UNSETTLED PAYABLES")
+        receivables_sht = wb.sheets("UNSETTLED RECEIVABLES")
+        ctm_sht = wb.sheets("CTM")
+        inventory_sht = wb.sheets("INVENTORY")
+        repos_sht = wb.sheets("REPOS")
+        freight_sht = wb.sheets("FREIGHT ACCRUAL")
+        storage_sht = wb.sheets("STORAGE ACCRUAL")
+
+        ##################getting data in dataframes#############
+        open_futures_df = pd.read_csv(inp_open_futures)
+        #Replacing data in Open Futures Sheet
+        last_row_open_futures = open_futures_sht.range(f'AX'+ str(open_futures_sht.cells.last_cell.row)).end('up').row
+        open_futures_sht.range(f'A2:AW{last_row_open_futures}').clear_contents()
+        open_futures_sht.range(f'A1').options(pd.DataFrame, header=False, index=False).value = open_futures_df
+        #Now calculating last row based on pasted data
+        last_row_open_futures = open_futures_sht.range(f'A'+ str(open_futures_sht.cells.last_cell.row)).end('up').row
+        wb.activate()
+        open_futures_sht.activate()
+        open_futures_sht.range(f'AX2:AY{last_row_open_futures}').select()
+        wb.app.selection.api.FillDown()
+        ############Unsettled payable part##################################
+        payables_df = pd.read_excel(inp_payables, sheet_name="Excl Macq & IC")
+        #Replacing data in Open Futures Sheet
+        last_row_payables = payab_sht.range(f'AI'+ str(payab_sht.cells.last_cell.row)).end('up').row
+        payab_sht.range(f'A2:AH{last_row_payables}').clear_contents()
+        payab_sht.range(f'A2').options(pd.DataFrame, header=False, index=False).value = payables_df
+        #Now calculating last row based on pasted data
+        last_row_payables = payab_sht.range(f'A'+ str(payab_sht.cells.last_cell.row)).end('up').row
+        wb.activate()
+        payab_sht.activate()
+        payab_sht.range(f'AI2:AK{last_row_payables}').select()
+        wb.app.selection.api.FillDown()
+        ############Unsettled Receivables part##################################
+        receivables_df = pd.read_excel(inp_receivables, sheet_name="Excl Macq & IC")
+        #Replacing data in Open Futures Sheet
+        last_row_receivables = receivables_sht.range(f'AF'+ str(receivables_sht.cells.last_cell.row)).end('up').row
+        receivables_sht.range(f'A2:AE{last_row_receivables}').clear_contents()
+        receivables_sht.range(f'A2').options(pd.DataFrame, header=False, index=False).value = receivables_df
+        #Now calculating last row based on pasted data
+        last_row_receivables = receivables_sht.range(f'A'+ str(receivables_sht.cells.last_cell.row)).end('up').row
+        wb.activate()
+        receivables_sht.activate()
+        receivables_sht.range(f'AF2:AH{last_row_receivables}').select()
+        wb.app.selection.api.FillDown()
+        
+        return f"{job_name} Report for {input_date} generated succesfully"
+    except Exception as e:
+        raise e
+    finally:
+        try:
+            wb.app.quit()
+        except:
+            pass
+
+
+
+
+
+
+
+
+
 def main():
     def on_closing():
         if messagebox.askokcancel("Quit", "Do you want to quit?"):
@@ -8481,7 +8640,7 @@ def main():
                     'Storage Month End Report':strg_month_end_report, "Month End BBR":bbr_monthEnd, "Bank Recons Report":bank_recons_rep, "Payables_GL_Entry_Monthly":payables_gl_entry_monthly,
                     "Receivables_GL_Entry_Monthly":receivables_gl_entry_monthly,"CTM_GL_Entry_Monthly":ctm_gl_entry_monthly, "Macquarie Accrual Entry":macq_accr_entry, "Ticket_N_Settlement_Report":tkt_n_settlement_summ,
                     "Payroll_Summary":payroll_summ,"Credit_Card_Entry":credit_card_entry, "Credit_Card_GL_Entry_Monthly":credit_card_gl,"Unsettled_AR_By_Reason":unsettled_ar_by_location_part1,
-                    "Unsettled_AR_By_Location_with_Location":unsettled_ar_by_location_part2,"Open_AR_Monthly":open_ar_monthly}
+                    "Unsettled_AR_By_Location_with_Location":unsettled_ar_by_location_part2,"Open_AR_Monthly":open_ar_monthly}#,"Weekly_Estimate":weekly_estimate}
     # wp_job_ids = {'ABS':1,'BBR':bbr,'CPR Report':cpr, 'Freight analysis':freight_analysis, 'CTM combined':ctm,'MTM Report':mtm_report,
     #                 'MOC Interest Allocation':moc_interest_alloc,'Open AR':open_ar,'Open AP':open_ap, 'Unsettled Payable Report':unsetteled_payables,'Unsettled Receivable Report':unsetteled_receivables,
     #                 'Storage Month End Report':strg_month_end_report, "Month End BBR":bbr_monthEnd, "Bank Recons Report":bank_recons_rep}
