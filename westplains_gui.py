@@ -8040,9 +8040,10 @@ def unsettled_ar_by_location_part1(input_date, output_date):
             Reason_column_letter=num_to_col_letters(Reason_column_no)
         except:
             Reason_column_no = column_list2.index("Reasons")+1
-            Reason_column_letter=num_to_col_letters(Reason_column_no) 
+            Reason_column_letter=num_to_col_letters(Reason_column_no)   
+        last_row22 = wss1.range(f'F'+ str(ws1.cells.last_cell.row)).end('up').row  
         if cnt2>cnt1:
-            wss1.range(f"A{last_row2}:{Reason_column_letter}{last_row2}").copy(wss1.range(f"A{last_row2}:{Reason_column_letter}{last_row}")) #old change
+            wss1.range(f"A{last_row2}:{Reason_column_letter}{last_row2}").copy(wss1.range(f"A{last_row2}:{Reason_column_letter}{last_row22}")) #old change
             # wss1.range(f"F{last_row2+1}:AK{last_row}").delete()  #new change
         else:
             wss1.range(f"A{cnt1+1}").expand('table').delete()
@@ -8059,7 +8060,7 @@ def unsettled_ar_by_location_part1(input_date, output_date):
         wb2.activate()
         wss1.activate()
         wss1.api.Range(f"{Reason_column_letter}2").Value=f"=VLOOKUP(A2,'[Unsettled AR {output_date}_with reason.xlsx]Sheet1'!$A:$E,5,0)"
-        wss1.range(f"{Reason_column_letter}2").copy(wss1.range(f"{Reason_column_letter}2:{Reason_column_letter}{last_row}"))
+        wss1.range(f"{Reason_column_letter}2").copy(wss1.range(f"{Reason_column_letter}2:{Reason_column_letter}{last_row22}"))
         time.sleep(1)
         wss1.range(f"{Reason_column_letter}:{Reason_column_letter}").copy()
         time.sleep(1)
@@ -8068,7 +8069,7 @@ def unsettled_ar_by_location_part1(input_date, output_date):
         try:
             wss1.api.Range(f"{Reason_column_letter}1").AutoFilter(Field:=f'{Reason_column_no}', Criteria1:=['#N/A'], Operator:=7)
             time.sleep(1)
-            wss1.api.Range(f"{Reason_column_letter}2:{Reason_column_letter}{last_row}").SpecialCells(win32c.CellType.xlCellTypeVisible).Select()
+            wss1.api.Range(f"{Reason_column_letter}2:{Reason_column_letter}{last_row22}").SpecialCells(win32c.CellType.xlCellTypeVisible).Select()
             time.sleep(1)
             wb2.app.api.Selection.Value=None
             time.sleep(1)
@@ -8082,7 +8083,7 @@ def unsettled_ar_by_location_part1(input_date, output_date):
             wss1.api.Range(f"{CVC_column_letter}1").AutoFilter(Field:=f'{CVC_column_no}', Criteria1:=['INTER-COMPANY PURCH/SALES'], Operator:=7)
             time.sleep(1)
             last_column_letter21=num_to_col_letters(wss1.range('A1').end('right').end('right').last_cell.column)
-            wss1.api.Range(f"A2:{last_column_letter21}{last_row}").SpecialCells(win32c.CellType.xlCellTypeVisible).Select()
+            wss1.api.Range(f"A2:{last_column_letter21}{last_row22}").SpecialCells(win32c.CellType.xlCellTypeVisible).Select()
             time.sleep(1)
             wb2.app.api.Selection.Delete(win32c.DeleteShiftDirection.xlShiftUp)
             time.sleep(1)
