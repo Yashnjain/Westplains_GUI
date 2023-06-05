@@ -6215,7 +6215,8 @@ def strg_month_end_report(input_date, output_date):
         monthYear = datetime.strftime(datetime.strptime(input_date, "%m.%d.%Y"), "%b%Y").upper()
         monthYear2 = datetime.strftime(datetime.strptime(input_date, "%m.%d.%Y"), "%b %Y").upper()
         
-        pdf_loc = drive+r'\REPORT\Storage Month End Report\Raw Files'+f"\\{monthYear}\\PDF"
+        # pdf_loc = drive+r'\REPORT\Storage Month End Report\Raw Files'+f"\\{monthYear}\\PDF"
+        pdf_loc = drive+r'\REPORT\Storage Month End Report\Raw Files'+f"\\{input_date}\\PDF"
         # pdf_loc = r'C:\Users\imam.khan\OneDrive - BioUrja Trading LLC\Documents\WEST PLAINS\REPORT\Storage Month End Report\Raw Files'+f"\\{monthYear}\\PDF"
         if not os.path.exists(pdf_loc):
             return(f"{pdf_loc} Excel file not present for date {input_date}")
@@ -8411,6 +8412,7 @@ def weekly_estimate(input_date, output_date):
         input_datetime = datetime.strptime(input_date, "%m.%d.%Y")
         input_date2 = datetime.strftime(input_datetime, "%m%d%Y")
         input_month_date = datetime.strftime(input_datetime, "%d%m")
+        inp_sht_date = datetime.strftime(input_datetime, "%d-%m-%Y")
 
         input_xl = drive+r'\REPORT\Weekly_Estimate'+f'\\Weekly_Estimate_Template.xlsx'
         if not os.path.exists(input_xl):
@@ -8435,9 +8437,12 @@ def weekly_estimate(input_date, output_date):
         inp_inventory = drive +f'\\REPORT\\Inv_MTM_Excel_Report_Summ\\Output Files\\Inventory MTM Excel Report_'+input_date+".xlsx"
         if not os.path.exists(inp_inventory):
             return(f"{inp_inventory} Excel file not present for date {input_date}")
+        inp_strg_accr = drive +f'\\REPORT\\Storage Month End Report\\Output Files\\STORAGE ACCRUAL JE_'+input_date+".xlsx"
+        if not os.path.exists(inp_strg_accr):
+            return(f"{inp_strg_accr} Excel file not present for date {input_date}")
         mapping_loc = drive+r'\REPORT\Weekly_Estimate\Mapping.xlsx'
         if not os.path.exists(mapping_loc):
-                return(f"{mapping_loc} Excel file not present for date {input_date}")
+            return(f"{mapping_loc} Excel file not present for date {input_date}")
         
         retry=0
         while retry < 10:
@@ -8505,6 +8510,7 @@ def weekly_estimate(input_date, output_date):
         #         if retry ==9:
         #             raise e
                 
+        estimate_sht = wb.sheets("West Plains Estimate")
         open_futures_sht = wb.sheets("OPEN FUTURES")
         payab_sht = wb.sheets("UNSETTLED PAYABLES")
         receivables_sht = wb.sheets("UNSETTLED RECEIVABLES")
@@ -8513,6 +8519,9 @@ def weekly_estimate(input_date, output_date):
         repos_sht = wb.sheets("REPOS")
         freight_sht = wb.sheets("FREIGHT ACCRUAL")
         storage_sht = wb.sheets("STORAGE ACCRUAL")
+
+        ###############Updating dat in first sheet########################
+        estimate_sht.range(f"A3").value = inp_sht_date
 
         ##################getting data in dataframes#############
         open_futures_df = pd.read_csv(inp_open_futures)
@@ -8672,6 +8681,21 @@ def weekly_estimate(input_date, output_date):
         ctm_sht.range(f'AP2:AQ{last_row_ctm}').select()
         wb.app.selection.api.FillDown()
         ctm_wb.close()
+        ########################Inventory Sheet####################################
+        inventory_df = pd.read_excel(inp_inventory, sheet_name="INPUT DATA",header=2)
+        inventory_df.columns = inventory_df.columns.str.rstrip()
+        inventory_df = inventory_df.dropna(subset=["UOM MKT VALUE"])
+        # last_row_inventory = inventory_sht.range(f'T'+ str(inventory_sht.cells.last_cell.row)).end('up').row
+        # inventory_sht.range(f'A2:S{last_row_inventory}').clear_contents()
+        inventory_sht.range(f'A4').options(pd.DataFrame, header=False, index=False).value = inventory_df
+        #Now calculating last row based on pasted data
+        last_row_inventory = inventory_sht.range(f'A'+ str(inventory_sht.cells.last_cell.row)).end('up').row
+        wb.activate()
+        inventory_sht.activate()
+        inventory_sht.range(f'T4:U{last_row_inventory}').select()
+        wb.app.selection.api.FillDown()
+        wb.api.ActiveSheet.PivotTables(1).PivotCache().SourceData = f"'INVENTORY'!R3C1:R{last_row_inventory}C21"
+        wb.api.ActiveSheet.PivotTables(1).PivotCache().Refresh()
         return f"{job_name} Report for {input_date} generated succesfully"
     except Exception as e:
         raise e
