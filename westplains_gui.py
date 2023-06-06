@@ -5605,6 +5605,7 @@ def moc_interest_alloc(input_date, output_date):
 
         # mtm_file = drive+r"\REPORT\MOC Interest allocation\Raw files\Inventory MTM Excel Report " + mtm_input_date +'.xlsx'
         mtm_file = drive+r"\REPORT\FIFO reports\Output files\Inventory MTM Excel Report " + mtm_input_date +'.xlsx'
+        # mtm_file = drive+r"\REPORT\FIFO reports\Output files\Inventory MTM Excel Report_" + input_date +'.xlsx'
         if not os.path.exists(mtm_file):
                 return(f"{mtm_file} Excel file not present for date {input_date}")
 
@@ -5817,7 +5818,8 @@ def fifo(input_date, output_date):
                     return(f"{input_xl} Excel file not present for date {input_date}")
             
             # input_mtm = drive+r"\REPORT\MOC Interest allocation\Raw Files" +f"\\Inventory MTM Excel Report {monthYear}.xlsx"
-            input_mtm = drive+r'\REPORT\Inv_MTM_Excel_Report_Summ\Output files' +f"\\Inventory MTM Excel Report {monthYear}.xlsx"
+            # input_mtm = drive+r'\REPORT\Inv_MTM_Excel_Report_Summ\Output files' +f"\\Inventory MTM Excel Report {monthYear}.xlsx"
+            input_mtm = drive+r'\REPORT\Inv_MTM_Excel_Report_Summ\Output files' +f"\\Inventory MTM Excel Report_{input_date}.xlsx"
             # input_mtm = r"C:\Users\imam.khan\OneDrive - BioUrja Trading LLC\Documents\WEST PLAINS\REPORT\FIFO reports\Output files" +f"\\Inventory MTM Excel Report {monthYear}.xlsx"
             if not os.path.exists(input_mtm):
                     return(f"{input_mtm} Excel file not present for date {input_date}")
@@ -7517,8 +7519,8 @@ def payroll_summ(input_date, output_date):
         monthYear = datetime.strftime(datetime.strptime(input_date, "%m.%d.%Y"), "%b %y")
         input_pdf = drive+r"\REPORT\Payroll summary accounting report\Raw Files" +f"\\Payroll Summary By Cost Center *.pdf"
         # input_pdf = r"C:\Users\imam.khan\OneDrive - BioUrja Trading LLC\Documents\WEST PLAINS\REPORT\Macquaire Accrual Entry\Raw Files" +f"\\Macq Statement_{input_date}.pdf"
-        # if not os.path.exists(input_pdf):
-        #         return(f"{input_pdf} PDF file not present for date {input_date}")
+        if not os.path.exists(input_pdf):
+                return(f"{input_pdf} PDF file not present for date {input_date}")
         # input_xl = drive+r"\REPORT\Payroll summary accounting report\Raw Files" +f"\\Payroll by Dept - {monthYear}.xlsx"
         # input_xl = r"C:\Users\imam.khan\OneDrive - BioUrja Trading LLC\Documents\WEST PLAINS\REPORT\Macquaire Accrual Entry\Raw Files" +f"\\Macq Accrual_{input_date}.xlsx"
         # if not osE.path.exists(input_xl):
@@ -8454,62 +8456,7 @@ def weekly_estimate(input_date, output_date):
                 retry+=1
                 if retry ==9:
                     raise e
-                
-        # retry=0
-        # while retry < 10:
-        #     try:
-        #         open_fut_wb=xw.Book(inp_open_futures, update_links=False)
-        #         break
-        #     except Exception as e:
-        #         time.sleep(2)
-        #         retry+=1
-        #         if retry ==9:
-        #             raise e
-                
-        # retry=0
-        # while retry < 10:
-        #     try:
-        #         payab_wb=xw.Book(inp_payables, update_links=False)
-        #         break
-        #     except Exception as e:
-        #         time.sleep(2)
-        #         retry+=1
-        #         if retry ==9:
-        #             raise e
-
-        # retry=0
-        # while retry < 10:
-        #     try:
-        #         unset_rec_wb=xw.Book(inp_receivables, update_links=False)
-        #         break
-        #     except Exception as e:
-        #         time.sleep(2)
-        #         retry+=1
-        #         if retry ==9:
-        #             raise e
-                
-        # retry=0
-        # while retry < 10:
-        #     try:
-        #         ctm_wb=xw.Book(inp_ctm, update_links=False)
-        #         break
-        #     except Exception as e:
-        #         time.sleep(2)
-        #         retry+=1
-        #         if retry ==9:
-        #             raise e
-                
-        # retry=0
-        # while retry < 10:
-        #     try:
-        #         inventory_wb=xw.Book(inp_inventory, update_links=False)
-        #         break
-        #     except Exception as e:
-        #         time.sleep(2)
-        #         retry+=1
-        #         if retry ==9:
-        #             raise e
-                
+    
         estimate_sht = wb.sheets("West Plains Estimate")
         open_futures_sht = wb.sheets("OPEN FUTURES")
         payab_sht = wb.sheets("UNSETTLED PAYABLES")
@@ -8696,6 +8643,17 @@ def weekly_estimate(input_date, output_date):
         wb.app.selection.api.FillDown()
         wb.api.ActiveSheet.PivotTables(1).PivotCache().SourceData = f"'INVENTORY'!R3C1:R{last_row_inventory}C21"
         wb.api.ActiveSheet.PivotTables(1).PivotCache().Refresh()
+        ######################STORAGE ACCRUAL JE############################################
+        strg_accr_df = pd.read_excel(inp_strg_accr, sheet_name="INPUT DATA",header=2)
+        storage_col_list = storage_sht.range("A3").expand("right").value
+        storage_sht.range(f'A4').options(pd.DataFrame, header=False, index=False).value = strg_accr_df
+        last_row_strg_accr = storage_sht.range(f'A'+ str(storage_sht.cells.last_cell.row)).end('up').row
+        wb.activate()
+        storage_sht.activate()
+        storage_sht.range(f'J4:K{last_row_strg_accr}').select()
+        wb.app.selection.api.FillDown()
+        ######################FREIGHT ACCRAUL TAB####################################
+        freight_accr_df = pd.read_excel(inp_strg_accr, sheet_name="INPUT DATA",header=2)
         return f"{job_name} Report for {input_date} generated succesfully"
     except Exception as e:
         raise e
