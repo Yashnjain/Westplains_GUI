@@ -8043,7 +8043,7 @@ def unsettled_ar_by_location_part1(input_date, output_date):
             Reason_column_no = column_list2.index("Reasons")+1
             Reason_column_letter=num_to_col_letters(Reason_column_no)   
         last_row22 = wss1.range(f'F'+ str(ws1.cells.last_cell.row)).end('up').row  
-        if cnt2>cnt1:
+        if cnt1>cnt2:
             wss1.range(f"A{last_row2}:{Reason_column_letter}{last_row2}").copy(wss1.range(f"A{last_row2}:{Reason_column_letter}{last_row22}")) #old change
             # wss1.range(f"F{last_row2+1}:AK{last_row}").delete()  #new change
         else:
