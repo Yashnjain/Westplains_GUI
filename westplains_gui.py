@@ -38,6 +38,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.firefox import GeckoDriverManager
 from selenium.webdriver.firefox.options import Options
 import re
+import requests
 
 
 # path = r'C:\Users\imam.khan\OneDrive - BioUrja Trading LLC\Documents\Revelio'
@@ -1151,7 +1152,7 @@ def payroll_pdf_extractor(input_pdf, input_datetime, monthYear):
         count = 0
         for loc in glob.glob(input_pdf):       #add month difference if ==2 then not consider that file
             file_date = loc.split()[-1].split(".pdf")[0].replace(".","-")
-            file_datetime = datetime.strptime(loc.split()[-1].split(".pdf")[0],"%m.%d.%Y")
+            file_datetime = datetime.strptime(loc.split()[-1].split(".pdf")[0],"%m.%d.%y")
             file_date = datetime.strftime(file_datetime, "%d-%m-%Y")
             diff = relativedelta(input_datetime.replace(day=1),file_datetime.replace(day=1))
             diff = diff.months*(diff.years+1)
@@ -7519,8 +7520,8 @@ def payroll_summ(input_date, output_date):
         monthYear = datetime.strftime(datetime.strptime(input_date, "%m.%d.%Y"), "%b %y")
         input_pdf = drive+r"\REPORT\Payroll summary accounting report\Raw Files" +f"\\Payroll Summary By Cost Center *.pdf"
         # input_pdf = r"C:\Users\imam.khan\OneDrive - BioUrja Trading LLC\Documents\WEST PLAINS\REPORT\Macquaire Accrual Entry\Raw Files" +f"\\Macq Statement_{input_date}.pdf"
-        if not os.path.exists(input_pdf):
-                return(f"{input_pdf} PDF file not present for date {input_date}")
+        # if not os.path.exists(input_pdf):
+        #         return(f"{input_pdf} PDF file not present for date {input_date}")
         # input_xl = drive+r"\REPORT\Payroll summary accounting report\Raw Files" +f"\\Payroll by Dept - {monthYear}.xlsx"
         # input_xl = r"C:\Users\imam.khan\OneDrive - BioUrja Trading LLC\Documents\WEST PLAINS\REPORT\Macquaire Accrual Entry\Raw Files" +f"\\Macq Accrual_{input_date}.xlsx"
         # if not osE.path.exists(input_xl):
@@ -8415,6 +8416,9 @@ def weekly_estimate(input_date, output_date):
         input_date2 = datetime.strftime(input_datetime, "%m%d%Y")
         input_month_date = datetime.strftime(input_datetime, "%d%m")
         inp_sht_date = datetime.strftime(input_datetime, "%d-%m-%Y")
+        cur_year = datetime.strftime(input_datetime, "%Y")
+        monthYear = datetime.strftime(input_datetime, "%b-%y")
+        input_date3 = datetime.strftime(input_datetime, "%m/%d/%Y")#05/22/2023
 
         input_xl = drive+r'\REPORT\Weekly_Estimate'+f'\\Weekly_Estimate_Template.xlsx'
         if not os.path.exists(input_xl):
@@ -8442,6 +8446,15 @@ def weekly_estimate(input_date, output_date):
         inp_strg_accr = drive +f'\\REPORT\\Storage Month End Report\\Output Files\\STORAGE ACCRUAL JE_'+input_date+".xlsx"
         if not os.path.exists(inp_strg_accr):
             return(f"{inp_strg_accr} Excel file not present for date {input_date}")
+        inp_freight_accr = drive +f'\\REPORT\Weekly_Estimate\Raw Files\\Freight Accrual_'+input_date+".xlsx"
+        if not os.path.exists(inp_freight_accr):
+            return(f"{inp_freight_accr} Excel file not present for date {input_date}")
+        macq_file_path = drive+f'\\REPORT\Weekly_Estimate\\Raw Files\\Open Macquire Repurchase Tracking Report- {cur_year}.xlsx'
+        if not os.path.exists(macq_file_path):
+            return(f"{macq_file_path} Excel file not present for year {cur_year}")
+        inp_basis_path = drive+f'\\REPORT\Weekly_Estimate\\Raw Files\\{cur_year}  Weekly and Monthly Values.xlsx'
+        if not os.path.exists(inp_basis_path):
+            return(f"{inp_basis_path} Excel file not present for year {cur_year}")
         mapping_loc = drive+r'\REPORT\Weekly_Estimate\Mapping.xlsx'
         if not os.path.exists(mapping_loc):
             return(f"{mapping_loc} Excel file not present for date {input_date}")
@@ -8653,7 +8666,133 @@ def weekly_estimate(input_date, output_date):
         storage_sht.range(f'J4:K{last_row_strg_accr}').select()
         wb.app.selection.api.FillDown()
         ######################FREIGHT ACCRAUL TAB####################################
-        freight_accr_df = pd.read_excel(inp_strg_accr, sheet_name="INPUT DATA",header=2)
+        retry=0
+        while retry<10:
+            try: 
+                freight_wb = xw.Book(inp_freight_accr, update_links=False)
+                break
+            except Exception as e:
+                time.sleep(2)
+                retry+=1
+                if retry==9:
+                    raise e
+        inp_freight_sht = freight_wb.sheets[0]
+        freight_accr_df = inp_freight_sht.range("A1").expand("table").options(pd.DataFrame,header=1,
+                                index=False).value
+        # freight_accr_df = pd.read_excel(inp_freight_accr,sheet_name=0,header=0)
+        freight_accr_df = freight_accr_df[freight_accr_df['Accrual Entered']!="C"].reset_index(drop=True)
+        freight_accr_df = freight_accr_df[freight_accr_df['Location Name']!="WEST PLAINS MEXICO"].reset_index(drop=True)
+        freight_accr_df['Comments'] = np.where(
+            (freight_accr_df['Contract Location'].isna()), "Unapplied Tickets", "Applied to Contract")
+        freight_sht.range(f'A2').options(pd.DataFrame, header=False, index=False).value = freight_accr_df
+        last_row_freight_accr = freight_sht.range(f'A'+ str(freight_sht.cells.last_cell.row)).end('up').row
+        wb.activate()
+        freight_sht.activate()
+        freight_sht.range(f'AA2:AB{last_row_freight_accr}').select()
+        wb.app.selection.api.FillDown()
+        freight_wb.close()
+        """Repos Tab Part"""
+        retry=0
+        while retry<10:
+            try:
+                macq_wb = xw.Book(macq_file_path, update_links=False)
+                break
+            except Exception as e:
+                time.sleep(2)
+                retry+=1
+                if retry==9:
+                    raise e
+        retry=0
+        while retry<10:
+            try:
+                basis_wb = xw.Book(inp_basis_path, update_links=False)
+                break
+            except Exception as e:
+                time.sleep(2)
+                retry+=1
+                if retry==9:
+                    raise e
+                
+        basis_sheet = basis_wb.sheets["Active Pricings"]
+        basis_wb.activate()
+        basis_sheet.activate()
+        basis_sheet.api.Cells.Find(What:="CORN", After:=basis_sheet.api.Application.ActiveCell,LookIn:=win32c.FindLookIn.xlFormulas,
+                                   LookAt:=win32c.LookAt.xlPart, SearchOrder:=win32c.SearchOrder.xlByRows, SearchDirection:=win32c.SearchDirection.xlNext).Activate()
+        corn_cell_value = basis_sheet.api.Application.ActiveCell.Address.replace("$","")
+        corn_df = basis_sheet.range(f"{corn_cell_value}").expand('table').options(pd.DataFrame,header=1,index=False).value
+        corn_df = corn_df[["Location", monthYear]]
+        corn_dict = corn_df.set_index("Location")[monthYear].to_dict()
+        ###HRW Location dict logic
+        basis_sheet.api.Cells.Find(What:="HRW", After:=basis_sheet.api.Application.ActiveCell,LookIn:=win32c.FindLookIn.xlFormulas,
+                                   LookAt:=win32c.LookAt.xlPart, SearchOrder:=win32c.SearchOrder.xlByRows, SearchDirection:=win32c.SearchDirection.xlNext).Activate()
+        hrw_cell_value = basis_sheet.api.Application.ActiveCell.Address.replace("$","")
+        hrw_df = basis_sheet.range(f"{hrw_cell_value}").expand('table').options(pd.DataFrame,header=1,index=False).value
+        hrw_df = hrw_df[["Location", monthYear]]
+        hrw_dict = hrw_df.set_index("Location")[monthYear].to_dict()
+
+        ####Updating basis price in Macquarie Sheet
+        
+        macq_m_end_sht = macq_wb.sheets["MONTH END PRICES"]
+        macq_wb.activate()
+        macq_m_end_sht.activate()
+        corn_last_row = macq_m_end_sht.range(f'F'+ str(macq_m_end_sht.cells.last_cell.row)).end('up').row
+        hrw_last_row = macq_m_end_sht.range(f'H'+ str(macq_m_end_sht.cells.last_cell.row)).end('up').row
+        corn_st_row = 4
+        hrw_st_row = 4
+        for row in range(corn_st_row,corn_last_row+1):
+            try:
+                macq_m_end_sht.range(f"G{row}").value = corn_dict[macq_m_end_sht.range(f"F{row}").value]
+            except:
+                try:
+                    macq_m_end_sht.range(f"G{row}").value = 0
+                except Exception as e:
+                    raise e
+        for row in range(hrw_st_row,hrw_last_row+1):
+            try:
+                macq_m_end_sht.range(f"I{row}").value = hrw_dict[macq_m_end_sht.range(f"H{row}").value]
+            except:
+                try:
+                    macq_m_end_sht.range(f"I{row}").value = 0
+                except Exception as e:
+                    raise e
+
+        ########Future Price Part#################
+        hrw_map_df = pd.read_excel(mapping_loc,sheet_name = "Future Month HRW",header=3)
+        hrw_mapping = hrw_map_df.set_index("Option Month")["Month"].to_dict()
+        corn_map_df = pd.read_excel(mapping_loc,sheet_name = "Future Month YC",header=3)
+        corn_mapping = corn_map_df.set_index("Option Month")["Month"].to_dict()
+
+        corn_site_code = 300
+        hrw_site_code = 348
+        
+        for site_code in [corn_site_code,hrw_site_code]:
+            cme_date_url = f'https://www.cmegroup.com/CmeWS/mvc/Settlements/Futures/Settlements/{site_code}/FUT?strategy=DEFAULT&tradeDate={input_date3}'
+            with requests.Session() as session:
+                response = session.get(cme_date_url)
+                if response.json()['empty']:
+                    messagebox.showinfo(messagebox.INFO,f"Data not found for {input_date} on cme website so picking up lastest date data")
+                    cme_url = f'https://www.cmegroup.com/CmeWS/mvc/Settlements/Futures/TradeDate/{corn_site_code}'
+                    date = session.get(cme_url).json()[1][0]
+                    cme_date_url = f'https://www.cmegroup.com/CmeWS/mvc/Settlements/Futures/Settlements/{site_code}/FUT?strategy=DEFAULT&tradeDate={date}'
+                    response= session.get(cme_date_url)
+            data_dict = response.json()
+            df = pd.DataFrame(data_dict['settlements'])
+            df = df[["month", "settle"]]
+            df_dict = df.set_index("month")["settle"].to_dict()
+            form_dict = {"'6":"75", "'4":"50", "'2":"25", "'0":"00"}
+            ##Updating Future prices
+            fut_start = 3
+            fut_end = macq_m_end_sht.range(f'C'+ str(macq_m_end_sht.cells.last_cell.row)).end('up').row
+            for row in range(fut_start,fut_end+1):
+                if macq_m_end_sht.range(f"C{row}").value is not None:
+                    if macq_m_end_sht.range(f"C{row}").value.startswith("C"):
+                        fut_value = df_dict[corn_mapping[macq_m_end_sht.range(f"C{row}").value]]                  
+                    else:
+                        fut_value = df_dict[hrw_mapping[macq_m_end_sht.range(f"C{row}").value]]
+                    fut_value = int(fut_value.split("'")[0] + form_dict[("'" + fut_value.split("'")[1])])/10000
+                    macq_m_end_sht.range(f"D{row}").value = fut_value
+        
+        
         return f"{job_name} Report for {input_date} generated succesfully"
     except Exception as e:
         raise e
