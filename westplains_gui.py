@@ -8419,6 +8419,10 @@ def weekly_estimate(input_date, output_date):
         cur_year = datetime.strftime(input_datetime, "%Y")
         monthYear = datetime.strftime(input_datetime, "%b-%y")
         input_date3 = datetime.strftime(input_datetime, "%m/%d/%Y")#05/22/2023
+        input_date_save = datetime.strftime(input_datetime, "%m-%d-%Y")#05/22/2023
+
+        output_loc = drive+f'\\REPORT\\Weekly_Estimate\\Output Files\\Weekly Estimate_{input_date_save}.xlsx'
+        
 
         input_xl = drive+r'\REPORT\Weekly_Estimate'+f'\\Weekly_Estimate_Template.xlsx'
         if not os.path.exists(input_xl):
@@ -8730,29 +8734,32 @@ def weekly_estimate(input_date, output_date):
         hrw_df = hrw_df[["Location", monthYear]]
         hrw_dict = hrw_df.set_index("Location")[monthYear].to_dict()
 
+        basis_wb.close()
+
         ####Updating basis price in Macquarie Sheet
         
-        macq_m_end_sht = macq_wb.sheets["MONTH END PRICES"]
+        macq_m_end_prices_sht = macq_wb.sheets["MONTH END PRICES"]
+        
         macq_wb.activate()
-        macq_m_end_sht.activate()
-        corn_last_row = macq_m_end_sht.range(f'F'+ str(macq_m_end_sht.cells.last_cell.row)).end('up').row
-        hrw_last_row = macq_m_end_sht.range(f'H'+ str(macq_m_end_sht.cells.last_cell.row)).end('up').row
+        macq_m_end_prices_sht.activate()
+        corn_last_row = macq_m_end_prices_sht.range(f'F'+ str(macq_m_end_prices_sht.cells.last_cell.row)).end('up').row
+        hrw_last_row = macq_m_end_prices_sht.range(f'H'+ str(macq_m_end_prices_sht.cells.last_cell.row)).end('up').row
         corn_st_row = 4
         hrw_st_row = 4
         for row in range(corn_st_row,corn_last_row+1):
             try:
-                macq_m_end_sht.range(f"G{row}").value = corn_dict[macq_m_end_sht.range(f"F{row}").value]
+                macq_m_end_prices_sht.range(f"G{row}").value = corn_dict[macq_m_end_prices_sht.range(f"F{row}").value]
             except:
                 try:
-                    macq_m_end_sht.range(f"G{row}").value = 0
+                    macq_m_end_prices_sht.range(f"G{row}").value = 0
                 except Exception as e:
                     raise e
         for row in range(hrw_st_row,hrw_last_row+1):
             try:
-                macq_m_end_sht.range(f"I{row}").value = hrw_dict[macq_m_end_sht.range(f"H{row}").value]
+                macq_m_end_prices_sht.range(f"I{row}").value = hrw_dict[macq_m_end_prices_sht.range(f"H{row}").value]
             except:
                 try:
-                    macq_m_end_sht.range(f"I{row}").value = 0
+                    macq_m_end_prices_sht.range(f"I{row}").value = 0
                 except Exception as e:
                     raise e
 
@@ -8770,7 +8777,7 @@ def weekly_estimate(input_date, output_date):
             with requests.Session() as session:
                 response = session.get(cme_date_url)
                 if response.json()['empty']:
-                    messagebox.showinfo(messagebox.INFO,f"Data not found for {input_date} on cme website so picking up lastest date data")
+                    messagebox.showinfo(messagebox.INFO,f"Data not found for {input_date} on cme website so picking up lastest data")
                     cme_url = f'https://www.cmegroup.com/CmeWS/mvc/Settlements/Futures/TradeDate/{corn_site_code}'
                     date = session.get(cme_url).json()[1][0]
                     cme_date_url = f'https://www.cmegroup.com/CmeWS/mvc/Settlements/Futures/Settlements/{site_code}/FUT?strategy=DEFAULT&tradeDate={date}'
@@ -8782,15 +8789,63 @@ def weekly_estimate(input_date, output_date):
             form_dict = {"'6":"75", "'4":"50", "'2":"25", "'0":"00"}
             ##Updating Future prices
             fut_start = 3
-            fut_end = macq_m_end_sht.range(f'C'+ str(macq_m_end_sht.cells.last_cell.row)).end('up').row
+            fut_end = macq_m_end_prices_sht.range(f'C'+ str(macq_m_end_prices_sht.cells.last_cell.row)).end('up').row
             for row in range(fut_start,fut_end+1):
-                if macq_m_end_sht.range(f"C{row}").value is not None:
-                    if macq_m_end_sht.range(f"C{row}").value.startswith("C"):
-                        fut_value = df_dict[corn_mapping[macq_m_end_sht.range(f"C{row}").value]]                  
+                if macq_m_end_prices_sht.range(f"C{row}").value is not None:
+                    if macq_m_end_prices_sht.range(f"C{row}").value.startswith("C"):
+                        fut_value = df_dict[corn_mapping[macq_m_end_prices_sht.range(f"C{row}").value]]                  
                     else:
-                        fut_value = df_dict[hrw_mapping[macq_m_end_sht.range(f"C{row}").value]]
+                        fut_value = df_dict[hrw_mapping[macq_m_end_prices_sht.range(f"C{row}").value]]
                     fut_value = int(fut_value.split("'")[0] + form_dict[("'" + fut_value.split("'")[1])])/10000
-                    macq_m_end_sht.range(f"D{row}").value = fut_value
+                    macq_m_end_prices_sht.range(f"D{row}").value = fut_value
+            ####Updating date and refreshing Pivot##########################
+            macq_m_end_je_sht = macq_wb.sheets["MONTH END JE UPDATED"]
+            input_date4 = macq_m_end_je_sht.range(f"B2").value
+            input_date4 = datetime.strftime(input_date4, "X%m-X%d-%y").replace('X0','').replace('X','')
+            try:
+                macq_date_sht = macq_wb.sheets[input_date4]
+            except:
+                # messagebox.showinfo(messagebox.INFO,f"Sheet not found for {input_date4} so picking up latest sheet i.e {macq_wb.sheets[4].name}")
+                return f"Sheet not found for {input_date4}"
+                # macq_date_sht = macq_wb.sheets[4]
+        #########Pivot Refreshing Tables#######################
+        date_sht_last_row = macq_date_sht.range(f'C'+ str(macq_date_sht.cells.last_cell.row)).end('up').row
+        row_list = macq_date_sht.range(f"A1:A{date_sht_last_row}").value
+        open_repo_row = row_list.index("OPEN REPOS")
+        cur_mon_buyback_row = row_list.index("CURRENT MONTH BUYBACKS")
+        open_repo_last_row =macq_date_sht.range(f"C{cur_mon_buyback_row}").end("up").row
+
+        macq_wb.activate()
+        macq_m_end_je_sht.activate()
+        #1st Pivot
+        macq_wb.api.ActiveSheet.PivotTables(1).ChangePivotCache(macq_wb.api.PivotCaches().Create(SourceType=win32c.PivotTableSourceType.xlDatabase,
+                                                 SourceData= f"'{macq_date_sht.name}'!R{open_repo_row}C1:R{open_repo_last_row}C42",
+                                                 Version=8))
+        # macq_wb.api.ActiveSheet.PivotTables(1).PivotCache().SourceData = f"'{macq_date_sht.name}'!R{open_repo_row}C1:R{open_repo_last_row}C42"
+        macq_wb.api.ActiveSheet.PivotTables(1).PivotCache().Refresh()
+        #4th Pivot
+        macq_wb.api.ActiveSheet.PivotTables(2).PivotCache().SourceData = f"'{macq_date_sht.name}'!R{open_repo_row}C1:R{date_sht_last_row}C42"
+        macq_wb.api.ActiveSheet.PivotTables(2).PivotCache().Refresh()
+        #3rd Pivot
+        macq_wb.api.ActiveSheet.PivotTables(3).PivotCache().SourceData = f"'{macq_date_sht.name}'!R{open_repo_row}C1:R{open_repo_last_row}C42"
+        macq_wb.api.ActiveSheet.PivotTables(3).PivotCache().Refresh()
+        #2nd Pivot
+        macq_wb.api.ActiveSheet.PivotTables(4).PivotCache().SourceData = f"'{macq_date_sht.name}'!R{cur_mon_buyback_row}C1:R{date_sht_last_row}C42"
+        macq_wb.api.ActiveSheet.PivotTables(4).PivotCache().Refresh()
+
+        repos_sht.clear_contents()
+        macq_wb.app.api.CutCopyMode=False
+        macq_wb.api.ActiveSheet.Cells.Copy()
+
+        wb.activate()
+        repos_sht.activate()
+        
+        repos_sht.api.Range(f"A1")._PasteSpecial(Paste=win32c.PasteType.xlPasteValuesAndNumberFormats,Operation=win32c.Constants.xlNone)
+
+        ####Saving Workbook
+        wb.save(output_loc)
+        macq_wb.close()
+
         
         
         return f"{job_name} Report for {input_date} generated succesfully"
