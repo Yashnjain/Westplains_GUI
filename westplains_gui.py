@@ -6218,8 +6218,8 @@ def strg_month_end_report(input_date, output_date):
         monthYear = datetime.strftime(datetime.strptime(input_date, "%m.%d.%Y"), "%b%Y").upper()
         monthYear2 = datetime.strftime(datetime.strptime(input_date, "%m.%d.%Y"), "%b %Y").upper()
         
-        # pdf_loc = drive+r'\REPORT\Storage Month End Report\Raw Files'+f"\\{monthYear}\\PDF"
-        pdf_loc = drive+r'\REPORT\Storage Month End Report\Raw Files'+f"\\{input_date}\\PDF"
+        pdf_loc = drive+r'\REPORT\Storage Month End Report\Raw Files'+f"\\{monthYear}\\PDF"
+        # pdf_loc = drive+r'\REPORT\Storage Month End Report\Raw Files'+f"\\{input_date}\\PDF"
         # pdf_loc = r'C:\Users\imam.khan\OneDrive - BioUrja Trading LLC\Documents\WEST PLAINS\REPORT\Storage Month End Report\Raw Files'+f"\\{monthYear}\\PDF"
         if not os.path.exists(pdf_loc):
             return(f"{pdf_loc} Excel file not present for date {input_date}")
@@ -8418,6 +8418,8 @@ def weekly_estimate(input_date, output_date):
         inp_sht_date = datetime.strftime(input_datetime, "%d-%m-%Y")
         cur_year = datetime.strftime(input_datetime, "%Y")
         monthYear = datetime.strftime(input_datetime, "%b-%y")
+        prev_datetime = input_datetime.replace(day=1)-timedelta(days=1)
+        prev_date = datetime.strftime(prev_datetime,"%m.%d.%Y").upper()
         input_date3 = datetime.strftime(input_datetime, "%m/%d/%Y")#05/22/2023
         input_date_save = datetime.strftime(input_datetime, "%m-%d-%Y")#05/22/2023
 
@@ -8427,6 +8429,9 @@ def weekly_estimate(input_date, output_date):
         input_xl = drive+r'\REPORT\Weekly_Estimate'+f'\\Weekly_Estimate_Template.xlsx'
         if not os.path.exists(input_xl):
             return(f"{input_xl} Excel Template file not present")
+        inp_gl_query = drive +f'\\REPORT\\Weekly_Estimate\\Raw Files\\GL QUERY.xlsx'
+        if not os.path.exists(inp_gl_query):
+            return(f"{inp_gl_query} Excel file not present.")
         inp_open_futures = drive + f'\\REPORT\\Macquarie P & L\\FromEmail\\{input_date2}\\{input_month_date}F\\OC{input_month_date}F.csv'
         if not os.path.exists(inp_open_futures):
             return(f"{inp_open_futures} CSV file not present for date {input_date}")
@@ -8447,9 +8452,9 @@ def weekly_estimate(input_date, output_date):
         inp_inventory = drive +f'\\REPORT\\Inv_MTM_Excel_Report_Summ\\Output Files\\Inventory MTM Excel Report_'+input_date+".xlsx"
         if not os.path.exists(inp_inventory):
             return(f"{inp_inventory} Excel file not present for date {input_date}")
-        inp_strg_accr = drive +f'\\REPORT\\Storage Month End Report\\Output Files\\STORAGE ACCRUAL JE_'+input_date+".xlsx"
+        inp_strg_accr = drive +f'\\REPORT\\Storage Month End Report\\Output Files\\STORAGE ACCRUAL JE_'+prev_date+".xlsx"
         if not os.path.exists(inp_strg_accr):
-            return(f"{inp_strg_accr} Excel file not present for date {input_date}")
+            return(f"{inp_strg_accr} Excel file not present for date {prev_date}")
         inp_freight_accr = drive +f'\\REPORT\Weekly_Estimate\Raw Files\\Freight Accrual_'+input_date+".xlsx"
         if not os.path.exists(inp_freight_accr):
             return(f"{inp_freight_accr} Excel file not present for date {input_date}")
@@ -8474,6 +8479,7 @@ def weekly_estimate(input_date, output_date):
                 if retry ==9:
                     raise e
     
+        gl_query_sht = wb.sheets("GL QUERY")
         estimate_sht = wb.sheets("West Plains Estimate")
         open_futures_sht = wb.sheets("OPEN FUTURES")
         payab_sht = wb.sheets("UNSETTLED PAYABLES")
@@ -8487,12 +8493,35 @@ def weekly_estimate(input_date, output_date):
         ###############Updating dat in first sheet########################
         estimate_sht.range(f"A3").value = inp_sht_date
 
+        ##################GL QUERY PART#####################################
+        retry=0
+        while retry < 10:
+            try:
+                gl_wb=xw.Book(inp_gl_query, update_links=False)
+                break
+            except Exception as e:
+                time.sleep(2)
+                retry+=1
+                if retry ==9:
+                    raise e
+        inp_gl_sht = gl_wb.sheets("GL QUERY")
+        inp_gl_last_row = inp_gl_sht.range(f"A{inp_gl_sht.cells.last_cell.row}").end('up').row
+        inp_gl_sht.range(f"A2:Q{inp_gl_last_row}").copy(gl_query_sht.range("A2"))
+        #Now calculating last row based on pasted data
+        last_row_gl_query = gl_query_sht.range(f'A'+ str(gl_query_sht.cells.last_cell.row)).end('up').row
+        wb.activate()
+        gl_query_sht.activate()
+        gl_query_sht.range(f'R2:T{last_row_gl_query}').select()
+        wb.app.selection.api.FillDown()
+
+        gl_wb.close()
+
         ##################getting data in dataframes#############
         open_futures_df = pd.read_csv(inp_open_futures)
         #Replacing data in Open Futures Sheet
         last_row_open_futures = open_futures_sht.range(f'AX'+ str(open_futures_sht.cells.last_cell.row)).end('up').row
         open_futures_sht.range(f'A2:AW{last_row_open_futures}').clear_contents()
-        open_futures_sht.range(f'A1').options(pd.DataFrame, header=False, index=False).value = open_futures_df
+        open_futures_sht.range(f'A1').options(pd.DataFrame, header=True, index=False).value = open_futures_df
         #Now calculating last row based on pasted data
         last_row_open_futures = open_futures_sht.range(f'A'+ str(open_futures_sht.cells.last_cell.row)).end('up').row
         wb.activate()
@@ -8662,8 +8691,11 @@ def weekly_estimate(input_date, output_date):
         wb.api.ActiveSheet.PivotTables(1).PivotCache().Refresh()
         ######################STORAGE ACCRUAL JE############################################
         strg_accr_df = pd.read_excel(inp_strg_accr, sheet_name="INPUT DATA",header=2)
+        strg_accr_df2 = pd.read_excel(inp_strg_accr, sheet_name="INPUT DATA",header=None)
         storage_col_list = storage_sht.range("A3").expand("right").value
         storage_sht.range(f'A4').options(pd.DataFrame, header=False, index=False).value = strg_accr_df
+        #Entering Date
+        storage_sht.range(f'A1').value = strg_accr_df2.iloc[0,0]
         last_row_strg_accr = storage_sht.range(f'A'+ str(storage_sht.cells.last_cell.row)).end('up').row
         wb.activate()
         storage_sht.activate()
@@ -8833,9 +8865,9 @@ def weekly_estimate(input_date, output_date):
         macq_wb.api.ActiveSheet.PivotTables(4).PivotCache().SourceData = f"'{macq_date_sht.name}'!R{cur_mon_buyback_row}C1:R{date_sht_last_row}C42"
         macq_wb.api.ActiveSheet.PivotTables(4).PivotCache().Refresh()
 
-        repos_sht.clear_contents()
+        repos_sht.range("A:U").clear_contents()
         macq_wb.app.api.CutCopyMode=False
-        macq_wb.api.ActiveSheet.Cells.Copy()
+        macq_wb.api.ActiveSheet.Range("A:U").Copy()
 
         wb.activate()
         repos_sht.activate()
