@@ -8491,7 +8491,7 @@ def weekly_estimate(input_date, output_date):
         storage_sht = wb.sheets("STORAGE ACCRUAL")
 
         ###############Updating dat in first sheet########################
-        estimate_sht.range(f"A3").value = inp_sht_date
+        estimate_sht.range(f"B3").value = inp_sht_date
 
         ##################GL QUERY PART#####################################
         retry=0
@@ -8850,20 +8850,45 @@ def weekly_estimate(input_date, output_date):
         macq_wb.activate()
         macq_m_end_je_sht.activate()
         #1st Pivot
-        macq_wb.api.ActiveSheet.PivotTables(1).ChangePivotCache(macq_wb.api.PivotCaches().Create(SourceType=win32c.PivotTableSourceType.xlDatabase,
+        macq_wb.api.ActiveSheet.PivotTables("PivotTable1").ChangePivotCache(macq_wb.api.PivotCaches().Create(SourceType=win32c.PivotTableSourceType.xlDatabase,
                                                  SourceData= f"'{macq_date_sht.name}'!R{open_repo_row}C1:R{open_repo_last_row}C42",
                                                  Version=8))
         # macq_wb.api.ActiveSheet.PivotTables(1).PivotCache().SourceData = f"'{macq_date_sht.name}'!R{open_repo_row}C1:R{open_repo_last_row}C42"
-        macq_wb.api.ActiveSheet.PivotTables(1).PivotCache().Refresh()
-        #4th Pivot
-        macq_wb.api.ActiveSheet.PivotTables(2).PivotCache().SourceData = f"'{macq_date_sht.name}'!R{open_repo_row}C1:R{date_sht_last_row}C42"
-        macq_wb.api.ActiveSheet.PivotTables(2).PivotCache().Refresh()
-        #3rd Pivot
-        macq_wb.api.ActiveSheet.PivotTables(3).PivotCache().SourceData = f"'{macq_date_sht.name}'!R{open_repo_row}C1:R{open_repo_last_row}C42"
-        macq_wb.api.ActiveSheet.PivotTables(3).PivotCache().Refresh()
+        macq_wb.api.ActiveSheet.PivotTables("PivotTable1").PivotCache().Refresh()
         #2nd Pivot
-        macq_wb.api.ActiveSheet.PivotTables(4).PivotCache().SourceData = f"'{macq_date_sht.name}'!R{cur_mon_buyback_row}C1:R{date_sht_last_row}C42"
-        macq_wb.api.ActiveSheet.PivotTables(4).PivotCache().Refresh()
+        macq_wb.api.ActiveSheet.PivotTables("PivotTable2").PivotCache().SourceData = f"'{macq_date_sht.name}'!R{cur_mon_buyback_row}C1:R{date_sht_last_row}C42"
+        macq_wb.api.ActiveSheet.PivotTables("PivotTable2").PivotCache().Refresh()
+        #3rd Pivot
+        macq_wb.api.ActiveSheet.PivotTables("PivotTable3").PivotCache().SourceData = f"'{macq_date_sht.name}'!R{open_repo_row}C1:R{open_repo_last_row}C42"
+        macq_wb.api.ActiveSheet.PivotTables("PivotTable3").PivotCache().Refresh()
+        #4th Pivot
+        macq_wb.api.ActiveSheet.PivotTables("PivotTable4").PivotCache().SourceData = f"'{macq_date_sht.name}'!R{open_repo_row}C1:R{date_sht_last_row}C42"
+        macq_wb.api.ActiveSheet.PivotTables("PivotTable4").PivotCache().Refresh()
+
+        
+        #################Updating True False Formulas#####################################
+        macq_wb.activate()
+        macq_m_end_je_sht.activate()
+        # pvt_from_rows= []
+        # pvt_last_rows = []
+        formula_list = ['=IF(GETPIVOTDATA("MONTH END STORAGE",$B$6)=SUM(\'4-30-23\'!AC9:AC23),"TRUE","FALSE")', 
+                        '=IF(GETPIVOTDATA("STORAGE THRU PURCHASE DATE",$B$23)=SUM(\'4-30-23\'!X30:X42),"TRUE","FALSE")',
+                        '=IF(GETPIVOTDATA("Sum of MONTH END INVENTORY VALUE",$B$45)=SUM(\'4-30-23\'!AG9:AG17),"TRUE","FALSE")',
+                        '=IF(GETPIVOTDATA("CURRENT MONTH GROSS INTEREST",$B$62)=SUM(\'4-30-23\'!AB9:AB42),"TRUE","FALSE")'
+                        ]
+        finder_list = ['**MONTH END STORAGE ACCRUAL ON OPEN REPOS (REVERSING)', '**MONTH END STORAGE ON CURRENT MONTH BUYBACKS (NONREVERSING)',
+                       '**MONTH END REPO INV. & LIAB (REV ENTRY)', '**MONTH END REPO INTEREST RECLASS (NR ENTRY)']
+        for finder in range(len(finder_list)):
+
+            macq_wb.api.ActiveSheet.PivotTables(f"PivotTable{finder+1}").PivotSelect("",win32c.PTSelectionMode.xlDataAndLabel,True)
+            pvt_last_row = macq_wb.api.Application.Selection.Address.replace("$","").split(":")[1][1:]
+            macq_m_end_je_sht.api.Cells.Find(What:=finder_list[finder], After:=macq_m_end_je_sht.api.Application.ActiveCell,LookIn:=win32c.FindLookIn.xlFormulas,
+                                    LookAt:=win32c.LookAt.xlPart, SearchOrder:=win32c.SearchOrder.xlByRows, SearchDirection:=win32c.SearchDirection.xlNext).Activate()
+            pvt_formula_row = macq_m_end_je_sht.api.Application.ActiveCell.Address.replace("$","")[1:]
+
+            macq_m_end_je_sht.range(f"F{pvt_formula_row}").formula = formula_list[finder]
+        
+        
 
         repos_sht.range("A:U").clear_contents()
         macq_wb.app.api.CutCopyMode=False
