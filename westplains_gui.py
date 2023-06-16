@@ -8424,6 +8424,7 @@ def weekly_estimate(input_date, output_date):
         input_date_save = datetime.strftime(input_datetime, "%m-%d-%Y")#05/22/2023
 
         output_loc = drive+f'\\REPORT\\Weekly_Estimate\\Output Files\\Weekly Estimate_{input_date_save}.xlsx'
+        mac_output_loc = drive+f'\\REPORT\\Weekly_Estimate\\Output Files\\Open Macquire Repurchase Tracking Report- {input_date_save}.xlsx'
         
 
         input_xl = drive+r'\REPORT\Weekly_Estimate'+f'\\Weekly_Estimate_Template.xlsx'
@@ -8491,7 +8492,7 @@ def weekly_estimate(input_date, output_date):
         storage_sht = wb.sheets("STORAGE ACCRUAL")
 
         ###############Updating dat in first sheet########################
-        estimate_sht.range(f"B3").value = inp_sht_date
+        estimate_sht.range(f"B3").value = input_datetime
 
         ##################GL QUERY PART#####################################
         retry=0
@@ -8666,12 +8667,14 @@ def weekly_estimate(input_date, output_date):
             return "Input CTM column count change found, last column is not AO. Please fix and rerrun the job"
         inp_ctm_sht.api.Range(f"{Customer_letter_column}1").AutoFilter(Field:=f'{Customer_no_column}', Criteria1:=["<>MACQUARIE COMMODITIES (USA) INC."], Operator:=1,Criteria2=["<>INTER-COMPANY PURCH/SALES"])
         inp_ctm_sht.api.Range(f"{Location_letter_column}1").AutoFilter(Field:=f'{Location_no_column}', Criteria1:=["<>WPMEXICO"], Operator:=1)
-        inp_ctm_sht.api.AutoFilter.Range.Copy()
-        ctm_sht.range("A1").api._PasteSpecial(Paste=win32c.PasteType.xlPasteValues)
+        inp_ctm_last_row = inp_ctm_sht.range(f'A'+ str(ctm_sht.cells.last_cell.row)).end('up').row
+        inp_ctm_sht.range(f"A2:AN{inp_ctm_last_row}").api.SpecialCells(win32c.CellType.xlCellTypeVisible).Copy()
+        # inp_ctm_sht.api.AutoFilter.Range("A:AN").Copy()
+        ctm_sht.range("A2").api._PasteSpecial(Paste=win32c.PasteType.xlPasteValues)
         last_row_ctm = ctm_sht.range(f'A'+ str(ctm_sht.cells.last_cell.row)).end('up').row
         wb.activate()
         ctm_sht.activate()
-        ctm_sht.range(f'AP2:AQ{last_row_ctm}').select()
+        ctm_sht.range(f'AO2:AP{last_row_ctm}').select()
         wb.app.selection.api.FillDown()
         ctm_wb.close()
         ########################Inventory Sheet####################################
@@ -8809,30 +8812,39 @@ def weekly_estimate(input_date, output_date):
             with requests.Session() as session:
                 response = session.get(cme_date_url)
                 if response.json()['empty']:
-                    messagebox.showinfo(messagebox.INFO,f"Data not found for {input_date} on cme website so picking up lastest data")
-                    cme_url = f'https://www.cmegroup.com/CmeWS/mvc/Settlements/Futures/TradeDate/{corn_site_code}'
-                    date = session.get(cme_url).json()[1][0]
-                    cme_date_url = f'https://www.cmegroup.com/CmeWS/mvc/Settlements/Futures/Settlements/{site_code}/FUT?strategy=DEFAULT&tradeDate={date}'
-                    response= session.get(cme_date_url)
-            data_dict = response.json()
-            df = pd.DataFrame(data_dict['settlements'])
-            df = df[["month", "settle"]]
-            df_dict = df.set_index("month")["settle"].to_dict()
-            form_dict = {"'6":"75", "'4":"50", "'2":"25", "'0":"00"}
-            ##Updating Future prices
-            fut_start = 3
-            fut_end = macq_m_end_prices_sht.range(f'C'+ str(macq_m_end_prices_sht.cells.last_cell.row)).end('up').row
-            for row in range(fut_start,fut_end+1):
-                if macq_m_end_prices_sht.range(f"C{row}").value is not None:
-                    if macq_m_end_prices_sht.range(f"C{row}").value.startswith("C"):
-                        fut_value = df_dict[corn_mapping[macq_m_end_prices_sht.range(f"C{row}").value]]                  
+                    commodity = "Corn"
+                    if site_code == hrw_site_code:
+                        commodity = "HRW"
+                    if messagebox.askyesno(messagebox.INFO,f"Data not found for {commodity} {input_date} on cme website, should I pick Latest Data?"):
+                        cme_url = f'https://www.cmegroup.com/CmeWS/mvc/Settlements/Futures/TradeDate/{corn_site_code}'
+                        date = session.get(cme_url).json()[1][0]
+                        cme_date_url = f'https://www.cmegroup.com/CmeWS/mvc/Settlements/Futures/Settlements/{site_code}/FUT?strategy=DEFAULT&tradeDate={date}'
+                        response= session.get(cme_date_url)
+                #Again checking if already data present already or after picking latest date then only update else considered for manual entry
+                if not response.json()['empty']:
+                    data_dict = response.json()
+                    df = pd.DataFrame(data_dict['settlements'])
+                    df = df[["month", "settle"]]
+                    df_dict = df.set_index("month")["settle"].to_dict()
+                    form_dict = {"'6":"75", "'4":"50", "'2":"25", "'0":"00"}
+                    ##Updating Future prices
+                    if site_code == corn_site_code:
+                        fut_start = macq_m_end_prices_sht.range(f'C3').end('down').end('down').row
+                        fut_end = macq_m_end_prices_sht.range(f'C{fut_start}').end('down').row
                     else:
-                        fut_value = df_dict[hrw_mapping[macq_m_end_prices_sht.range(f"C{row}").value]]
-                    fut_value = int(fut_value.split("'")[0] + form_dict[("'" + fut_value.split("'")[1])])/10000
-                    macq_m_end_prices_sht.range(f"D{row}").value = fut_value
+                        fut_start = 3
+                        fut_end = macq_m_end_prices_sht.range(f'C3').end('down').row
+                    for row in range(fut_start,fut_end+1):
+                        if macq_m_end_prices_sht.range(f"C{row}").value is not None:
+                            if macq_m_end_prices_sht.range(f"C{row}").value.startswith("C"):
+                                fut_value = df_dict[corn_mapping[macq_m_end_prices_sht.range(f"C{row}").value]]            
+                            else:
+                                fut_value = df_dict[hrw_mapping[macq_m_end_prices_sht.range(f"C{row}").value]]
+                            fut_value = int(fut_value.split("'")[0] + form_dict[("'" + fut_value.split("'")[1])])/10000
+                            macq_m_end_prices_sht.range(f"D{row}").value = fut_value
             ####Updating date and refreshing Pivot##########################
             macq_m_end_je_sht = macq_wb.sheets["MONTH END JE UPDATED"]
-            input_date4 = macq_m_end_je_sht.range(f"B2").value
+            input_date4 = input_datetime
             input_date4 = datetime.strftime(input_date4, "X%m-X%d-%y").replace('X0','').replace('X','')
             try:
                 macq_date_sht = macq_wb.sheets[input_date4]
@@ -8840,6 +8852,14 @@ def weekly_estimate(input_date, output_date):
                 # messagebox.showinfo(messagebox.INFO,f"Sheet not found for {input_date4} so picking up latest sheet i.e {macq_wb.sheets[4].name}")
                 return f"Sheet not found for {input_date4}"
                 # macq_date_sht = macq_wb.sheets[4]
+        #########Updating A1 A2 date in date sheet#############
+        macq_wb.activate()
+        macq_date_sht.activate()
+        macq_date_sht.range("A1").value = input_datetime
+        macq_date_sht.range("A2").value = input_datetime
+        macq_wb.activate()
+        macq_m_end_je_sht.activate()
+        macq_m_end_je_sht.range("B2").value = input_datetime
         #########Pivot Refreshing Tables#######################
         date_sht_last_row = macq_date_sht.range(f'C'+ str(macq_date_sht.cells.last_cell.row)).end('up').row
         row_list = macq_date_sht.range(f"A1:A{date_sht_last_row}").value
@@ -8871,10 +8891,10 @@ def weekly_estimate(input_date, output_date):
         macq_m_end_je_sht.activate()
         # pvt_from_rows= []
         # pvt_last_rows = []
-        formula_list = ['=IF(GETPIVOTDATA("MONTH END STORAGE",$B$6)=SUM(\'4-30-23\'!AC9:AC23),"TRUE","FALSE")', 
-                        '=IF(GETPIVOTDATA("STORAGE THRU PURCHASE DATE",$B$23)=SUM(\'4-30-23\'!X30:X42),"TRUE","FALSE")',
-                        '=IF(GETPIVOTDATA("Sum of MONTH END INVENTORY VALUE",$B$45)=SUM(\'4-30-23\'!AG9:AG17),"TRUE","FALSE")',
-                        '=IF(GETPIVOTDATA("CURRENT MONTH GROSS INTEREST",$B$62)=SUM(\'4-30-23\'!AB9:AB42),"TRUE","FALSE")'
+        formula_list = [f'=IF(GETPIVOTDATA("MONTH END STORAGE",$B$last_row)=SUM(\'{macq_date_sht.name}\'!AC9:AC23),"TRUE","FALSE")', 
+                        f'=IF(GETPIVOTDATA("STORAGE THRU PURCHASE DATE",$B$last_row)=SUM(\'{macq_date_sht.name}\'!X30:X42),"TRUE","FALSE")',
+                        f'=IF(GETPIVOTDATA("Sum of MONTH END INVENTORY VALUE",$B$last_row)=SUM(\'{macq_date_sht.name}\'!AG9:AG17),"TRUE","FALSE")',
+                        f'=IF(GETPIVOTDATA("CURRENT MONTH GROSS INTEREST",$B$last_row)=SUM(\'{macq_date_sht.name}\'!AB9:AB42),"TRUE","FALSE")'
                         ]
         finder_list = ['**MONTH END STORAGE ACCRUAL ON OPEN REPOS (REVERSING)', '**MONTH END STORAGE ON CURRENT MONTH BUYBACKS (NONREVERSING)',
                        '**MONTH END REPO INV. & LIAB (REV ENTRY)', '**MONTH END REPO INTEREST RECLASS (NR ENTRY)']
@@ -8886,7 +8906,7 @@ def weekly_estimate(input_date, output_date):
                                     LookAt:=win32c.LookAt.xlPart, SearchOrder:=win32c.SearchOrder.xlByRows, SearchDirection:=win32c.SearchDirection.xlNext).Activate()
             pvt_formula_row = macq_m_end_je_sht.api.Application.ActiveCell.Address.replace("$","")[1:]
 
-            macq_m_end_je_sht.range(f"F{pvt_formula_row}").formula = formula_list[finder]
+            macq_m_end_je_sht.range(f"F{pvt_formula_row}").formula = formula_list[finder].replace("last_row", pvt_last_row)
         
         
 
@@ -8901,6 +8921,7 @@ def weekly_estimate(input_date, output_date):
 
         ####Saving Workbook
         wb.save(output_loc)
+        macq_wb.save(mac_output_loc)
         macq_wb.close()
 
         
