@@ -3084,7 +3084,23 @@ def mtm_pdf_data_extractor(input_date, f, hrw_pdf_loc=None, yc_pdf_loc=None ,ysb
         if mtm_excel_summ:
             return loc_dict
         else:
-            return loc_dict, hrw_fut, yc_fut ,ysb_fut
+            try:
+
+                return loc_dict, hrw_fut, yc_fut ,ysb_fut
+            except Exception as e:
+                if "hrw_fut" in e.args[0]:
+                    e_value = "hrw_fut"
+                    hrw_fut=None
+                elif "yc_fut" in e.args[0]:
+                    e_value = "yc_fut"
+                    yc_fut=None
+                elif "ysb_fut" in e.args[0]:
+                    e_value = "ysb_fut"
+                    ysb_fut=None
+                else:
+                    raise e
+                messagebox.showinfo("Sttle Price Not found",f"Settle price for {e_value} not found, click ok to proceed further")
+                return loc_dict, hrw_fut, yc_fut ,ysb_fut
     except Exception as e:
         raise e
 
