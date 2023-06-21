@@ -3099,7 +3099,7 @@ def mtm_pdf_data_extractor(input_date, f, hrw_pdf_loc=None, yc_pdf_loc=None ,ysb
                     ysb_fut=None
                 else:
                     raise e
-                messagebox.showinfo("Sttle Price Not found",f"Settle price for {e_value} not found, click ok to proceed further")
+                messagebox.showinfo("Settle Price Not found",f"Settle price for {e_value} not found, click ok to proceed further")
                 return loc_dict, hrw_fut, yc_fut ,ysb_fut
     except Exception as e:
         raise e
@@ -8429,6 +8429,7 @@ def weekly_estimate(input_date, output_date):
         job_name = "Weekly Estimate"
 
         input_datetime = datetime.strptime(input_date, "%m.%d.%Y")
+        input_datetime2 = datetime.strptime(output_date, "%m.%d.%Y")
         input_date2 = datetime.strftime(input_datetime, "%m%d%Y")
         input_month_date = datetime.strftime(input_datetime, "%d%m")
         inp_sht_date = datetime.strftime(input_datetime, "%d-%m-%Y")
@@ -8436,7 +8437,7 @@ def weekly_estimate(input_date, output_date):
         monthYear = datetime.strftime(input_datetime, "%b-%y")
         prev_datetime = input_datetime.replace(day=1)-timedelta(days=1)
         prev_date = datetime.strftime(prev_datetime,"%m.%d.%Y").upper()
-        input_date3 = datetime.strftime(input_datetime, "%m/%d/%Y")#05/22/2023
+        input_date3 = datetime.strftime(input_datetime2, "%m/%d/%Y")#05/22/2023
         input_date_save = datetime.strftime(input_datetime, "%m-%d-%Y")#05/22/2023
 
         output_loc = drive+f'\\REPORT\\Weekly_Estimate\\Output Files\\Weekly Estimate_{input_date_save}.xlsx'
@@ -8856,7 +8857,12 @@ def weekly_estimate(input_date, output_date):
                                 fut_value = df_dict[corn_mapping[macq_m_end_prices_sht.range(f"C{row}").value]]            
                             else:
                                 fut_value = df_dict[hrw_mapping[macq_m_end_prices_sht.range(f"C{row}").value]]
-                            fut_value = int(fut_value.split("'")[0] + form_dict[("'" + fut_value.split("'")[1])])/10000
+                            if "'" in fut_value:
+                                fut_value = int(fut_value.split("'")[0] + form_dict[("'" + fut_value.split("'")[1])])/10000
+                            else:
+                                fut_value = None
+                                messagebox.showinfo("Settle Price Not found",f"Settle price for {commodity} not found, click ok to proceed further")
+    
                             macq_m_end_prices_sht.range(f"D{row}").value = fut_value
             ####Updating date and refreshing Pivot##########################
             macq_m_end_je_sht = macq_wb.sheets["MONTH END JE UPDATED"]
