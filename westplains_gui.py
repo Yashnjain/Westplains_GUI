@@ -8845,13 +8845,14 @@ def weekly_estimate(input_date, output_date):
                     df_dict = df.set_index("month")["settle"].to_dict()
                     form_dict = {"'6":"75", "'4":"50", "'2":"25", "'0":"00"}
                     ##Updating Future prices
-                    if site_code == corn_site_code:
+                    if site_code == hrw_site_code:
                         fut_start = macq_m_end_prices_sht.range(f'C3').end('down').end('down').row
                         fut_end = macq_m_end_prices_sht.range(f'C{fut_start}').end('down').row
                     else:
                         fut_start = 3
                         fut_end = macq_m_end_prices_sht.range(f'C3').end('down').row
                     for row in range(fut_start,fut_end+1):
+                        manual_entry=False
                         if macq_m_end_prices_sht.range(f"C{row}").value is not None:
                             if macq_m_end_prices_sht.range(f"C{row}").value.startswith("C"):
                                 fut_value = df_dict[corn_mapping[macq_m_end_prices_sht.range(f"C{row}").value]]            
@@ -8861,9 +8862,15 @@ def weekly_estimate(input_date, output_date):
                                 fut_value = int(fut_value.split("'")[0] + form_dict[("'" + fut_value.split("'")[1])])/10000
                             else:
                                 fut_value = None
+                                commodity = "Corn"
+                                if site_code == hrw_site_code:
+                                    commodity = "HRW"
                                 messagebox.showinfo("Settle Price Not found",f"Settle price for {commodity} not found, click ok to proceed further")
-    
-                            macq_m_end_prices_sht.range(f"D{row}").value = fut_value
+                                manual_entry=True
+                            if not manual_entry:
+                                macq_m_end_prices_sht.range(f"D{row}").value = fut_value
+                            else:
+                                pass
             ####Updating date and refreshing Pivot##########################
             macq_m_end_je_sht = macq_wb.sheets["MONTH END JE UPDATED"]
             input_date4 = input_datetime
