@@ -8439,11 +8439,15 @@ def weekly_estimate(input_date, output_date):
         prev_date = datetime.strftime(prev_datetime,"%m.%d.%Y").upper()
         input_date3 = datetime.strftime(input_datetime2, "%m/%d/%Y")#05/22/2023
         input_date_save = datetime.strftime(input_datetime, "%m-%d-%Y")#05/22/2023
+        prior_date = input_datetime - timedelta(days=7)
+        prior_date_str = datetime.strftime(prior_date, "%m-%d-%Y")
 
         output_loc = drive+f'\\REPORT\\Weekly_Estimate\\Output Files\\Weekly Estimate_{input_date_save}.xlsx'
         mac_output_loc = drive+f'\\REPORT\\Weekly_Estimate\\Output Files\\Open Macquire Repurchase Tracking Report- {input_date_save}.xlsx'
         
-
+        prior_wb_loc = drive+f'\\REPORT\\Weekly_Estimate\\Output Files\\Weekly Estimate_{prior_date_str}.xlsx'
+        if not os.path.exists(prior_wb_loc):
+            return(f"{prior_wb_loc} Excel file not present")
         input_xl = drive+r'\REPORT\Weekly_Estimate'+f'\\Weekly_Estimate_Template.xlsx'
         if not os.path.exists(input_xl):
             return(f"{input_xl} Excel Template file not present")
@@ -8947,6 +8951,70 @@ def weekly_estimate(input_date, output_date):
         repos_sht.activate()
         
         repos_sht.api.Range(f"A1")._PasteSpecial(Paste=win32c.PasteType.xlPasteValuesAndNumberFormats,Operation=win32c.Constants.xlNone)
+        ######################Updating prior week data in Current file############################
+        retry=0
+        while retry<10:
+            try:
+                prior_wb = xw.Book(prior_wb_loc, update_links=False)
+                break
+            except Exception as e:
+                time.sleep(2)
+                retry+=1
+                if retry==9:
+                    raise e
+
+        prior_est_sht = prior_wb.sheets("West Plains Estimate")
+        est_sht = wb.sheets("West Plains Estimate")
+        prior_loc_est_sht = prior_wb.sheets("Locations Estimate")
+        loc_est_sht = wb.sheets("Locations Estimate")
+        prior_est_sht.range("C6:C8").copy()
+        est_sht.range("D6:D8").api._PasteSpecial(Paste=win32c.PasteType.xlPasteValues,Operation=win32c.Constants.xlNone)
+        #Copy Pasting formulas
+        est_sht.range("C9:C12").copy()
+        est_sht.range("D9:D12").paste()
+
+        ##Location estimate sheet logic####
+        prior_loc_est_sht.range("B4:B6").copy()
+        loc_est_sht.range("C4:C6").api._PasteSpecial(Paste=win32c.PasteType.xlPasteValues,Operation=win32c.Constants.xlNone)
+        #Copy Pasting formulas
+        loc_est_sht.range("B7:B10").copy()
+        loc_est_sht.range("C7:C10").paste()
+
+        prior_loc_est_sht.range("B16:B18").copy()
+        loc_est_sht.range("C16:C18").api._PasteSpecial(Paste=win32c.PasteType.xlPasteValues,Operation=win32c.Constants.xlNone)
+        #Copy Pasting formulas
+        loc_est_sht.range("B19:B22").copy()
+        loc_est_sht.range("C19:C22").paste()
+
+        prior_loc_est_sht.range("B28:B30").copy()
+        loc_est_sht.range("C28:C30").api._PasteSpecial(Paste=win32c.PasteType.xlPasteValues,Operation=win32c.Constants.xlNone)
+        #Copy Pasting formulas
+        loc_est_sht.range("B31:B34").copy()
+        loc_est_sht.range("C31:C34").paste()
+
+        prior_loc_est_sht.range("B40:B42").copy()
+        loc_est_sht.range("C40:C42").api._PasteSpecial(Paste=win32c.PasteType.xlPasteValues,Operation=win32c.Constants.xlNone)
+        #Copy Pasting formulas
+        loc_est_sht.range("B43:B46").copy()
+        loc_est_sht.range("C43:C46").paste()
+
+        prior_loc_est_sht.range("B52:B54").copy()
+        loc_est_sht.range("C52:C54").api._PasteSpecial(Paste=win32c.PasteType.xlPasteValues,Operation=win32c.Constants.xlNone)
+        #Copy Pasting formulas
+        loc_est_sht.range("B55:B58").copy()
+        loc_est_sht.range("C55:C58").paste()
+
+        prior_loc_est_sht.range("B64:B66").copy()
+        loc_est_sht.range("C64:C66").api._PasteSpecial(Paste=win32c.PasteType.xlPasteValues,Operation=win32c.Constants.xlNone)
+        #Copy Pasting formulas
+        loc_est_sht.range("B67:B70").copy()
+        loc_est_sht.range("C67:C70").paste()
+
+
+
+
+
+
 
         ####Saving Workbook
         wb.save(output_loc)
