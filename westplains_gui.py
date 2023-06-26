@@ -1124,6 +1124,9 @@ def ar_reports_exposure(input_date, output_date):
         input_tab2.activate()
         input_tab2.range(f"G:G").number_format="mm-dd-yyyy"
         input_tab2.range(f"I:I").number_format="mm-dd-yyyy"
+        master_tab=wb.sheets[f"MASTER"]
+        master_tab.activate()
+        master_tab.range(f"P:P").number_format="mm-dd-yyyy"
         wb.save(f"{output_location2}\\Unsettled AR_"+input_date+'.xlsx') 
 
         wb_open_ar.save(f"{output_location2}\\Open AR_"+input_date+'.xlsx')
