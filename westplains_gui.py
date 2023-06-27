@@ -1,44 +1,37 @@
-from email.mime import message
-from tkinter.filedialog import askdirectory, askopenfilename
-from tkinter import N, Menubutton, Tk, StringVar, Text
-from tkinter import PhotoImage
-from tkinter.font import Font
-from tkinter.ttk import Label
-from tkinter import Button
-from tkinter.ttk import Frame, Style
-from tkinter.ttk import OptionMenu
-from tkinter import Label as label
-from tkcalendar import DateEntry
-from tkinter import messagebox
-# from typing import Text
-import traceback
-from pandas.core import frame 
-import requests, json
-from datetime import date, datetime, timedelta
-import numpy as np
-import glob, time
-from tkinter.messagebox import showerror
-import pandas as pd
-import os
-import xlwings as xw
-from tabula import read_pdf
-# import PyPDF2
-from collections import defaultdict
-import xlwings.constants as win32c
-import sys, traceback
-import PyPDF2
-from collections import OrderedDict
-import calendar
-from dateutil.relativedelta import relativedelta
-import shutil
-from selenium import webdriver
-from selenium.webdriver.support.wait import WebDriverWait
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as EC
-from webdriver_manager.firefox import GeckoDriverManager
-from selenium.webdriver.firefox.options import Options
 import re
+import os
+import PyPDF2
+import shutil
+import calendar
 import requests
+import traceback
+import glob, time
+import numpy as np
+import pandas as pd
+import xlwings as xw
+import sys, traceback
+from tkinter import Button
+from tabula import read_pdf
+from tkinter.ttk import Label
+from tkinter import PhotoImage
+from selenium import webdriver
+from tkinter import messagebox
+from tkcalendar import DateEntry
+from tkinter import Label as label
+import xlwings.constants as win32c
+from tkinter.ttk import OptionMenu
+from collections import defaultdict
+from collections import OrderedDict
+from tkinter.ttk import Frame, Style
+from tkinter.messagebox import showerror
+from tkinter import N, Tk, StringVar, Text
+from selenium.webdriver.common.by import By
+from datetime import date, datetime, timedelta
+from dateutil.relativedelta import relativedelta
+from selenium.webdriver.firefox.options import Options
+from webdriver_manager.firefox import GeckoDriverManager
+from selenium.webdriver.support.wait import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 
 # path = r'C:\Users\imam.khan\OneDrive - BioUrja Trading LLC\Documents\Revelio'
@@ -1125,7 +1118,15 @@ def ar_reports_exposure(input_date, output_date):
         # wb_ap_ar.api.ActiveSheet.PivotTables("PivotTable1").InGridDropZones = True
         # wb_ap_ar.api.ActiveSheet.PivotTables("PivotTable2").DataPivotField.Caption = "Values"
         time.sleep(1) 
-
+        ### date fromat changes ###
+        input_tab.activate()
+        input_tab.range(f"P:P").number_format="mm-dd-yyyy"
+        input_tab2.activate()
+        input_tab2.range(f"G:G").number_format="mm-dd-yyyy"
+        input_tab2.range(f"I:I").number_format="mm-dd-yyyy"
+        master_tab=wb.sheets[f"MASTER"]
+        master_tab.activate()
+        master_tab.range(f"P:P").number_format="mm-dd-yyyy"
         wb.save(f"{output_location2}\\Unsettled AR_"+input_date+'.xlsx') 
 
         wb_open_ar.save(f"{output_location2}\\Open AR_"+input_date+'.xlsx')
