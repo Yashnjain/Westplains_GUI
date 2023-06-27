@@ -8450,7 +8450,7 @@ def weekly_estimate(input_date, output_date):
         prior_wb_loc = drive+f'\\REPORT\\Weekly_Estimate\\Output Files\\Weekly Estimate_*.xlsx'
         prior_wb_list = glob.glob(prior_wb_loc)
         prior_wb_list.sort(key=os.path.getmtime)
-        prior_wb_loc = prior_wb_list[0]
+        prior_wb_loc = prior_wb_list[-1]
         if not os.path.exists(prior_wb_loc):
             return(f"{prior_wb_loc} Excel file not present")
         input_xl = drive+r'\REPORT\Weekly_Estimate'+f'\\Weekly_Estimate_Template.xlsx'
