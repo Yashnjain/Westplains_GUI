@@ -8433,18 +8433,18 @@ def weekly_estimate(input_date, output_date):
         input_datetime2 = datetime.strptime(output_date, "%m.%d.%Y")
         input_date2 = datetime.strftime(input_datetime, "%m%d%Y")
         input_month_date = datetime.strftime(input_datetime, "%d%m")
-        inp_sht_date = datetime.strftime(input_datetime, "%d-%m-%Y")
+        # inp_sht_date = datetime.strftime(input_datetime, "%d-%m-%Y")
         cur_year = datetime.strftime(input_datetime, "%Y")
         monthYear = datetime.strftime(input_datetime, "%b-%y")
         prev_datetime = input_datetime.replace(day=1)-timedelta(days=1)
         prev_date = datetime.strftime(prev_datetime,"%m.%d.%Y").upper()
         input_date3 = datetime.strftime(input_datetime2, "%m/%d/%Y")#05/22/2023
-        input_date_save = datetime.strftime(input_datetime, "%m-%d-%Y")#05/22/2023
+        # input_date_save = datetime.strftime(input_datetime, "%m-%d-%Y")#05/22/2023
         prior_date = input_datetime - timedelta(days=7)
         prior_date_str = datetime.strftime(prior_date, "%m-%d-%Y")
 
-        output_loc = drive+f'\\REPORT\\Weekly_Estimate\\Output Files\\Weekly Estimate_{input_date_save}.xlsx'
-        mac_output_loc = drive+f'\\REPORT\\Weekly_Estimate\\Output Files\\Open Macquire Repurchase Tracking Report- {input_date_save}.xlsx'
+        output_loc = drive+f'\\REPORT\\Weekly_Estimate\\Output Files\\Weekly Estimate_{input_date}.xlsx'
+        mac_output_loc = drive+f'\\REPORT\\Weekly_Estimate\\Output Files\\Open Macquire Repurchase Tracking Report_{input_date}.xlsx'
         
         ################Picking Latest Output File Location###############################################
         prior_wb_loc = drive+f'\\REPORT\\Weekly_Estimate\\Output Files\\Weekly Estimate_*.xlsx'
@@ -8486,10 +8486,11 @@ def weekly_estimate(input_date, output_date):
         if not os.path.exists(inp_freight_accr):
             return(f"{inp_freight_accr} Excel file not present for date {input_date}")
         # macq_file_path = drive+f'\\REPORT\Weekly_Estimate\\Raw Files\\Open Macquire Repurchase Tracking Report- {cur_year}.xlsx'
-        macq_file_path = drive+f'\\REPORT\Weekly_Estimate\\Raw Files\\Open Macquire Repurchase Tracking Report- {input_date_save}.xlsx'
+        macq_file_path = drive+f'\\REPORT\Weekly_Estimate\\Raw Files\\Open Macquire Repurchase Tracking Report_{input_date}.xlsx'
         if not os.path.exists(macq_file_path):
             return(f"{macq_file_path} Excel file not present for year {cur_year}")
-        inp_basis_path = drive+f'\\REPORT\Weekly_Estimate\\Raw Files\\{cur_year}  Weekly and Monthly Values.xlsx'
+        # inp_basis_path = drive+f'\\REPORT\Weekly_Estimate\\Raw Files\\{cur_year}  Weekly and Monthly Values.xlsx'
+        inp_basis_path = drive+f'\\REPORT\Weekly_Estimate\\Raw Files\\Weekly and Monthly Values_{input_date}.xlsx'
         if not os.path.exists(inp_basis_path):
             return(f"{inp_basis_path} Excel file not present for year {cur_year}")
         mapping_loc = drive+r'\REPORT\Weekly_Estimate\Mapping.xlsx'
