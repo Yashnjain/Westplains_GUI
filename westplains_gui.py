@@ -8445,7 +8445,11 @@ def weekly_estimate(input_date, output_date):
         output_loc = drive+f'\\REPORT\\Weekly_Estimate\\Output Files\\Weekly Estimate_{input_date_save}.xlsx'
         mac_output_loc = drive+f'\\REPORT\\Weekly_Estimate\\Output Files\\Open Macquire Repurchase Tracking Report- {input_date_save}.xlsx'
         
-        prior_wb_loc = drive+f'\\REPORT\\Weekly_Estimate\\Output Files\\Weekly Estimate_{prior_date_str}.xlsx'
+        ################Picking Latest Output File Location###############################################
+        prior_wb_loc = drive+f'\\REPORT\\Weekly_Estimate\\Output Files\\Weekly Estimate_*.xlsx'
+        prior_wb_list = glob.glob(prior_wb_loc)
+        prior_wb_list.sort(key=os.path.getmtime)
+        prior_wb_loc = prior_wb_list[0]
         if not os.path.exists(prior_wb_loc):
             return(f"{prior_wb_loc} Excel file not present")
         input_xl = drive+r'\REPORT\Weekly_Estimate'+f'\\Weekly_Estimate_Template.xlsx'
@@ -8480,7 +8484,8 @@ def weekly_estimate(input_date, output_date):
         inp_freight_accr = drive +f'\\REPORT\Weekly_Estimate\Raw Files\\Freight Accrual_'+input_date+".xlsx"
         if not os.path.exists(inp_freight_accr):
             return(f"{inp_freight_accr} Excel file not present for date {input_date}")
-        macq_file_path = drive+f'\\REPORT\Weekly_Estimate\\Raw Files\\Open Macquire Repurchase Tracking Report- {cur_year}.xlsx'
+        # macq_file_path = drive+f'\\REPORT\Weekly_Estimate\\Raw Files\\Open Macquire Repurchase Tracking Report- {cur_year}.xlsx'
+        macq_file_path = drive+f'\\REPORT\Weekly_Estimate\\Raw Files\\Open Macquire Repurchase Tracking Report- {input_date_save}.xlsx'
         if not os.path.exists(macq_file_path):
             return(f"{macq_file_path} Excel file not present for year {cur_year}")
         inp_basis_path = drive+f'\\REPORT\Weekly_Estimate\\Raw Files\\{cur_year}  Weekly and Monthly Values.xlsx'
@@ -9023,7 +9028,7 @@ def weekly_estimate(input_date, output_date):
 
         
         
-        return f"{job_name} Report for {input_date} generated succesfully"
+        return f"{job_name} Report for {input_date} generated succesfully and previous output file picked is {prior_wb_loc}"
     except Exception as e:
         raise e
     finally:
