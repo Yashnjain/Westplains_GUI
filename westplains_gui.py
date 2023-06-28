@@ -8796,6 +8796,8 @@ def weekly_estimate(input_date, output_date):
         hrw_df = basis_sheet.range(f"{hrw_cell_value}").expand('table').options(pd.DataFrame,header=1,index=False).value
         hrw_df = hrw_df[["Location", monthYear]]
         hrw_dict = hrw_df.set_index("Location")[monthYear].to_dict()
+        hrw_dict["Omaha"] = hrw_dict["Omaha 12"] 
+
 
         basis_wb.close()
 
