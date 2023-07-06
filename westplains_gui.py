@@ -8442,7 +8442,7 @@ def weekly_estimate(input_date, output_date):
         # input_date_save = datetime.strftime(input_datetime, "%m-%d-%Y")#05/22/2023
         prior_date = input_datetime - timedelta(days=7)
         prior_date_str = datetime.strftime(prior_date, "%m-%d-%Y")
-
+        curr_month_last_date = (input_datetime.replace(day=28) + timedelta(days=4)).replace(day=1) + timedelta(days=-1)
         output_loc = drive+f'\\REPORT\\Weekly_Estimate\\Output Files\\Weekly Estimate_{input_date}.xlsx'
         mac_output_loc = drive+f'\\REPORT\\Weekly_Estimate\\Output Files\\Open Macquire Repurchase Tracking Report_{input_date}.xlsx'
         
@@ -8456,7 +8456,7 @@ def weekly_estimate(input_date, output_date):
         input_xl = drive+r'\REPORT\Weekly_Estimate'+f'\\Weekly_Estimate_Template.xlsx'
         if not os.path.exists(input_xl):
             return(f"{input_xl} Excel Template file not present")
-        inp_gl_query = drive +f'\\REPORT\\Weekly_Estimate\\Raw Files\\GL QUERY.xlsx'
+        inp_gl_query = drive +f'\\REPORT\\Weekly_Estimate\\Raw Files\\GL QUERY_{input_date}.xlsx'
         if not os.path.exists(inp_gl_query):
             return(f"{inp_gl_query} Excel file not present.")
         inp_open_futures = drive + f'\\REPORT\\Macquarie P & L\\FromEmail\\{input_date2}\\{input_month_date}F\\OC{input_month_date}F.csv'
@@ -8479,6 +8479,8 @@ def weekly_estimate(input_date, output_date):
         inp_inventory = drive +f'\\REPORT\\Inv_MTM_Excel_Report_Summ\\Output Files\\Inventory MTM Excel Report_'+input_date+".xlsx"
         if not os.path.exists(inp_inventory):
             return(f"{inp_inventory} Excel file not present for date {input_date}")
+        if curr_month_last_date == input_datetime:
+            prev_date = input_date
         inp_strg_accr = drive +f'\\REPORT\\Storage Month End Report\\Output Files\\STORAGE ACCRUAL JE_'+prev_date+".xlsx"
         if not os.path.exists(inp_strg_accr):
             return(f"{inp_strg_accr} Excel file not present for date {prev_date}")
