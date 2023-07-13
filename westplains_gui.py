@@ -3158,7 +3158,8 @@ def mtm_excel(input_date,input_xl,loc_dict,loc_sheet, output_location, hrw_fut, 
                 other_loc_2 = f"A{i+1}"
             elif main_loc[i] == "Sunflowers":
                 sunflwr = f"{i+1}"
-
+            elif main_loc[i] == "Palm":
+                palm = f"{i+1}"
 
 
         # hrw_locations = m_sht.range("B7").expand('down').value
@@ -3365,6 +3366,10 @@ def mtm_excel(input_date,input_xl,loc_dict,loc_sheet, output_location, hrw_fut, 
         m_sht.range(f"F{sunflwr}").value = loc_dict['SUNFLWR'][0].iloc[-1,-1]/loc_dict['SUNFLWR'][0].iloc[-1,-2]  #Price
         # m_sht.range(f"C113").value = loc_dict['SUNFLWR'][0].iloc[-1,-1]
         m_sht.range(f"C{sunflwr}").value = loc_dict['SUNFLWR'][0].iloc[-1,-2]  #Quantity
+
+        m_sht.range(f"F{palm}").value = loc_dict['PALM'][0].iloc[-1,-1]/loc_dict['PALM'][0].iloc[-1,-2]  #Price
+        # m_sht.range(f"C113").value = loc_dict['SUNFLWR'][0].iloc[-1,-1]
+        m_sht.range(f"C{palm}").value = loc_dict['PALM'][0].iloc[-1,-2]  #Quantity
 
         other_loc_2_lst = m_sht.range(other_loc_2).expand('down').value
         i=int(other_loc_2.replace("A", ""))
