@@ -23,7 +23,7 @@ from tkinter.ttk import OptionMenu
 from collections import defaultdict
 from collections import OrderedDict
 from tkinter.ttk import Frame, Style
-from tkinter.messagebox import showerror
+from tkinter.messagebox import showerror,showwarning
 from tkinter import N, Tk, StringVar, Text
 from selenium.webdriver.common.by import By
 from datetime import date, datetime, timedelta
@@ -78,6 +78,41 @@ def set_borders(border_range):
         border_range.api.Borders(border_id).Weight=2
 
 
+def xlOpner(inputFile):
+    try:
+        retry = 0
+        while retry<10:
+            try:
+                input_wb = xw.Book(inputFile, update_links=False)
+                return input_wb
+            except Exception as e:
+                time.sleep(2)
+                retry+=1
+                if retry==9:
+                    raise e
+    except Exception as e:
+        print(f"Exception caught in xlOpner :{e}")
+        raise e
+
+
+def row_range_calc(filter_col:str, input_sht,wb):
+
+    sp_lst_row = input_sht.range(f'{filter_col}'+ str(input_sht.cells.last_cell.row)).end('up').row
+    sp_address= input_sht.api.Range(f"{filter_col}2:{filter_col}{sp_lst_row}").SpecialCells(win32c.CellType.xlCellTypeVisible).EntireRow.Address
+    sp_initial_rw = re.findall("\d+",sp_address.replace("$","").split(":")[0])[0]        
+    row_range = sorted([int(i) for i in list(set(re.findall("\d+",sp_address.replace("$",""))))])
+
+    while row_range[-1]!=sp_lst_row:
+        sp_lst_row = input_sht.range(f'{filter_col}'+ str(input_sht.cells.last_cell.row)).end('up').row
+        sp_address = sp_address+','+(input_sht.api.Range(f"{filter_col}{row_range[-1]+1}:{filter_col}{sp_lst_row}").SpecialCells(win32c.CellType.xlCellTypeVisible).EntireRow.Address)
+        # sp_initial_rw = re.findall("\d+",sp_address.replace("$","").split(":")[0])[0]        
+        row_range.extend(sorted([int(i) for i in list(set(re.findall("\d+",sp_address.replace("$",""))))]))
+
+    sp_address = sp_address.replace("$","").split(",")
+    init_list= [list(range(int(i.split(":")[0]), int(i.split(":")[1])+1)) for i in sp_address]
+    sublist = []
+    flat_list = [item for sublist in init_list for item in sublist]
+    return flat_list, sp_lst_row,sp_address
 
 
 def insert_all_borders(cellrange:str,working_sheet,working_workbook):
@@ -101,6 +136,43 @@ def freezepanes_for_tab(cellrange:str,working_sheet,working_workbook):
     except Exception as e:
         raise e        
 
+def getColumnName(n):
+    try:
+        result = ''
+        while n > 0:
+            index = (n - 1) % 26
+            result += chr(index + ord('A'))
+            n = (n - 1) // 26
+    
+        return result[::-1]
+    except Exception as e:
+        raise e
+
+
+def num_to_col_letters(num):
+    try:
+        letters = ''
+        while num:
+            mod = (num - 1) % 26
+            letters += chr(mod + 65)
+            num = (num - 1) // 26
+        return ''.join(reversed(letters))
+    except Exception as e:
+        raise e
+
+def interior_coloring_temp(colour_value,cellrange:str,working_sheet,working_workbook):
+    try:
+        working_sheet.activate()
+        working_sheet.api.Range(cellrange).Select()
+        a = working_workbook.app.selection.api.Interior
+        a.Pattern = win32c.Constants.xlSolid
+        a.PatternColorIndex = win32c.Constants.xlAutomatic
+        a.Color = colour_value
+        a.TintAndShade = 0
+        a.PatternTintAndShade = 0        
+    except Exception as e:
+        raise e  
+
 def interior_coloring(colour_value,cellrange:str,working_sheet,working_workbook):
     try:
         working_sheet.activate()
@@ -117,6 +189,7 @@ def interior_coloring(colour_value,cellrange:str,working_sheet,working_workbook)
     except Exception as e:
         raise e  
 
+
 def interior_coloring_by_theme(pattern_tns,tintandshade,colour_value,cellrange:str,working_sheet,working_workbook):
     try:
         working_sheet.activate()
@@ -132,6 +205,226 @@ def interior_coloring_by_theme(pattern_tns,tintandshade,colour_value,cellrange:s
         a.PatternTintAndShade = pattern_tns    
     except Exception as e:
         raise e  
+
+
+def mtd_new_trades(input_date, output_date):
+    try:       
+        job_name = 'MTD New Trades Automation'
+
+        ##### Defining paths and checking availability of files ###########
+        input_sheet= r'J:\WEST PLAINS\REPORT\MTD Trades\Input'+f'\\Sale Open Close_{input_date}.xlsx'
+        input_sheet2 = r'J:\WEST PLAINS\REPORT\MTD Trades\Input'+f'\\Purchase Open Close_{input_date}.xlsx'
+        ctm_book = r'J:\WEST PLAINS\REPORT\CTM Combined report\Output files'+f'\\CTM Combined _{input_date}.xlsx'
+        template_sheet= r'J:\WEST PLAINS\REPORT\MTD Trades\Template'+f'\\MTD New Trades Templets.xlsx'
+        mapping_workbook = r'J:\WEST PLAINS\REPORT\MTD Trades\Template'+f'\\Market Zone Mapping.xlsx'
+        pricing_workbook = r'J:\WEST PLAINS\REPORT\MTD Trades\Active Pricing'+f'\\2023  Weekly and Monthly Values.xlsx'
+        if not os.path.exists(input_sheet):
+            return(f"{input_sheet} Excel file not present for date {input_date}")
+        if not os.path.exists(input_sheet2):
+            return(f"{input_sheet2} Excel file not present") 
+        if not os.path.exists(template_sheet):
+            return(f"{template_sheet} Excel file not present")  
+        if not os.path.exists(ctm_book):
+            return(f"{ctm_book} Excel file not present")           
+
+        #####opening required workbooks ###########
+        """
+        1.Opening Template workbook
+        2.Opening Sales workbook
+        3.Opening Purchase workbook
+        4.CTM workbook for same date
+        """
+        template_wb = xlOpner(template_sheet)
+
+        sale_wb = xlOpner(input_sheet)
+
+        purchase_wb = xlOpner(input_sheet2)
+
+        ctm_wb = xlOpner(ctm_book)
+
+        ###########Clearing GS QUERY SHEET ############
+        template_wb.activate()
+        gs_sheet=template_wb.sheets[f"GS QUERY"]
+        gs_sheet.activate()
+        last_rw = gs_sheet.api.UsedRange.Rows.Count
+        gs_sheet.range(f"A2:BQ{last_rw}").clear()
+        gs_sheet.range(f"BR3:BV{last_rw}").clear()
+
+        ###########Copying FROM Sales sheet ==> GS QUERY SHEET ############
+        sale_wb.activate()
+        sale_sheet=sale_wb.sheets[0]
+        sale_last_rw = sale_sheet.api.UsedRange.Rows.Count
+        last_column_letter_s=num_to_col_letters(sale_sheet.range('A1').end('right').last_cell.column)
+        sale_sheet.range(f"A2:{last_column_letter_s}{sale_last_rw}").copy(gs_sheet.range(f"A2"))
+
+        ###########Copying FROM Purchase sheet ==> GS QUERY SHEET ############
+        purchase_wb.activate()
+        purchase_sheet=purchase_wb.sheets[0]
+        purchase_last_rw = purchase_sheet.api.UsedRange.Rows.Count
+        last_column_letter_p=num_to_col_letters(purchase_sheet.range('A1').end('right').last_cell.column)
+        purchase_sheet.range(f"A2:{last_column_letter_p}{purchase_last_rw}").copy(gs_sheet.range(f"A{sale_last_rw+1}"))
+
+        ########### GS QUERY SHEET Vlookup dragdown############
+        gs_sheet.activate()
+        gs_sheet.range(f'BR2:BV{sale_last_rw + purchase_last_rw - 1}').select()
+        template_wb.app.selection.api.FillDown()
+        template_wb.api.ActiveSheet.Outline.ShowLevels(RowLevels:=0,ColumnLevels:=1)
+
+        ########### Copying data from CTM ==> MTM - CONTRACTS REPORT SHEET ############
+        template_wb.activate()
+        mtm_sheet=template_wb.sheets[f"MTM - CONTRACTS REPORT"]
+        mtm_sheet.activate()
+        lst_mtm = mtm_sheet.api.UsedRange.Rows.Count
+        mtm_sheet.range(f"A3:AQ{lst_mtm}").clear()
+
+        ctm_wb.activate()
+        ctm_sheet=ctm_wb.sheets[0]
+        ctm_sheet.activate()
+        ctm_last = ctm_sheet.api.UsedRange.Rows.Count
+        lst_clm = num_to_col_letters(ctm_sheet.api.UsedRange.Columns.Count)
+        ctm_sheet.range(f"A2:{lst_clm}{ctm_last}").copy(mtm_sheet.range(f"B2"))
+
+        mtm_sheet.activate()
+        mtm_sheet.range(f'A2:A{ctm_last}').select()
+        template_wb.app.selection.api.FillDown()
+        template_wb.api.ActiveSheet.Outline.ShowLevels(RowLevels:=0,ColumnLevels:=1)        
+        print(f"{mtm_sheet.name} processed successfully")
+        
+        ############### END DATE LOOKUP SHEET ############
+        template_wb.activate()
+        date_sheet=template_wb.sheets[f"END DATE LOOKUP"]
+        date_sheet.activate()        
+
+        column_list = gs_sheet.range("A1").expand('right').value
+        edate_cl_no = column_list.index('End Date')+1
+        pivotCount = template_wb.api.ActiveSheet.PivotTables().Count
+         # 'INPUT DATA'!$A$3:$I$86
+        for j in range(1, pivotCount+1):
+            # if template_wb.api.ActiveSheet.PivotTables(j).PivotCache().SourceData != f"'INPUT DATA'!R3C1:R{num_row}C{num_col}": #Updateing data source
+            template_wb.api.ActiveSheet.PivotTables(j).PivotCache().SourceData = f"'GS QUERY'!R1C{edate_cl_no}:R{sale_last_rw + purchase_last_rw - 1}C{edate_cl_no}" #Updateing data source
+            template_wb.api.ActiveSheet.PivotTables(j).PivotCache().Refresh()
+        date_sheet.range(f"B:B").clear()
+
+        ########### date logic ######################
+        dte_lst_rw = date_sheet.range(f'A'+ str(date_sheet.cells.last_cell.row)).end('up').row
+        date_values = date_sheet.range(f"A2:A{dte_lst_rw -1}").value
+        for index,dat_val in enumerate(date_values):
+            if type(dat_val) == datetime:
+                if dat_val.replace(day=1) > datetime.strptime(input_date,"%m.%d.%Y").replace(day=1):
+                    print("found datetime date")
+                    mnt = datetime.strftime(dat_val,"%b")
+                    yr = datetime.strftime(dat_val,"%y")
+                    date_sheet.range(f"B{index+2}").value = f"'{mnt}{yr}"
+                else:
+                    date_sheet.range(f"B{index+2}").value = f"Delinquent"  
+            elif type(dat_val) == str:
+                print(f"found str value format unknown :: row no {index+2}")
+            else:
+                print(f"unable to detect format check row no {index+2}")    
+
+        ####################            #############################
+        gs_sheet.activate()
+        mpb_cl_no = column_list.index('Market Price Basis')+1
+        mpb_letter_column = num_to_col_letters(mpb_cl_no)
+        try:
+            gs_sheet.api.Range(f"{mpb_letter_column}1").AutoFilter(Field:=f'{mpb_cl_no}', Criteria1:=["#N/A"], Operator:=7)
+        except:
+            print("no na values found")    
+
+        mapping_wb = xlOpner(mapping_workbook)
+
+        pricing_wb = xlOpner(pricing_workbook)
+        pricing_sheet = pricing_wb.sheets[0]
+        loc_sht=mapping_wb.sheets["Market Zone Mapping"]
+        tlast_row = loc_sht.range(f'F'+ str(loc_sht.cells.last_cell.row)).end('up').row
+        loc_dict=loc_sht.range(f'E1:F{tlast_row}').options(dict).value
+
+        commodity_sht=mapping_wb.sheets["Commodity Mapping"]
+        tlast_row2 = commodity_sht.range(f'A'+ str(commodity_sht.cells.last_cell.row)).end('up').row
+        commodity_dict=commodity_sht.range(f'A1:B{tlast_row2}').options(dict).value
+
+        option_mnt_sht=mapping_wb.sheets["Option Month mapping IT"]
+        tlast_row3 = option_mnt_sht.range(f'A'+ str(option_mnt_sht.cells.last_cell.row)).end('up').row
+        option_mnt_df=option_mnt_sht.range(f'A1:B{tlast_row3}').options(pd.DataFrame,header=False,index=False).value
+        option_mnt_dict = {}
+        for country in option_mnt_df[0].unique():
+            option_mnt_dict[country] = option_mnt_df[option_mnt_df[0] == country][1].tolist()
+                
+        flat_list, sp_lst_row,sp_address = row_range_calc("A",gs_sheet,template_wb)
+        str1 = ''
+        for row in flat_list:
+            gs_sheet.activate()
+            market_zone = loc_dict[gs_sheet.range(f'AO{row}').value]
+            commodity = commodity_dict[gs_sheet.range(f'I{row}').value]
+            if gs_sheet.range(f'Y{row}').value !=None:
+                text = (re.findall(r'(\d+|\D+)', gs_sheet.range(f'Y{row}').value))
+            else:
+                str1+=f' - Option month not found for row:{row}\n'
+                print(f"Option month value not found for row :: {row}")
+                interior_coloring_temp(49407,f'BU{row}',gs_sheet,template_wb)
+                continue   
+            year = "2" + text[1]
+            mnth = option_mnt_dict[text[0]]
+            price_flag = False
+            for months in mnth:
+                ori_mnth = datetime.strftime(datetime.strptime(months,"%B"),"%b")
+                matching_mnth = ori_mnth + f"-{year}"
+                pricing_sheet.activate()
+                pricing_sheet.api.Range("A1").Select()
+                pricing_sheet.range('A:A').api.Cells.Find(What:=commodity, After:=pricing_sheet.api.Application.ActiveCell,LookIn:=win32c.FindLookIn.xlFormulas,
+                                    LookAt:=win32c.LookAt.xlPart, SearchOrder:=win32c.SearchOrder.xlByRows, SearchDirection:=win32c.SearchDirection.xlNext).Activate()
+                first_row = pricing_sheet.api.Application.ActiveCell.Row  
+                end_row = pricing_sheet.range(f"A{int(row)}").expand('down').last_cell.row 
+                pricing_sheet.api.Range(f"B{first_row}").Activate()
+
+                pricing_sheet.api.Cells.Find(What:=market_zone, After:=pricing_sheet.api.Application.ActiveCell,LookIn:=win32c.FindLookIn.xlFormulas,
+                                    LookAt:=win32c.LookAt.xlWhole, SearchOrder:=win32c.SearchOrder.xlByRows, SearchDirection:=win32c.SearchDirection.xlNext).Activate()                        
+
+                price_row = pricing_sheet.api.Application.ActiveCell.Row
+
+                pricing_sheet.api.Range(f"B{first_row}").Activate()
+                pricing_sheet.api.Cells.Find(What:=matching_mnth, After:=pricing_sheet.api.Application.ActiveCell,LookIn:=win32c.FindLookIn.xlFormulas,
+                                    LookAt:=win32c.LookAt.xlPart, SearchOrder:=win32c.SearchOrder.xlByColumns, SearchDirection:=win32c.SearchDirection.xlNext).Activate() 
+                price_column = num_to_col_letters(pricing_sheet.api.Application.ActiveCell.Column)    
+                if pricing_sheet.range(f'{price_column}{price_row}').value !=None:
+                    actual_price = pricing_sheet.range(f'{price_column}{price_row}').value
+                    gs_sheet.activate()
+                    gs_sheet.range(f'BU{row}').value = actual_price
+                    ######.Color = 15773696 ###########
+                    interior_coloring_temp(15773696,f'BU{row}',gs_sheet,template_wb)
+                    gs_sheet.api.Range(f"BU{row}").Font.Bold = True
+                    price_flag = True
+                    break
+                else:
+                    pass
+
+            if price_flag == False:    
+                    print(f"price not found for months ==> {mnth} ::commodity {commodity} ::{market_zone} :: reffer output row {row}")
+                    str1+= f" - Price not found for months ==> {mnth} ::commodity => {commodity} :: market_zone => {market_zone} :: reffer row(GS Query) =>{row}\n"
+                    interior_coloring_temp(255,f'BU{row}',gs_sheet,template_wb)
+
+        
+        tablist={gs_sheet:255,mtm_sheet:49407,date_sheet:win32c.ThemeColor.xlThemeColorLight2}
+        for tab,color in tablist.items():
+            freezepanes_for_tab(cellrange="2:2",working_sheet=tab,working_workbook=template_wb) 
+            try:
+                tab.api.Tab.Color = color
+            except:
+                tab.api.Tab.ThemeColor =color
+            tab.api.AutoFilterMode=False    
+
+        output_location = r'J:\WEST PLAINS\REPORT\MTD Trades\Output'   
+        template_wb.save(f"{output_location}\\MTD New Trades_"+input_date+'.xlsx')
+        template_wb.app.quit()
+        return[f"{job_name} Report for {input_date} generated succesfully", str1]
+
+    except Exception as e:
+        raise e
+    finally:
+        try:
+            template_wb.app.quit()
+        except:
+            pass
 
 
 def ar_exposure(input_date, output_date):
@@ -2900,29 +3193,6 @@ def update_moc_excel(main_df,template_dir,output_dir, input_date):
             pass
 
 
-def getColumnName(n):
-    try:
-        result = ''
-        while n > 0:
-            index = (n - 1) % 26
-            result += chr(index + ord('A'))
-            n = (n - 1) // 26
-    
-        return result[::-1]
-    except Exception as e:
-        raise e
-
-
-def num_to_col_letters(num):
-    try:
-        letters = ''
-        while num:
-            mod = (num - 1) % 26
-            letters += chr(mod + 65)
-            num = (num - 1) // 26
-        return ''.join(reversed(letters))
-    except Exception as e:
-        raise e
 
 def mtm_pdf_data_extractor(input_date, f, hrw_pdf_loc=None, yc_pdf_loc=None ,ysb_pdf_loc=None, mtm_excel_summ=False):
     try:
@@ -9082,6 +9352,9 @@ def main():
             output_date = out_date.get()
             func_to_call = Rep_variable.get()
             msg = wp_job_ids[func_to_call](input_date, output_date)
+            if type(msg)==list:
+                showwarning(title="Warning",message=msg[1])
+                msg=msg[0]
             text_box.delete(1.0, "end")
             text_box.insert("end", f"\n{msg}", "center")
             submit_text.set("Submit")
@@ -9130,7 +9403,7 @@ def main():
     # input_date=None
     # output_date = None
     frame_options.grid(row=1,column=0, pady=30, padx=35, columnspan=2, rowspan=3)
-    wp_job_ids = {'ABS':1,'AR Exposure E2E':ar_exposure,'AR Reports Exposure':ar_reports_exposure,'BBR':bbr,'CPR Report':cpr, 'Freight analysis':freight_analysis, 'CTM combined':ctm,'FIFO Report':fifo,'MTM Report':mtm_report,'Inventory MTM excel report summary':inv_mtm_excel_summ,
+    wp_job_ids = {'ABS':1,'MTD New Trades Report':mtd_new_trades,'AR Exposure E2E':ar_exposure,'AR Reports Exposure':ar_reports_exposure,'BBR':bbr,'CPR Report':cpr, 'Freight analysis':freight_analysis, 'CTM combined':ctm,'FIFO Report':fifo,'MTM Report':mtm_report,'Inventory MTM excel report summary':inv_mtm_excel_summ,
                     'MOC Interest Allocation':moc_interest_alloc,'Open AR':open_ar,'Open AP':open_ap, 'Unsettled Payable Report':unsetteled_payables,'Unsettled Receivable Report':unsetteled_receivables,
                     'Storage Month End Report':strg_month_end_report, "Month End BBR":bbr_monthEnd, "Bank Recons Report":bank_recons_rep, "Payables_GL_Entry_Monthly":payables_gl_entry_monthly,
                     "Receivables_GL_Entry_Monthly":receivables_gl_entry_monthly,"CTM_GL_Entry_Monthly":ctm_gl_entry_monthly, "Macquarie Accrual Entry":macq_accr_entry, "Ticket_N_Settlement_Report":tkt_n_settlement_summ,
