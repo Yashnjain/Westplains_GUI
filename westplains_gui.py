@@ -39,7 +39,8 @@ from selenium.webdriver.support import expected_conditions as EC
 today = datetime.strftime(date.today(), format = "%d%m%Y")
 
 # drive = r"I:\RPTWP_Swati"
-drive = r"J:\WEST PLAINS"
+# drive = r"J:\WEST PLAINS"
+drive = r"\\biourja.local\biourja\India Sync\WEST PLAINS"
 
 path = drive+r'\REPORT\Westplains_gui'
 
@@ -135,7 +136,8 @@ def interior_coloring_by_theme(pattern_tns,tintandshade,colour_value,cellrange:s
 
 
 def ar_exposure(input_date, output_date):
-    try:       
+    try:
+        # drive= r"C:\Users\amanullah.khan\OneDrive - BioUrja Trading LLC\p drive backup\projects\westplains_gui\AR Exposure Files"      
         job_name = 'ar_exposure_automation'
         input_sheet2 = drive+r'\REPORT\AR EXPOSURE\Output'+f'\\Open AR_{output_date}.xlsx'
         input_sheet= drive+r'\REPORT\AR EXPOSURE\Output'+f'\\Unsettled AR_{output_date}.xlsx'
@@ -259,7 +261,7 @@ def ar_exposure(input_date, output_date):
         sp_lst_row = credit_over_utilized_tab.range(f'A'+ str(credit_over_utilized_tab.cells.last_cell.row)).end('up').row
         sp_address= credit_over_utilized_tab.api.Range(f"A2:A{sp_lst_row}").SpecialCells(win32c.CellType.xlCellTypeVisible).EntireRow.Address
         sp_initial_rw = re.findall("\d+",sp_address.replace("$","").split(":")[0])[0]
-       
+    
 
         credit_over_utilized_tab.api.Range(f"A1:H{sp_lst_row}").SpecialCells(win32c.CellType.xlCellTypeVisible).Copy()
         unapplied_credit_tab.api.Range(f"A1")._PasteSpecial(Paste=win32c.PasteType.xlPasteAllUsingSourceTheme,Operation=win32c.Constants.xlNone)
@@ -313,7 +315,7 @@ def ar_exposure(input_date, output_date):
 
         watch_accounts_tab.api.AutoFilterMode=False
         watch_accounts_tab.range(f"A2:I{last_row_wa}").api.Sort(Key1=watch_accounts_tab.range(f"I2:I{last_row_wa}").api,Order1=win32c.SortOrder.xlDescending,DataOption1=win32c.SortDataOption.xlSortNormal,Orientation=1,SortMethod=1)
-       
+    
         last_row_waf = watch_accounts_tab.range(f'A'+ str(watch_accounts_tab.cells.last_cell.row)).end('up').row
         insert_all_borders(cellrange=f"A2:A{last_row_waf}",working_sheet=watch_accounts_tab,working_workbook=ar_exposure_wb)
 
@@ -360,10 +362,10 @@ def ar_exposure(input_date, output_date):
 
         credit_over_utilized_tab.activate()
         credit_over_utilized_tab.range(f"A2:H{last_row_cou}").api.Sort(Key1=credit_over_utilized_tab.range(f"D2:D{last_row_cou}").api,Order1=win32c.SortOrder.xlDescending,DataOption1=win32c.SortDataOption.xlSortNormal,Orientation=1,SortMethod=1)
-         
+        
         unsettled_receivables_tab.activate()
         unsettled_receivables_tab.api.Range(f"A2:H{last_row_urt_u}").Delete()
-         
+        
         credit_over_utilized_tab.activate() 
         credit_over_utilized_tab.api.Range(f"A1:H{last_row_cou}").AutoFilter(Field:=4, Criteria1:=[">0"]) 
 
@@ -386,12 +388,12 @@ def ar_exposure(input_date, output_date):
         last_row_un_ar_de = exposure_un_ar_tab.range(f'A'+ str(exposure_un_ar_tab.cells.last_cell.row)).end('up').row
         last_column_letter_un_ar_de=num_to_col_letters(exposure_un_ar_tab.range('A1').end('right').last_cell.column)
         exposure_un_ar_tab.range(f"A2:{last_column_letter_un_ar_de}{last_row_un_ar_de}").api.Sort(Key1=exposure_un_ar_tab.range(f"M2:M{last_row_un_ar_de}").api,Order1=win32c.SortOrder.xlAscending,DataOption1=win32c.SortDataOption.xlSortNormal,Orientation=1,SortMethod=1)
-      
+    
 
         unapplied_credit_tab.activate()
         last_row_un_Cr_t = unapplied_credit_tab.range(f'A'+ str(unapplied_credit_tab.cells.last_cell.row)).end('up').row
         unapplied_credit_tab.range(f"A2:H{last_row_un_Cr_t}").api.Sort(Key1=unapplied_credit_tab.range(f"E2:E{last_row_un_Cr_t}").api,Order1=win32c.SortOrder.xlAscending,DataOption1=win32c.SortDataOption.xlSortNormal,Orientation=1,SortMethod=1)
-              
+            
         exposure_ar_tab.activate()
         exposure_ar_tab.api.Range(f"C:C").Delete(win32c.DeleteShiftDirection.xlShiftToLeft)
         exposure_ar_tab.api.Range(f"I:I").Delete(win32c.DeleteShiftDirection.xlShiftToLeft)
@@ -450,7 +452,7 @@ def ar_exposure(input_date, output_date):
         ar_exposure_wb.app.api.CutCopyMode=False
         pre_open_ar.api.AutoFilterMode=False
         exposure_ar_tab.range(f"A2:{last_column_letter_o_ar}{last_row_o_ar}").api.Sort(Key1=exposure_ar_tab.range(f"N2:N{last_row_o_ar}").api,Order1=win32c.SortOrder.xlDescending,DataOption1=win32c.SortDataOption.xlSortNormal,Orientation=1,SortMethod=1)
-       
+    
 
         exposure_ar_tab.api.Range(f"A1:{last_column_letter_o_ar}{last_row_o_ar}").AutoFilter(Field:=14, Criteria1:=[">0"],Operator:=1)
         filter_check=exposure_ar_tab.range(f'A'+ str(exposure_ar_tab.cells.last_cell.row)).end('up').row
@@ -463,7 +465,7 @@ def ar_exposure(input_date, output_date):
             print("no data found")
         exposure_ar_tab.api.AutoFilterMode=False
         exposure_ar_tab.range(f"A2:{last_column_letter_o_ar}{last_row_o_ar}").api.Sort(Key1=exposure_ar_tab.range(f"M2:M{last_row_o_ar}").api,Order1=win32c.SortOrder.xlDescending,DataOption1=win32c.SortDataOption.xlSortNormal,Orientation=1,SortMethod=1)
-       
+    
 
         exposure_ar_tab.api.Range(f"A1:{last_column_letter_o_ar}{last_row_o_ar}").AutoFilter(Field:=13, Criteria1:=[">0"],Operator:=1)
         filter_check=exposure_ar_tab.range(f'A'+ str(exposure_ar_tab.cells.last_cell.row)).end('up').row
@@ -498,7 +500,7 @@ def ar_exposure(input_date, output_date):
         unsettled_receivables_tab.activate()
         Unarsum_lst_row = unsettled_receivables_tab.range(f'A'+ str(unsettled_receivables_tab.cells.last_cell.row)).end('up').row
         unsettled_receivables_tab.range(f"A2:H{Unarsum_lst_row}").api.Sort(Key1=unsettled_receivables_tab.range(f"D2:D{Unarsum_lst_row}").api,Order1=win32c.SortOrder.xlDescending,DataOption1=win32c.SortDataOption.xlSortNormal,Orientation=1,SortMethod=1)       
-               
+        
         unsettled_receivables_tab.api.Range(f"A1:H{Unarsum_lst_row}").AutoFilter(Field:=4, Criteria1:=[">=75000"],Operator:=1)
         
         filter_check=unsettled_receivables_tab.range(f'A'+ str(unsettled_receivables_tab.cells.last_cell.row)).end('up').row
@@ -541,7 +543,8 @@ def ar_exposure(input_date, output_date):
 
         exposure_ar_tab.activate()
         exposure_ar_tab.autofit()
-        filter_dict = {"O":[15,65535],"N":[14,6684927],"M":[13,5296274]}
+        # filter_dict = {"O":[15,65535],"N":[14,6684927],"M":[13,5296274]}
+        filter_dict = {"O":[15,65535],"N":[14,14857357],"M":[13,5296274]}
         for key,value in filter_dict.items():
             exposure_ar_tab.api.Range(f"A1:{last_column_letter_o_ar}{last_row_o_ar}").AutoFilter(Field:=value[0], Criteria1:=[">0"],Operator:=1)
             filter_check=exposure_ar_tab.range(f'A'+ str(exposure_ar_tab.cells.last_cell.row)).end('up').row
@@ -760,6 +763,20 @@ def ar_exposure(input_date, output_date):
                 print("no data found")
             over_limit_tab.api.AutoFilterMode=False 
 
+        
+        ########################################## NEW COLOR LOGIC ################################################
+        last_row_open_ar_sh = exposure_ar_tab.range(f'A'+ str(exposure_ar_tab.cells.last_cell.row)).end('up').row
+
+        # Apply the filter to Column N (assuming it's the 14th column)
+        exposure_ar_tab.api.Range(f"A1:P{last_row_open_ar_sh}").AutoFilter(Field=14, Criteria1=">0", Operator=2)
+        interior_coloring(colour_value=14857357,cellrange=f"A2:P{last_row_open_ar_sh}",working_sheet=exposure_ar_tab,working_workbook=ar_exposure_wb)
+        exposure_ar_tab.api.AutoFilterMode=False
+        
+        exposure_ar_tab.range(f"A2:T{last_row_o_ar}").api.Sort(Key1=exposure_ar_tab.range(f"L2:L{last_row_o_ar}").api,Order1=win32c.SortOrder.xlDescending,DataOption1=win32c.SortDataOption.xlSortNormal,Orientation=1,SortMethod=1)
+        exposure_ar_tab.range(f"A2:T{last_row_o_ar}").api.Sort(Key1=exposure_ar_tab.range(f"M2:M{last_row_o_ar}").api,Order1=win32c.SortOrder.xlDescending,DataOption1=win32c.SortDataOption.xlSortNormal,Orientation=1,SortMethod=1)
+        exposure_ar_tab.range(f"A2:T{last_row_o_ar}").api.Sort(Key1=exposure_ar_tab.range(f"N2:N{last_row_o_ar}").api,Order1=win32c.SortOrder.xlDescending,DataOption1=win32c.SortDataOption.xlSortNormal,Orientation=1,SortMethod=1)
+        exposure_ar_tab.range(f"A2:T{last_row_o_ar}").api.Sort(Key1=exposure_ar_tab.range(f"O2:O{last_row_o_ar}").api,Order1=win32c.SortOrder.xlDescending,DataOption1=win32c.SortDataOption.xlSortNormal,Orientation=1,SortMethod=1)
+        ###########################################################################################################
         ar_exposure_wb.save(f"{output_location}\\AR Exposure "+input_date+'.xlsm')
 
         try:
