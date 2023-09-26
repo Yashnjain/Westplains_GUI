@@ -445,7 +445,7 @@ def ar_exposure(input_date, output_date):
         if not os.path.exists(ap_ar_template):
             return(f"{ap_ar_template} Excel file not present")     
         if not os.path.exists(ar_exposure_template):
-            return(f"{ar_exposure_template} Excel file not present")     
+            return(f"{ar_exposure_template} Excel file not present")
         if not os.path.exists(previous_sheet_ar_axposure):
             return(f"{previous_sheet_ar_axposure} Excel file not present")                  
         retry=0
@@ -464,7 +464,7 @@ def ar_exposure(input_date, output_date):
         retry=0
         while retry < 10:
             try:
-                wb_open_ar = xw.Book(input_sheet2) 
+                wb_open_ar = xw.Book(input_sheet2,update_links=False) 
                 break
             except Exception as e:
                 time.sleep(5)
@@ -477,7 +477,7 @@ def ar_exposure(input_date, output_date):
         retry=0
         while retry < 10:
             try:
-                wb_ap_ar = xw.Book(ap_ar_template) 
+                wb_ap_ar = xw.Book(ap_ar_template,update_links=False) 
                 break
             except Exception as e:
                 time.sleep(5)
@@ -491,7 +491,7 @@ def ar_exposure(input_date, output_date):
         retry=0
         while retry < 10:
             try:
-                ar_exposure_wb = xw.Book(ar_exposure_template) 
+                ar_exposure_wb = xw.Book(ar_exposure_template,update_links=False) 
                 break
             except Exception as e:
                 time.sleep(5)
@@ -1069,6 +1069,16 @@ def ar_exposure(input_date, output_date):
         exposure_ar_tab.range(f"A2:T{last_row_o_ar}").api.Sort(Key1=exposure_ar_tab.range(f"M2:M{last_row_o_ar}").api,Order1=win32c.SortOrder.xlDescending,DataOption1=win32c.SortDataOption.xlSortNormal,Orientation=1,SortMethod=1)
         exposure_ar_tab.range(f"A2:T{last_row_o_ar}").api.Sort(Key1=exposure_ar_tab.range(f"N2:N{last_row_o_ar}").api,Order1=win32c.SortOrder.xlDescending,DataOption1=win32c.SortDataOption.xlSortNormal,Orientation=1,SortMethod=1)
         exposure_ar_tab.range(f"A2:T{last_row_o_ar}").api.Sort(Key1=exposure_ar_tab.range(f"O2:O{last_row_o_ar}").api,Order1=win32c.SortOrder.xlDescending,DataOption1=win32c.SortDataOption.xlSortNormal,Orientation=1,SortMethod=1)
+        
+        # Descending order in over limit column
+        over_limit_tab.activate()
+        over_limit_tab.range(f"A2:G35").api.Sort(Key1=over_limit_tab.range(f"G2:G35").api,Order1=win32c.SortOrder.xlDescending,DataOption1=win32c.SortDataOption.xlSortNormal,Orientation=1,SortMethod=1)
+        
+        # Adding dollar sign in sheet1 column B        
+        sh1_ws=ar_exposure_wb.sheets[0]
+        sh1_ws.activate()
+        last_row_b_sh1 = sh1_ws.range(f'B'+ str(sh1_ws.cells.last_cell.row)).end('up').row
+        sh1_ws.range(f"B4:B{last_row_b_sh1}").api.NumberFormat = '_("$"* #,##0.00_);_("$"* (#,##0.00);_("$"* "-"??_);_(@_)'
         ###########################################################################################################
         ar_exposure_wb.save(f"{output_location}\\AR Exposure "+input_date+'.xlsm')
 
