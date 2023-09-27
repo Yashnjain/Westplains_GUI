@@ -1072,7 +1072,8 @@ def ar_exposure(input_date, output_date):
         
         # Descending order in over limit column
         over_limit_tab.activate()
-        over_limit_tab.range(f"A2:G35").api.Sort(Key1=over_limit_tab.range(f"G2:G35").api,Order1=win32c.SortOrder.xlDescending,DataOption1=win32c.SortDataOption.xlSortNormal,Orientation=1,SortMethod=1)
+        last_row_a_over_limit = over_limit_tab.range(f'A'+ str(over_limit_tab.cells.last_cell.row)).end('up').row
+        over_limit_tab.range(f"A2:G{last_row_a_over_limit}").api.Sort(Key1=over_limit_tab.range(f"G2:G{last_row_a_over_limit}").api,Order1=win32c.SortOrder.xlDescending,DataOption1=win32c.SortDataOption.xlSortNormal,Orientation=1,SortMethod=1)
         
         # Adding dollar sign in sheet1 column B        
         sh1_ws=ar_exposure_wb.sheets[0]
