@@ -4516,7 +4516,7 @@ def ctm(input_date, output_date):
             last_column = intcomp_sht.range('A1').end('right').last_cell.column
             last_column_letter=num_to_col_letters(intcomp_sht.range('A1').end('right').last_cell.column)
             x=last_row2+last_row
-            intcomp_sht.range(f"A2:{last_column_letter}{last_row}").copy(ws2.range(f"A{last_row2}:{last_column_letter}{x}"))
+            intcomp_sht.range(f"A2:{last_column_letter}{last_row}").copy(ws2.range(f"A{last_row2}"))#:{last_column_letter}{x}
             intcomp_sht.delete()
 
             excl_sht = wb.sheets("Excl Macq & IC")
