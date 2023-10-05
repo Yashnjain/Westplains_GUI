@@ -6191,7 +6191,7 @@ def fifo(input_date, output_date):
                         raise e
             
             inp_sht.copy(wb.sheets[0],name="Master file")
-            inp_sht.range("1:1").insert()
+            inp_sht.range("1:1").insert(shift = "down")
             inp_sht.api.AutoFilterMode=False
 
             last_column = num_to_col_letters(inp_sht.range("A2").end('right').column)
@@ -6218,11 +6218,11 @@ def fifo(input_date, output_date):
             last_row = inp_sht.range(f'{transDate}'+ str(inp_sht.cells.last_cell.row)).end('up').row
             inp_sht.range(f"A2:{last_column}{last_row}").api.Sort(Key1=inp_sht.range(f"{transDate}2:{transDate}{last_row}").api,Order1=2,DataOption1=0,Orientation=1)
             #inserting  columns after INVENTORY VALUE
-            inp_sht.range(f"{qty_col}:{qty_col}").insert()
+            inp_sht.range(f"{qty_col}:{qty_col}").insert(shift = "down")
             inp_sht.range(f"{qty_col}2").value = "Qty"
-            inp_sht.range(f"{value_col}:{value_col}").insert()
+            inp_sht.range(f"{value_col}:{value_col}").insert(shift = "down")
             inp_sht.range(f"{value_col}2").value = "Value"
-            inp_sht.range(f"{price_col}:{price_col}").insert()
+            inp_sht.range(f"{price_col}:{price_col}").insert(shift = "down")
             inp_sht.range(f"{price_col}2").value = "Price"
 
             #Filtering Inter-Company and putting their quantiy to 0
@@ -6366,10 +6366,14 @@ def fifo(input_date, output_date):
                 mtm_sht.api.Range(f"B3").AutoFilter(Field:=2,Criteria1:=columns_1[key].split(','), Operator:=7)
                 time.sleep(1)
                 mtm_sht.api.Range(f"G3").AutoFilter(Field:=7,Criteria1:='<>0', Operator:=1, Criteria2:='<>')
-                mtm_sht.api.Range(f"O4:O{mtm_last_row}").SpecialCells(12).Select()
-                mtm_wb.app.selection.value = new_sht.range(f"R{i}").value
+                mtm_wb.activate()
+                mtm_sht.activate()
+                try:
+                    mtm_sht.api.Range(f"O4:O{mtm_last_row}").SpecialCells(12).Select()
+                    mtm_wb.app.selection.value = new_sht.range(f"R{i}").value
+                except:
+                    messagebox.showinfo("Info", f"Zero rows found for location {loc}-{columns_1[key].split(',')[0]}, check and continue")
 
-                
             if loc == "HRW":
                 mtm_sht.api.AutoFilterMode=False
                 mtm_sht.api.Range(f"D3").AutoFilter(Field:=4,Criteria1:='<>HRW', Operator:=1, Criteria2:='<>YC')
