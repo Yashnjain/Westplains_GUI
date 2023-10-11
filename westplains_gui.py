@@ -9168,7 +9168,8 @@ def weekly_estimate(input_date, output_date):
                     form_dict = {"'6":"75", "'4":"50", "'2":"25", "'0":"00"}
                     ##Updating Future prices
                     if site_code == hrw_site_code:
-                        fut_start = macq_m_end_prices_sht.range(f'C3').end('down').end('down').row
+                        # fut_start = macq_m_end_prices_sht.range(f'C3').end('down').end('down').row
+                        fut_start = macq_m_end_prices_sht.range(f'B3').end('down').row
                         fut_end = macq_m_end_prices_sht.range(f'C{fut_start}').end('down').row
                     else:
                         fut_start = 3
