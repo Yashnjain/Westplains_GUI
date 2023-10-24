@@ -311,13 +311,14 @@ def mtd_new_trades(input_date, output_date):
         date_values = date_sheet.range(f"A2:A{dte_lst_rw -1}").value
         for index,dat_val in enumerate(date_values):
             if type(dat_val) == datetime:
-                if dat_val.replace(day=1) > datetime.strptime(input_date,"%m.%d.%Y").replace(day=1):
+                if dat_val.replace(day=1) < datetime.strptime(input_date,"%m.%d.%Y").replace(day=1):
+                    print("found datetime date")
+                    date_sheet.range(f"B{index+2}").value = f"Delinquent"
+                else:
                     print("found datetime date")
                     mnt = datetime.strftime(dat_val,"%b")
                     yr = datetime.strftime(dat_val,"%y")
-                    date_sheet.range(f"B{index+2}").value = f"'{mnt}{yr}"
-                else:
-                    date_sheet.range(f"B{index+2}").value = f"Delinquent"  
+                    date_sheet.range(f"B{index+2}").value = f"'{mnt}-{yr}" 
             elif type(dat_val) == str:
                 print(f"found str value format unknown :: row no {index+2}")
             else:
