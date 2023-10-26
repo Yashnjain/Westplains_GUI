@@ -356,6 +356,10 @@ def mtd_new_trades(input_date, output_date):
         str1 = ''
         for row in flat_list:
             gs_sheet.activate()
+            if gs_sheet.range(f'AO{row}').value == 'IN STORE':
+                gs_sheet.range(f'BU{row}').value = 0
+                interior_coloring_temp(5287936,f'BU{row}',gs_sheet,template_wb)
+                continue
             market_zone = loc_dict[gs_sheet.range(f'AO{row}').value]
             commodity = commodity_dict[gs_sheet.range(f'I{row}').value]
             if gs_sheet.range(f'Y{row}').value !=None:
