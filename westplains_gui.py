@@ -408,8 +408,29 @@ def mtd_new_trades(input_date, output_date):
                     print(f"price not found for months ==> {mnth} ::commodity {commodity} ::{market_zone} :: reffer output row {row}")
                     str1+= f" - Price not found for months ==> {mnth} ::commodity => {commodity} :: market_zone => {market_zone} :: reffer row(GS Query) =>{row}\n"
                     interior_coloring_temp(255,f'BU{row}',gs_sheet,template_wb)
-
-        
+                    
+        ################# REMOVING INSTORE FROM MAKET-ZONE  ##############
+        gs_sheet.api.AutoFilterMode=False
+        curr_col_list=gs_sheet.range("A1").expand('right').value
+        market_zone_index=curr_col_list.index("Market Zone")
+        market_zone_letter=num_to_col_letters(market_zone_index+1)
+        commodity_index=curr_col_list.index("Commodity")
+        commodity_letter=num_to_col_letters(commodity_index+1)
+        last_rw = gs_sheet.range(f'A'+ str(gs_sheet.cells.last_cell.row)).end('up').row
+        for row in range(last_rw, 1, -1):
+            cell_value = gs_sheet[market_zone_letter + str(row)].value
+            cell_value2 = gs_sheet[commodity_letter + str(row)].value
+            if cell_value=="IN STORE":
+                gs_sheet.range('A' + str(row)).api.EntireRow.Delete()
+                print(f"value found for :: {row}, value :: {cell_value}")
+                continue
+            elif cell_value2=="EQUIP" or cell_value2=="FRT TON":
+                gs_sheet.range('A' + str(row)).api.EntireRow.Delete()  
+                print(f"value found for :: {row}, value :: {cell_value2}")
+                continue              
+            else:
+                print(f"value not found for :: {row}")
+        #####################################################################
         tablist={gs_sheet:255,mtm_sheet:49407,date_sheet:win32c.ThemeColor.xlThemeColorLight2}
         for tab,color in tablist.items():
             freezepanes_for_tab(cellrange="2:2",working_sheet=tab,working_workbook=template_wb) 
