@@ -9171,10 +9171,16 @@ def weekly_estimate(input_date, output_date):
 
         corn_site_code = 300
         hrw_site_code = 348
-        
+        headers = {
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36",
+                    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
+                    "Accept-Encoding": "gzip, deflate, br",
+                    "Accept-Language": "en-US,en;q=0.9",
+                    }
         for site_code in [corn_site_code,hrw_site_code]:
             cme_date_url = f'https://www.cmegroup.com/CmeWS/mvc/Settlements/Futures/Settlements/{site_code}/FUT?strategy=DEFAULT&tradeDate={input_date3}'
             with requests.Session() as session:
+                session.headers.update(headers)
                 response = session.get(cme_date_url)
                 if response.json()['empty']:
                     commodity = "Corn"
