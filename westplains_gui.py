@@ -1856,9 +1856,13 @@ def inv_mtm_pdf_data_extractor(input_date, f, hrw_pdf_loc=None, yc_pdf_loc=None,
             if old_pdf:
                 df = read_pdf(f, pages = page, guess = False, stream = True ,
                             pandas_options={'header':0}, area = ["75,10,580,850"], columns=["65,85, 180,225, 260, 280,300,360,400,430,480,525,570,620,665,720"])
+                # df = read_pdf(f, pages = page, guess = True, stream = True ,
+                #         pandas_options={'header':0}, area = ["75,10,580,850"], columns=["50,85, 180,225, 260, 280,300,360,400,430,480,525,570,620,665,720"])
             else:
                 df = read_pdf(f, pages = page, guess = False, stream = True ,
                             pandas_options={'header':0}, area = ["75,10,580,850"], columns=["65,85, 180,225, 260, 275,300,360,400,430,480,525,570,620,665,713"])
+                # df = read_pdf(f, pages = page, guess = True, stream = True ,
+                #             pandas_options={'header':0}, area = ["75,10,580,850"], columns=["47,85, 180,225, 255,275,300,360,400,430,480,525,570,620,665,713"])
             df = pd.concat(df, ignore_index=True)
             ########logger.info("Filtering only required columns")
             df = df.iloc[:,[0,1,2,3,-2,-1]]
@@ -1873,6 +1877,8 @@ def inv_mtm_pdf_data_extractor(input_date, f, hrw_pdf_loc=None, yc_pdf_loc=None,
                 try:
                     df = read_pdf(f, pages = page, guess = False, stream = True ,
                             pandas_options={'header':0}, area = ["75,10,580,850"], columns=["65,85, 180,225, 260, 275,300,360,400,430,480,525,570,620,665,713"])
+                    # df = read_pdf(f, pages = page, guess = True, stream = True ,
+                    #         pandas_options={'header':0}, area = ["75,10,580,850"], columns=["46,85, 180,225, 255,275,300,360,400,430,480,525,570,620,665,713"])
                     df = pd.concat(df, ignore_index=True)
                     df["Value.5"].fillna(0, inplace=True)
                     old_pdf=False
@@ -1883,7 +1889,10 @@ def inv_mtm_pdf_data_extractor(input_date, f, hrw_pdf_loc=None, yc_pdf_loc=None,
             df["Value.5"] = df["Value.5"].astype(str).str.replace("(","-").str.replace(",","").str.replace(")","").astype(float)
 
             for i in range(len(df)):
-                print(df.iloc[i,2]) #2 for "Offsite Name Cont. No."
+                try:
+                    print(df.iloc[i,2]) #2 for "Offsite Name Cont. No."
+                except:
+                    continue
                 if "priced Sales" in df.iloc[i,2]:
                     print("Unprised Value found")
                     if df.iloc[-2,2] == 'Unpriced Sales:' and df.iloc[-2,-2]==0: #pd.isna(df.iloc[-2,-1]):
@@ -1891,6 +1900,16 @@ def inv_mtm_pdf_data_extractor(input_date, f, hrw_pdf_loc=None, yc_pdf_loc=None,
                     else:
                         df.iloc[i+1,-2] = df.iloc[i+1,-2] - df.iloc[i,-2]
                         df.iloc[i+1,-1] = df.iloc[i+1,-1] - df.iloc[i,-1]
+
+                if i>0 and (isinstance(df.iloc[i-1,0], str) or isinstance(df.iloc[i,0], str)):
+                    if df.iloc[i-1,0]==df.iloc[i,0] or ("ALLIANCE" in df.iloc[i-1,0] and "ALLIANCE" in df.iloc[i,0]):
+                        #Price Remains last one
+                        #Adding Quantity and Value
+                        df.iloc[i,4] = df.iloc[i,4]+df.iloc[i-1,4]
+                        df.iloc[i,5] = df.iloc[i,5]+df.iloc[i-1,5]
+                        #droping i-1 index row
+                        df.drop([df.index[i-1]], inplace=True)
+                        pass
 
             # n_df[n_df.iloc[:,2].str.contains("Company Owned Risk:")] #Another way
             
@@ -3378,14 +3397,16 @@ def mtm_pdf_data_extractor(input_date, f, hrw_pdf_loc=None, yc_pdf_loc=None ,ysb
                     else:
                         df.iloc[i+1,-2] = df.iloc[i+1,-2] - df.iloc[i,-2]
                         df.iloc[i+1,-1] = df.iloc[i+1,-1] - df.iloc[i,-1]
-                if i>0 and df.iloc[i-1,0]==df.iloc[i,0]:
-                    #Price Remains last one
-                    #Adding Quantity and Value
-                    df.iloc[i,4] = df.iloc[i,4]+df.iloc[i-1,4]
-                    df.iloc[i,5] = df.iloc[i,5]+df.iloc[i-1,5]
-                    #droping i-1 index row
-                    df.drop([df.index[i-1]], inplace=True)
-                    pass
+                # if i>0 and df.iloc[i-1,0]==df.iloc[i,0]:
+                if i>0 and (isinstance(df.iloc[i-1,0], str) or isinstance(df.iloc[i,0], str)):
+                    if df.iloc[i-1,0]==df.iloc[i,0] or ("ALLIANCE" in df.iloc[i-1,0] and "ALLIANCE" in df.iloc[i,0]):
+                        #Price Remains last one
+                        #Adding Quantity and Value
+                        df.iloc[i,4] = df.iloc[i,4]+df.iloc[i-1,4]
+                        df.iloc[i,5] = df.iloc[i,5]+df.iloc[i-1,5]
+                        #droping i-1 index row
+                        df.drop([df.index[i-1]], inplace=True)
+                        pass
 
             # n_df[n_df.iloc[:,2].str.contains("Company Owned Risk:")] #Another way
             
