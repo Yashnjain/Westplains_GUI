@@ -1901,7 +1901,7 @@ def inv_mtm_pdf_data_extractor(input_date, f, hrw_pdf_loc=None, yc_pdf_loc=None,
                         df.iloc[i+1,-2] = df.iloc[i+1,-2] - df.iloc[i,-2]
                         df.iloc[i+1,-1] = df.iloc[i+1,-1] - df.iloc[i,-1]
 
-                if i>0 and (isinstance(df.iloc[i-1,0], str) or isinstance(df.iloc[i,0], str)):
+                if i>0 and (isinstance(df.iloc[i-1,0], str) and isinstance(df.iloc[i,0], str)):
                     if df.iloc[i-1,0]==df.iloc[i,0] or ("ALLIANCE" in df.iloc[i-1,0] and "ALLIANCE" in df.iloc[i,0]):
                         #Price Remains last one
                         #Adding Quantity and Value
@@ -3398,7 +3398,7 @@ def mtm_pdf_data_extractor(input_date, f, hrw_pdf_loc=None, yc_pdf_loc=None ,ysb
                         df.iloc[i+1,-2] = df.iloc[i+1,-2] - df.iloc[i,-2]
                         df.iloc[i+1,-1] = df.iloc[i+1,-1] - df.iloc[i,-1]
                 # if i>0 and df.iloc[i-1,0]==df.iloc[i,0]:
-                if i>0 and (isinstance(df.iloc[i-1,0], str) or isinstance(df.iloc[i,0], str)):
+                if i>0 and (isinstance(df.iloc[i-1,0], str) and isinstance(df.iloc[i,0], str)):
                     if df.iloc[i-1,0]==df.iloc[i,0] or ("ALLIANCE" in df.iloc[i-1,0] and "ALLIANCE" in df.iloc[i,0]):
                         #Price Remains last one
                         #Adding Quantity and Value
