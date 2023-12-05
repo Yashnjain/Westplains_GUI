@@ -408,8 +408,29 @@ def mtd_new_trades(input_date, output_date):
                     print(f"price not found for months ==> {mnth} ::commodity {commodity} ::{market_zone} :: reffer output row {row}")
                     str1+= f" - Price not found for months ==> {mnth} ::commodity => {commodity} :: market_zone => {market_zone} :: reffer row(GS Query) =>{row}\n"
                     interior_coloring_temp(255,f'BU{row}',gs_sheet,template_wb)
-
-        
+                    
+        ################# REMOVING INSTORE FROM MAKET-ZONE  ##############
+        gs_sheet.api.AutoFilterMode=False
+        curr_col_list=gs_sheet.range("A1").expand('right').value
+        market_zone_index=curr_col_list.index("Market Zone")
+        market_zone_letter=num_to_col_letters(market_zone_index+1)
+        commodity_index=curr_col_list.index("Commodity")
+        commodity_letter=num_to_col_letters(commodity_index+1)
+        last_rw = gs_sheet.range(f'A'+ str(gs_sheet.cells.last_cell.row)).end('up').row
+        for row in range(last_rw, 1, -1):
+            cell_value = gs_sheet[market_zone_letter + str(row)].value
+            cell_value2 = gs_sheet[commodity_letter + str(row)].value
+            if cell_value=="IN STORE":
+                gs_sheet.range('A' + str(row)).api.EntireRow.Delete()
+                print(f"value found for :: {row}, value :: {cell_value}")
+                continue
+            elif cell_value2=="EQUIP" or cell_value2=="FRT TON":
+                gs_sheet.range('A' + str(row)).api.EntireRow.Delete()  
+                print(f"value found for :: {row}, value :: {cell_value2}")
+                continue              
+            else:
+                print(f"value not found for :: {row}")
+        #####################################################################
         tablist={gs_sheet:255,mtm_sheet:49407,date_sheet:win32c.ThemeColor.xlThemeColorLight2}
         for tab,color in tablist.items():
             freezepanes_for_tab(cellrange="2:2",working_sheet=tab,working_workbook=template_wb) 
@@ -1835,9 +1856,13 @@ def inv_mtm_pdf_data_extractor(input_date, f, hrw_pdf_loc=None, yc_pdf_loc=None,
             if old_pdf:
                 df = read_pdf(f, pages = page, guess = False, stream = True ,
                             pandas_options={'header':0}, area = ["75,10,580,850"], columns=["65,85, 180,225, 260, 280,300,360,400,430,480,525,570,620,665,720"])
+                # df = read_pdf(f, pages = page, guess = True, stream = True ,
+                #         pandas_options={'header':0}, area = ["75,10,580,850"], columns=["50,85, 180,225, 260, 280,300,360,400,430,480,525,570,620,665,720"])
             else:
                 df = read_pdf(f, pages = page, guess = False, stream = True ,
                             pandas_options={'header':0}, area = ["75,10,580,850"], columns=["65,85, 180,225, 260, 275,300,360,400,430,480,525,570,620,665,713"])
+                # df = read_pdf(f, pages = page, guess = True, stream = True ,
+                #             pandas_options={'header':0}, area = ["75,10,580,850"], columns=["47,85, 180,225, 255,275,300,360,400,430,480,525,570,620,665,713"])
             df = pd.concat(df, ignore_index=True)
             ########logger.info("Filtering only required columns")
             df = df.iloc[:,[0,1,2,3,-2,-1]]
@@ -1852,6 +1877,8 @@ def inv_mtm_pdf_data_extractor(input_date, f, hrw_pdf_loc=None, yc_pdf_loc=None,
                 try:
                     df = read_pdf(f, pages = page, guess = False, stream = True ,
                             pandas_options={'header':0}, area = ["75,10,580,850"], columns=["65,85, 180,225, 260, 275,300,360,400,430,480,525,570,620,665,713"])
+                    # df = read_pdf(f, pages = page, guess = True, stream = True ,
+                    #         pandas_options={'header':0}, area = ["75,10,580,850"], columns=["46,85, 180,225, 255,275,300,360,400,430,480,525,570,620,665,713"])
                     df = pd.concat(df, ignore_index=True)
                     df["Value.5"].fillna(0, inplace=True)
                     old_pdf=False
@@ -1862,7 +1889,10 @@ def inv_mtm_pdf_data_extractor(input_date, f, hrw_pdf_loc=None, yc_pdf_loc=None,
             df["Value.5"] = df["Value.5"].astype(str).str.replace("(","-").str.replace(",","").str.replace(")","").astype(float)
 
             for i in range(len(df)):
-                print(df.iloc[i,2]) #2 for "Offsite Name Cont. No."
+                try:
+                    print(df.iloc[i,2]) #2 for "Offsite Name Cont. No."
+                except:
+                    continue
                 if "priced Sales" in df.iloc[i,2]:
                     print("Unprised Value found")
                     if df.iloc[-2,2] == 'Unpriced Sales:' and df.iloc[-2,-2]==0: #pd.isna(df.iloc[-2,-1]):
@@ -1870,6 +1900,16 @@ def inv_mtm_pdf_data_extractor(input_date, f, hrw_pdf_loc=None, yc_pdf_loc=None,
                     else:
                         df.iloc[i+1,-2] = df.iloc[i+1,-2] - df.iloc[i,-2]
                         df.iloc[i+1,-1] = df.iloc[i+1,-1] - df.iloc[i,-1]
+
+                if i>0 and (isinstance(df.iloc[i-1,0], str) and isinstance(df.iloc[i,0], str)):
+                    if df.iloc[i-1,0]==df.iloc[i,0] or ("ALLIANCE" in df.iloc[i-1,0] and "ALLIANCE" in df.iloc[i,0]):
+                        #Price Remains last one
+                        #Adding Quantity and Value
+                        df.iloc[i,4] = df.iloc[i,4]+df.iloc[i-1,4]
+                        df.iloc[i,5] = df.iloc[i,5]+df.iloc[i-1,5]
+                        #droping i-1 index row
+                        df.drop([df.index[i-1]], inplace=True)
+                        pass
 
             # n_df[n_df.iloc[:,2].str.contains("Company Owned Risk:")] #Another way
             
@@ -3357,14 +3397,16 @@ def mtm_pdf_data_extractor(input_date, f, hrw_pdf_loc=None, yc_pdf_loc=None ,ysb
                     else:
                         df.iloc[i+1,-2] = df.iloc[i+1,-2] - df.iloc[i,-2]
                         df.iloc[i+1,-1] = df.iloc[i+1,-1] - df.iloc[i,-1]
-                if i>0 and df.iloc[i-1,0]==df.iloc[i,0]:
-                    #Price Remains last one
-                    #Adding Quantity and Value
-                    df.iloc[i,4] = df.iloc[i,4]+df.iloc[i-1,4]
-                    df.iloc[i,5] = df.iloc[i,5]+df.iloc[i-1,5]
-                    #droping i-1 index row
-                    df.drop([df.index[i-1]], inplace=True)
-                    pass
+                # if i>0 and df.iloc[i-1,0]==df.iloc[i,0]:
+                if i>0 and (isinstance(df.iloc[i-1,0], str) and isinstance(df.iloc[i,0], str)):
+                    if df.iloc[i-1,0]==df.iloc[i,0] or ("ALLIANCE" in df.iloc[i-1,0] and "ALLIANCE" in df.iloc[i,0]):
+                        #Price Remains last one
+                        #Adding Quantity and Value
+                        df.iloc[i,4] = df.iloc[i,4]+df.iloc[i-1,4]
+                        df.iloc[i,5] = df.iloc[i,5]+df.iloc[i-1,5]
+                        #droping i-1 index row
+                        df.drop([df.index[i-1]], inplace=True)
+                        pass
 
             # n_df[n_df.iloc[:,2].str.contains("Company Owned Risk:")] #Another way
             
@@ -9158,10 +9200,16 @@ def weekly_estimate(input_date, output_date):
 
         corn_site_code = 300
         hrw_site_code = 348
-        
+        headers = {
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36",
+                    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
+                    "Accept-Encoding": "gzip, deflate, br",
+                    "Accept-Language": "en-US,en;q=0.9",
+                    }
         for site_code in [corn_site_code,hrw_site_code]:
             cme_date_url = f'https://www.cmegroup.com/CmeWS/mvc/Settlements/Futures/Settlements/{site_code}/FUT?strategy=DEFAULT&tradeDate={input_date3}'
             with requests.Session() as session:
+                session.headers.update(headers)
                 response = session.get(cme_date_url)
                 if response.json()['empty']:
                     commodity = "Corn"
