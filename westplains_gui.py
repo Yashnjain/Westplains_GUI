@@ -3411,6 +3411,7 @@ def mtm_pdf_data_extractor(input_date, f, hrw_pdf_loc=None, yc_pdf_loc=None ,ysb
 def mtm_excel(input_date,input_xl,loc_dict,loc_sheet, output_location, hrw_fut, yc_fut ,ysb_fut):
     try:
         monthYear = datetime.strftime(datetime.strptime(input_xl.split("_")[-1].split(".xlsx")[0],"%m.%d.%Y"), "%d-%b")
+        add_message = ""
         
         retry = 0
         while retry<10:
@@ -3482,8 +3483,11 @@ def mtm_excel(input_date,input_xl,loc_dict,loc_sheet, output_location, hrw_fut, 
         # locations[locations.index('North Greeley')] = 'NGREEL'
         # locations[locations.index('North Greeley')] = 'NGREEL'
         equip_row = m_sht.range("L1").end('down').end('down').end('down').row #57
-        m_sht.range(f"P{equip_row}").value = loc_dict["EQUIP"][0].iloc[-1,-1]/loc_dict["EQUIP"][0].iloc[-1,-2] #loc_dict["HRW"][0].loc[loc_abbr[location]]["Price"]
-        m_sht.range(f"M{equip_row}").value = loc_dict["EQUIP"][0].iloc[-1,-2]
+        try:
+            m_sht.range(f"P{equip_row}").value = loc_dict["EQUIP"][0].iloc[-1,-1]/loc_dict["EQUIP"][0].iloc[-1,-2] #loc_dict["HRW"][0].loc[loc_abbr[location]]["Price"]
+            m_sht.range(f"M{equip_row}").value = loc_dict["EQUIP"][0].iloc[-1,-2]
+        except:
+            add_message = "EQUIP Commodity not Found"
         loc_dict["HRW"][0].set_index('Location', inplace=True) #DF re_idct[loc_abbr[location]]
         i = int(hrw.replace("B", ""))
         start=int(hrw.replace("B", ""))
@@ -3694,6 +3698,7 @@ def mtm_excel(input_date,input_xl,loc_dict,loc_sheet, output_location, hrw_fut, 
             i+=1
         print()
         wb.save(output_location)
+        return add_message
     except Exception as e:
         raise e
     finally:
@@ -4808,10 +4813,13 @@ def mtm_report(input_date, output_date):
 
         loc_dict, hrw_fut, yc_fut, ysb_fut = mtm_pdf_data_extractor(input_date,pdf_loc, hrw_pdf_loc, yc_pdf_loc ,ysb_pdf_loc)
         output_location = drive+r'\REPORT\MTM reports\Output files\Inventory MTM_'+input_date+".xlsx"
-        mtm_excel(input_date, input_xl,loc_dict,loc_sheet, output_location, hrw_fut, yc_fut , ysb_fut)
+        add_msg = mtm_excel(input_date, input_xl,loc_dict,loc_sheet, output_location, hrw_fut, yc_fut , ysb_fut)
 
         print("Done")
-        return f"MTM report Generated for {input_date}"
+        if len(add_msg):
+            return f"MTM report Generated for {input_date} and {add_msg}"
+        else:
+            return f"MTM report Generated for {input_date}"
     except Exception as e:
         raise e
     
