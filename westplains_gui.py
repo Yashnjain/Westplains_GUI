@@ -1913,7 +1913,8 @@ def inv_mtm_pdf_data_extractor(input_date, f, hrw_pdf_loc=None, yc_pdf_loc=None,
 
             # n_df[n_df.iloc[:,2].str.contains("Company Owned Risk:")] #Another way
             
-            
+            if com_loc[page-1] == "MILO":
+                df['Location Zone'] = np.where(df['Location Zone']=='ALLIANCETE','ALLIANCE',df['Location Zone'])
             
             loc_dict[com_loc[page-1]].append(df)
             
@@ -6142,34 +6143,35 @@ def inv_mtm_excel_summ(input_date, output_date):
         for rng in mtm_wb.app.selection.address.split(','):
             for i in range(int(rng.split(":")[0].split("$")[-1]),int(rng.split(":")[-1].split("$")[-1])+1):
                 
-                if mtm_sht.range(f"B{i}").value == "BROWNSVILL" and mtm_sht.range(f"D{i}").value == "MILO":
+                # if mtm_sht.range(f"B{i}").value == "BROWNSVILL" and mtm_sht.range(f"D{i}").value == "MILO":
+                #     try:
+                #         loc_dict["SORGHUM"][0].set_index('Location Zone', inplace=True)
+                #     except:
+                #         pass
+                #     mtm_sht.range(f"G{i}").value = float(loc_dict["SORGHUM"][0].loc[mtm_sht.range(f"B{i}").value]["Quantity.5"])
+                #     mtm_sht.range(f"K{i}").value = float(loc_dict["SORGHUM"][0].loc[mtm_sht.range(f"B{i}").value]["Value.5"]) #/float(loc_dict["SORGHUM"][0].loc[mtm_sht.range(f"B{i}").value]["Quantity.5"])
+                # else:
+                try:
+                    loc_dict[mtm_sht.range(f"D{i}").value][0].set_index('Location Zone', inplace=True)
                     try:
-                        loc_dict["SORGHUM"][0].set_index('Location Zone', inplace=True)
+                        # loc_dict[mtm_sht.range(f"D{i}").value][0].rename(index={'OMA COMM': 'TERMINAL'}, inplace=True)
+                        loc_dict[mtm_sht.range(f"D{i}").value][0].rename(index={'OMA COMM': 'OMCOM'}, inplace=True)
                     except:
                         pass
-                    mtm_sht.range(f"G{i}").value = float(loc_dict["SORGHUM"][0].loc[mtm_sht.range(f"B{i}").value]["Quantity.5"])
-                    mtm_sht.range(f"K{i}").value = float(loc_dict["SORGHUM"][0].loc[mtm_sht.range(f"B{i}").value]["Value.5"]) #/float(loc_dict["SORGHUM"][0].loc[mtm_sht.range(f"B{i}").value]["Quantity.5"])
-                else:
-                    try:
-                        loc_dict[mtm_sht.range(f"D{i}").value][0].set_index('Location Zone', inplace=True)
-                        try:
-                            # loc_dict[mtm_sht.range(f"D{i}").value][0].rename(index={'OMA COMM': 'TERMINAL'}, inplace=True)
-                            loc_dict[mtm_sht.range(f"D{i}").value][0].rename(index={'OMA COMM': 'OMCOM'}, inplace=True)
-                        except:
-                            pass
-                    except:
-                        pass
-                    try:
-                        mtm_sht.range(f"G{i}").value = float(loc_dict[mtm_sht.range(f"D{i}").value][0].loc[mtm_sht.range(f"B{i}").value]["Quantity.5"]) #Quantity
-                    except:
-                        pass
-                    try:
-                        if float(loc_dict[mtm_sht.range(f"D{i}").value][0].loc[mtm_sht.range(f"B{i}").value]["Quantity.5"]) == 0 and float(loc_dict[mtm_sht.range(f"D{i}").value][0].loc[mtm_sht.range(f"B{i}").value]["Value.5"]) == 0:
-                            mtm_sht.range(f"K{i}").value = 0
-                        else:
-                            mtm_sht.range(f"K{i}").value = float(loc_dict[mtm_sht.range(f"D{i}").value][0].loc[mtm_sht.range(f"B{i}").value]["Value.5"]) #/float(loc_dict[mtm_sht.range(f"D{i}").value][0].loc[mtm_sht.range(f"B{i}").value]["Quantity.5"])
-                    except:
-                        pass
+                except:
+                    pass
+                try:
+                    mtm_sht.range(f"G{i}").value = float(loc_dict[mtm_sht.range(f"D{i}").value][0].loc[mtm_sht.range(f"B{i}").value]["Quantity.5"]) #Quantity
+                except:
+                    pass
+                try:
+                    if float(loc_dict[mtm_sht.range(f"D{i}").value][0].loc[mtm_sht.range(f"B{i}").value]["Quantity.5"]) == 0 and float(loc_dict[mtm_sht.range(f"D{i}").value][0].loc[mtm_sht.range(f"B{i}").value]["Value.5"]) == 0:
+                        mtm_sht.range(f"K{i}").value = 0
+                    else:
+                        mtm_sht.range(f"K{i}").value = float(loc_dict[mtm_sht.range(f"D{i}").value][0].loc[mtm_sht.range(f"B{i}").value]["Value.5"]) #/float(loc_dict[mtm_sht.range(f"D{i}").value][0].loc[mtm_sht.range(f"B{i}").value]["Quantity.5"])
+                except:
+                    pass
+                ###############################################
         mtm_sht.api.AutoFilterMode=False                   
         mtm_wb.save(output_loc)
 
