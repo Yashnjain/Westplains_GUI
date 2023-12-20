@@ -5875,7 +5875,7 @@ def unsetteled_receivables(input_date, output_date):
 
         for col in n_col_list[::-1]: #For properly inserting data
             last_col_num+=1
-            exc_sht.range(f"{next_col}:{next_col}").insert()
+            exc_sht.range(f"{next_col}:{next_col}").insert(shift='right')
             exc_sht.range(f"{next_col}1").value = f"{col}"
             
         
