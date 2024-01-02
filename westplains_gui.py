@@ -1503,9 +1503,11 @@ def payroll_pdf_extractor(input_pdf, input_datetime, monthYear):
             file_datetime = datetime.strptime(loc.split()[-1].split(".pdf")[0],"%m.%d.%y")
             file_date = datetime.strftime(file_datetime, "%d-%m-%Y")
             diff = relativedelta(input_datetime.replace(day=1),file_datetime.replace(day=1))
-            diff = diff.months*(diff.years+1)
+            # diff = diff.months*(diff.years+1)
+            # Convert the difference to months (considering years)
+            diff_in_months = diff.years * 12 + diff.months
 
-            if diff == 0: # or diff == 1 or diff==-1:
+            if diff_in_months == 0: # or diff == 1 or diff==-1:
                 if count == 2:
                     raise Exception(f"3rd file found for input month {monthYear}")
                 count+=1
@@ -6640,7 +6642,10 @@ def strg_month_end_report(input_date, output_date):
             
             commodity = loc.split("\\")[-1].split(".")[1]
             value = float(df.iloc[-1][-1].replace(",",""))
-            qty_value = float(df.iloc[-1][0].replace(",",""))
+            try:
+                qty_value = float(df.iloc[-1][0].replace(",",""))
+            except:
+                qty_value = 0
 
             # location_lst.append(loc.split("\\")[-1].split(".")[0])
             # commodity_lst.append(loc.split("\\")[-1].split(".")[1])
