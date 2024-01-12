@@ -218,7 +218,7 @@ def mtd_new_trades(input_date, output_date):
         ctm_book = r'J:\WEST PLAINS\REPORT\CTM Combined report\Output files'+f'\\CTM Combined _{input_date}.xlsx'
         template_sheet= r'J:\WEST PLAINS\REPORT\MTD Trades\Template'+f'\\MTD New Trades Templets.xlsx'
         mapping_workbook = r'J:\WEST PLAINS\REPORT\MTD Trades\Template'+f'\\Market Zone Mapping.xlsx'
-        pricing_workbook = r'J:\WEST PLAINS\REPORT\MTD Trades\Active Pricing'+f'\\2023  Weekly and Monthly Values.xlsx'
+        pricing_workbook = r'J:\WEST PLAINS\REPORT\MTD Trades\Active Pricing'+f'\\2024  Weekly and Monthly Values.xlsx'
         if not os.path.exists(input_sheet):
             return(f"{input_sheet} Excel file not present for date {input_date}")
         if not os.path.exists(input_sheet2):
@@ -295,7 +295,7 @@ def mtd_new_trades(input_date, output_date):
         template_wb.activate()
         date_sheet=template_wb.sheets[f"END DATE LOOKUP"]
         date_sheet.activate()        
-
+        gs_sheet.activate()
         column_list = gs_sheet.range("A1").expand('right').value
         edate_cl_no = column_list.index('End Date')+1
         pivotCount = template_wb.api.ActiveSheet.PivotTables().Count
@@ -389,9 +389,19 @@ def mtd_new_trades(input_date, output_date):
                 price_row = pricing_sheet.api.Application.ActiveCell.Row
 
                 pricing_sheet.api.Range(f"B{first_row}").Activate()
-                pricing_sheet.api.Cells.Find(What:=matching_mnth, After:=pricing_sheet.api.Application.ActiveCell,LookIn:=win32c.FindLookIn.xlFormulas,
-                                    LookAt:=win32c.LookAt.xlPart, SearchOrder:=win32c.SearchOrder.xlByColumns, SearchDirection:=win32c.SearchDirection.xlNext).Activate() 
-                price_column = num_to_col_letters(pricing_sheet.api.Application.ActiveCell.Column)    
+                try: 
+                    pricing_sheet.api.Cells.Find(What:=matching_mnth, After:=pricing_sheet.api.Application.ActiveCell,LookIn:=win32c.FindLookIn.xlFormulas,
+                                        LookAt:=win32c.LookAt.xlPart, SearchOrder:=win32c.SearchOrder.xlByColumns, SearchDirection:=win32c.SearchDirection.xlNext).Activate() 
+                    price_column = num_to_col_letters(pricing_sheet.api.Application.ActiveCell.Column)  
+
+                except:
+                    matching_mnth = "Forward"
+                    if matching_mnth == "Forward":
+                        pricing_sheet.api.Cells.Find(What:=matching_mnth, After:=pricing_sheet.api.Application.ActiveCell,LookIn:=win32c.FindLookIn.xlFormulas,
+                        LookAt:=win32c.LookAt.xlPart, SearchOrder:=win32c.SearchOrder.xlByColumns, SearchDirection:=win32c.SearchDirection.xlNext).Activate()
+                        price_column = num_to_col_letters(pricing_sheet.api.Application.ActiveCell.Column)  
+                    else:    
+                        continue      
                 if pricing_sheet.range(f'{price_column}{price_row}').value !=None:
                     actual_price = pricing_sheet.range(f'{price_column}{price_row}').value
                     gs_sheet.activate()
