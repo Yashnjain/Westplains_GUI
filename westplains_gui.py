@@ -1685,6 +1685,8 @@ def other_loc_extractor(input_pdf):
                 #     location = "BROWNSVILLE"
             product = df['Product'][i]
             value = df['Unit Cost'][i]
+            if location == "ALLIANCETE" and product == "MILO":
+                location = "ALLIANCE"
             if product in loc_dict.keys():  
                     if location in loc_dict[product].keys():
                         loc_dict[product][location].append(value)
@@ -1693,6 +1695,8 @@ def other_loc_extractor(input_pdf):
             else:  
                 loc_dict[product] = {}
                 loc_dict[product][location] = [value]
+            if location == "ALLIANCE" and product == "MILO":
+                location = "ALLIANCETE"
 
         print()
         return loc_dict
