@@ -3467,7 +3467,7 @@ def mtm_pdf_data_extractor(input_date, f, hrw_pdf_loc=None, yc_pdf_loc=None ,ysb
     except Exception as e:
         raise e
 
-def mtm_excel(input_date,input_xl,loc_dict,loc_sheet, output_location, hrw_fut, yc_fut ,ysb_fut):
+def mtm_excel(input_date,input_xl,prev_xl,loc_dict,loc_sheet, output_location, hrw_fut, yc_fut ,ysb_fut):
     try:
         monthYear = datetime.strftime(datetime.strptime(input_xl.split("_")[-1].split(".xlsx")[0],"%m.%d.%Y"), "%d-%b")
         add_message = ""
@@ -3594,7 +3594,23 @@ def mtm_excel(input_date,input_xl,loc_dict,loc_sheet, output_location, hrw_fut, 
 
         hrw_basis_dict = dict(zip(hrw_basis_loc, hrw_basis))
 
-        
+        ########Added logic for replacing hrw mtm basis and yc  mtm basis sheets with same sheets from outputfile with date specified in output date field
+        wb.sheets["HRW MTM Basis"].delete()
+        wb.sheets["YC MTM Basis"].delete()
+        retry = 0
+        while retry<10:
+            try:
+                prev_wb = xw.Book(prev_xl, update_links=True)
+
+                break
+            except Exception as e:
+                time.sleep(2)
+                retry+=1
+                if retry==9:
+                    raise e
+        prev_wb.sheets["HRW MTM Basis"].copy(after=wb.sheets["Inventory"])
+        prev_wb.sheets["YC MTM Basis"].copy(after=wb.sheets["HRW MTM Basis"])
+        ########################
         retry = 0
         while retry<10:
             try:
@@ -4872,7 +4888,10 @@ def mtm_report(input_date, output_date):
 
         loc_dict, hrw_fut, yc_fut, ysb_fut = mtm_pdf_data_extractor(input_date,pdf_loc, hrw_pdf_loc, yc_pdf_loc ,ysb_pdf_loc)
         output_location = drive+r'\REPORT\MTM reports\Output files\Inventory MTM_'+input_date+".xlsx"
-        add_msg = mtm_excel(input_date, input_xl,loc_dict,loc_sheet, output_location, hrw_fut, yc_fut , ysb_fut)
+        prev_xl = drive+r'\REPORT\MTM reports\Output files\Inventory MTM_'+output_date+".xlsx"
+        if not os.path.exists(pdf_loc):
+            return(f"{prev_xl} Excel file not present for date {output_date}")
+        add_msg = mtm_excel(input_date, input_xl,prev_xl,loc_dict,loc_sheet, output_location, hrw_fut, yc_fut , ysb_fut)
 
         print("Done")
         if len(add_msg):
