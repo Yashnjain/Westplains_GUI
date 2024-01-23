@@ -4419,6 +4419,11 @@ def ctm(input_date, output_date):
     try:
         input_sheet = drive+r'\REPORT\CTM Combined report\Raw Files\CTM Combined _'+input_date+'.xlsx' 
         output_location = drive+r'\REPORT\CTM Combined report\Output files\CTM Combined _'+input_date+".xlsx"
+        
+        # For debug purpose 
+        # input_sheet = 'Backups\CTM Combined _'+input_date+'.xlsx' 
+        # output_location = 'Backups\Output\CTM Combined _'+input_date+".xlsx"
+        
         # input_cpr = drive+r'\REPORT\CPR reports\Raw Files\Counter Party Risk Consolidated '+cpr_file_date+'.xlsx'    
         if not os.path.exists(input_sheet):
             return(f"{input_sheet} Excel file not present for date {input_date}")
@@ -4441,6 +4446,12 @@ def ctm(input_date, output_date):
         ###logger.info("Clearing its contents")
         ws2.cells.clear_contents()
         ###logger.info("Accessing Particular WorkBook[0]")
+        
+        ## Create new temporary sheet add the data then apply filter and add the data again , delete the temporary sheet
+        wb.sheets.add("Temporary_Sheet",after=wb.sheets[f"CTM Combined _{input_date}"]) 
+        temp_sh=wb.sheets["Temporary_Sheet"]
+        temp_sh.cells.clear_contents()
+        
         ws1=wb.sheets[0]
 
         ###logger.info("Declaring Variables for columns and rows")
@@ -4453,16 +4464,32 @@ def ctm(input_date, output_date):
         Location_letter_column = num_to_col_letters(column_list.index('Location Id')+1)
         Location_data = ws1.range(f"{Location_letter_column}1").expand('down').value
 
-
-        ###logger.info("Applying Filter to the same workbook")
-        ws1.api.Range(f"{Customer_letter_column}1").AutoFilter(Field:=f'{Customer_no_column}', Criteria1:=["<>MACQUARIE COMMODITIES (USA) INC."], Operator:=1,Criteria2=["<>INTER-COMPANY PURCH/SALES"])
+        ##=====================================Add Data To temp Sheet
+        ws1.api.Range(f"{Customer_letter_column}1").AutoFilter(Field:=f'{Customer_no_column}', Criteria1:=["<>MACQUARIE BANK LIMITED"], Operator:=1, Criteria2:=["<>INTER-COMPANY PURCH/SALES"])
         ws1.api.Range(f"{Location_letter_column}1").AutoFilter(Field:=f'{Location_no_column}', Criteria1:=["<>WPMEXICO"], Operator:=1)
+        
         ###logger.info("Copying and pasting Worksheet")
         ws1.api.AutoFilter.Range.Copy()
+        temp_sh.api.Paste()
+        ###logger.info("Applying Autofit")
+        temp_sh.autofit()
+        
+        # ===================================Add Data to Excl Macq & IC and delete temp sheet
+        ###logger.info("Applying Filter to the same workbook")
+        temp_sh.api.Range(f"{Customer_letter_column}1").AutoFilter(Field:=f'{Customer_no_column}', Criteria1:=["<>MACQUARIE COMMODITIES (USA) INC."], Operator:=1,Criteria2=["<>INTER-COMPANY PURCH/SALES"])
+        temp_sh.api.Range(f"{Location_letter_column}1").AutoFilter(Field:=f'{Location_no_column}', Criteria1:=["<>WPMEXICO"], Operator:=1)
+        
+        ###logger.info("Copying and pasting Worksheet")
+        temp_sh.api.AutoFilter.Range.Copy()
         ws2.api.Paste()
         ###logger.info("Applying Autofit")
         ws2.autofit()
 
+        try:
+            wb.sheets["Temporary_Sheet"].delete()
+        except:
+            pass
+        
         ###logger.info("Declaring Variables for columns and rows")
         column_list = ws1.range("A1").expand('right').value
         Customer_column = num_to_col_letters(column_list.index('Customer')+1)
@@ -4593,8 +4620,8 @@ def ctm(input_date, output_date):
             if excl_sht.range(f'I{num_row}').value.upper()!="EQUIP":
                 excl_sht.range(f"{num_row}:{num_row}").delete()                   
         except Exception as e:
-         print("No (INTER-COMPANY PURCH/SALES) Present ")
-         print(e) 
+            print("No (INTER-COMPANY PURCH/SALES) Present ")
+            print(e)
 
         
 
