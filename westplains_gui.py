@@ -4931,14 +4931,21 @@ def mtm_report(input_date, output_date):
 
 def open_ar(input_date, output_date):
     try:
-        input_sheet = drive+r'\REPORT\Open AR\Raw files'+f'\\Open AR _{input_date} - Production.xlsx' 
+        
+        # input_sheet = drive+r'\REPORT\Open AR\Raw files'+f'\\Open AR _{input_date} - Production.xlsx' 
+        # prev_output=drive+r'\REPORT\Open AR\Output files'+f'\\Open AR _{output_date} - Production.xlsx'
+        
+        # for Debug Purpose
+        input_sheet = f'Backups\open_ar\Open AR _{input_date} - Production.xlsx' 
+        prev_output = f'Backups\Output\Open AR _{output_date} - Production.xlsx'
+        output_location = f'Backups\Output'  
+        
         if not os.path.exists(input_sheet):
             return(f"{input_sheet} Excel file not present for date {input_date}")
-        prev_output=drive+r'\REPORT\Open AR\Output files'+f'\\Open AR _{output_date} - Production.xlsx'
         if not os.path.exists(prev_output):
             return(f"{prev_output} Excel file not present for date {output_date}")  
 
-        output_location = drive+r'\REPORT\Open AR\Output files'  
+        # output_location = drive+r'\REPORT\Open AR\Output files'  
         prev_month = datetime.strftime(datetime.strptime(input_date, "%m.%d.%Y"), "%B")
         ##logger.info("Opening operating workbook instance of excel")
         retry=0
@@ -4973,15 +4980,47 @@ def open_ar(input_date, output_date):
         Total_AR_data = ws1.range(f"{Total_AR_letter_column}1").expand('down').value
 
 
-        ##logger.info("Applying Filter to the same workbook")
-        ws1.api.Range(f"{Customer_letter_column}1").AutoFilter(Field:=f'{Customer_no_column}', Criteria1:=["<>MACQUARIE COMMODITIES (USA) INC."], Operator:=1,Criteria2=["<>INTER-COMPANY PURCH/SALES"])
+        #======================================Creating temporary sheet
+        wb.sheets.add("Temporary_Sheet",after=wb.sheets[f"Open AR _{input_date} - Productio"]) 
+        temp_sh=wb.sheets["Temporary_Sheet"]
+        temp_sh.cells.clear_contents()
+        
+        ##=====================================Add Data To temp Sheet
+        ws1.api.Range(f"{Customer_letter_column}1").AutoFilter(Field:=f'{Customer_no_column}', Criteria1:=["<>MACQUARIE BANK LIMITED"], Operator:=1, Criteria2:=["<>INTER-COMPANY PURCH/SALES"])
         ws1.api.Range(f"{Location_letter_column}1").AutoFilter(Field:=f'{Location_no_column}', Criteria1:=["<>WPMEXICO"], Operator:=1)
         ws1.api.Range(f"{Total_AR_letter_column}1").AutoFilter(Field:=f'{Total_AR_no_column}', Criteria1:="<>0", Operator:=1)
-        ##logger.info("Copying and pasting Worksheet")
+        ###logger.info("Copying and pasting Worksheet")
         ws1.api.AutoFilter.Range.Copy()
+        temp_sh.api.Paste()
+        ###logger.info("Applying Autofit")
+        temp_sh.autofit()
+        
+        # ===================================Add Data to Excl Macq & IC and delete temp sheet
+        ###logger.info("Applying Filter to the same workbook")
+        temp_sh.api.Range(f"{Customer_letter_column}1").AutoFilter(Field:=f'{Customer_no_column}', Criteria1:=["<>MACQUARIE COMMODITIES (USA) INC."], Operator:=1,Criteria2=["<>INTER-COMPANY PURCH/SALES"])
+        temp_sh.api.Range(f"{Location_letter_column}1").AutoFilter(Field:=f'{Location_no_column}', Criteria1:=["<>WPMEXICO"], Operator:=1)
+        temp_sh.api.Range(f"{Total_AR_letter_column}1").AutoFilter(Field:=f'{Total_AR_no_column}', Criteria1:="<>0", Operator:=1)
+        ###logger.info("Copying and pasting Worksheet")
+        temp_sh.api.AutoFilter.Range.Copy()
         ws2.api.Paste()
-        ##logger.info("Applying Autofit")
+        ###logger.info("Applying Autofit")
         ws2.autofit()
+
+        try:
+            wb.sheets["Temporary_Sheet"].delete()
+        except:
+            pass
+        
+        
+        # ##logger.info("Applying Filter to the same workbook")
+        # ws1.api.Range(f"{Customer_letter_column}1").AutoFilter(Field:=f'{Customer_no_column}', Criteria1:=["<>MACQUARIE COMMODITIES (USA) INC."], Operator:=1,Criteria2=["<>INTER-COMPANY PURCH/SALES"])
+        # ws1.api.Range(f"{Location_letter_column}1").AutoFilter(Field:=f'{Location_no_column}', Criteria1:=["<>WPMEXICO"], Operator:=1)
+        # ws1.api.Range(f"{Total_AR_letter_column}1").AutoFilter(Field:=f'{Total_AR_no_column}', Criteria1:="<>0", Operator:=1)
+        # ##logger.info("Copying and pasting Worksheet")
+        # ws1.api.AutoFilter.Range.Copy()
+        # ws2.api.Paste()
+        # ##logger.info("Applying Autofit")
+        # ws2.autofit()
 
         ##logger.info("Declaring Variables for columns and rows")
         column_list = ws1.range("A1").expand('right').value
