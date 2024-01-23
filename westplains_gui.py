@@ -4932,20 +4932,20 @@ def mtm_report(input_date, output_date):
 def open_ar(input_date, output_date):
     try:
         
-        # input_sheet = drive+r'\REPORT\Open AR\Raw files'+f'\\Open AR _{input_date} - Production.xlsx' 
-        # prev_output=drive+r'\REPORT\Open AR\Output files'+f'\\Open AR _{output_date} - Production.xlsx'
+        input_sheet = drive+r'\REPORT\Open AR\Raw files'+f'\\Open AR _{input_date} - Production.xlsx' 
+        prev_output=drive+r'\REPORT\Open AR\Output files'+f'\\Open AR _{output_date} - Production.xlsx'
         
         # for Debug Purpose
-        input_sheet = f'Backups\open_ar\Open AR _{input_date} - Production.xlsx' 
-        prev_output = f'Backups\Output\Open AR _{output_date} - Production.xlsx'
-        output_location = f'Backups\Output'  
+        # input_sheet = f'Backups\open_ar\Open AR _{input_date} - Production.xlsx' 
+        # prev_output = f'Backups\Output\Open AR _{output_date} - Production.xlsx'
+        # output_location = f'Backups\Output'  
         
         if not os.path.exists(input_sheet):
             return(f"{input_sheet} Excel file not present for date {input_date}")
         if not os.path.exists(prev_output):
             return(f"{prev_output} Excel file not present for date {output_date}")  
 
-        # output_location = drive+r'\REPORT\Open AR\Output files'  
+        output_location = drive+r'\REPORT\Open AR\Output files'  
         prev_month = datetime.strftime(datetime.strptime(input_date, "%m.%d.%Y"), "%B")
         ##logger.info("Opening operating workbook instance of excel")
         retry=0
