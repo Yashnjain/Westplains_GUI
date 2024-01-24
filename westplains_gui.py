@@ -5495,6 +5495,12 @@ def open_ap(input_date, output_date):
     try:
         input_sheet = drive+r'\REPORT\Open AP\Raw files'+f'\\Open AP _{input_date}.xlsx' 
         output_location = drive+r'\REPORT\Open AP\Output files'
+        
+        # For debug purpose 
+        # input_sheet = 'Backups\open ap\Raw files'+f'\\Open AP _{input_date}.xlsx' 
+        # output_location = 'Backups\open ap\Output files'
+        
+        
         if not os.path.exists(input_sheet):
             return(f"{input_sheet} Excel file not present for date {input_date}")
         #logger.info("Opening operating workbook instance of excel")
@@ -5509,28 +5515,54 @@ def open_ap(input_date, output_date):
                 if retry ==9:
                     raise e
         #logger.info("Adding sheet to the same workbook")
+        
         wb.sheets.add("EXCLUDING",after=wb.sheets[f"Open AP _{input_date}"]) 
         #logger.info("Accessing Particular WorkBook ")
         ws1=wb.sheets[f"Open AP _{input_date}"]
         ws2=wb.sheets["EXCLUDING"]
         #logger.info("Declaring Variables for columns and rows")
+        
+        ## Getting Column Indexes
         last_row = ws1.range(f'A'+ str(ws1.cells.last_cell.row)).end('up').row
         column_list = ws1.range("A1").expand('right').value
         Vendor_no_column=column_list.index('Vendor')+1
         Vendor_letter_column = num_to_col_letters(column_list.index('Vendor')+1)
         Location_no_column=column_list.index('Location')+1
         Location_letter_column = num_to_col_letters(column_list.index('Location')+1)
-        #logger.info("Applying Filter to the same workbook")
-        ws1.api.Range(f"{Vendor_letter_column}1").AutoFilter(Field:=f'{Vendor_no_column}', Criteria1:=["<>MACQUARIE COMMODITIES (USA) INC."], Operator:=1,Criteria2=["<>INTER-COMPANY PURCH/SALES"])
+        
+        #======================================Creating temporary sheet
+        wb.sheets.add("Temporary_Sheet",after=wb.sheets[f"Open AP _{input_date}"]) 
+        temp_sh=wb.sheets["Temporary_Sheet"]
+        temp_sh.cells.clear_contents()
+        
+        ##======================================= Add Data To temp Sheet
+        ws1.api.Range(f"{Vendor_letter_column}1").AutoFilter(Field:=f'{Vendor_no_column}', Criteria1:=["<>MACQUARIE BANK LIMITED"], Operator:=1, Criteria2:=["<>INTER-COMPANY PURCH/SALES"])
         ws1.api.Range(f"{Location_letter_column}1").AutoFilter(Field:=f'{Location_no_column}', Criteria1:=["<>WPMEXICO"], Operator:=1)
-        #logger.info("Copying and pasting Worksheet")
+        
+        ###logger.info("Copying and pasting Worksheet")
         ws1.api.AutoFilter.Range.Copy()
+        temp_sh.api.Paste()
+        ###logger.info("Applying Autofit")
+        temp_sh.autofit()
+        #======================================== Copy Data from Temp sheet to Excl Macq TC sheet removing Macuqarie Bank
+        
+        #logger.info("Applying Filter to the same workbook")
+        temp_sh.api.Range(f"{Vendor_letter_column}1").AutoFilter(Field:=f'{Vendor_no_column}', Criteria1:=["<>MACQUARIE COMMODITIES (USA) INC."], Operator:=1,Criteria2=["<>INTER-COMPANY PURCH/SALES"])
+        temp_sh.api.Range(f"{Location_letter_column}1").AutoFilter(Field:=f'{Location_no_column}', Criteria1:=["<>WPMEXICO"], Operator:=1)
+        #logger.info("Copying and pasting Worksheet")
+        temp_sh.api.AutoFilter.Range.Copy()
         ws2.api.Paste()
         #logger.info("Renaming the worksheet")
         ws2.name='Excl Macq & IC'
         #logger.info("Applying autofit")
         ws2.autofit()
         ws2=wb.sheets['Excl Macq & IC']
+        
+        ## Delete the Temp Sheet As it no longer neededd
+        try:
+            wb.sheets["Temporary_Sheet"].delete()
+        except:
+            pass
 
         #logger.info("Declaring Variables for columns and rows")
         column_list = ws1.range("A1").expand('right').value
@@ -5686,10 +5718,10 @@ def open_ap(input_date, output_date):
         ####logger.info("Creating Pivot table") 
         PivotCache=wb.api.PivotCaches().Create(SourceType=win32c.PivotTableSourceType.xlDatabase, SourceData=f'\'{ws1.name}\'!R1C1:R{last_row}C{last_col_num}', Version=win32c.PivotTableVersionList.xlPivotTableVersion14) 
         PivotTable = PivotCache.CreatePivotTable(TableDestination="'For allocation entry'!R3C1", TableName="PivotTable1", DefaultVersion=win32c.PivotTableVersionList.xlPivotTableVersion14)
-         ####logger.info("Adding particular Row in Pivot Table") 
+        ####logger.info("Adding particular Row in Pivot Table") 
         PivotTable.PivotFields('Location').Orientation = win32c.PivotFieldOrientation.xlRowField
         PivotTable.PivotFields('Invoice Balance').Orientation = win32c.PivotFieldOrientation.xlDataField
-         # PivotTable.PivotFields('Sum of Net').NumberFormat= '0.00'
+        # PivotTable.PivotFields('Sum of Net').NumberFormat= '0.00'
 
         #logger.info("Saving current worksheet")
 
