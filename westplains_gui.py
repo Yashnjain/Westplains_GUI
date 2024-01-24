@@ -4989,10 +4989,8 @@ def open_ar(input_date, output_date):
         ws1.api.Range(f"{Customer_letter_column}1").AutoFilter(Field:=f'{Customer_no_column}', Criteria1:=["<>MACQUARIE BANK LIMITED"], Operator:=1, Criteria2:=["<>INTER-COMPANY PURCH/SALES"])
         ws1.api.Range(f"{Location_letter_column}1").AutoFilter(Field:=f'{Location_no_column}', Criteria1:=["<>WPMEXICO"], Operator:=1)
         ws1.api.Range(f"{Total_AR_letter_column}1").AutoFilter(Field:=f'{Total_AR_no_column}', Criteria1:="<>0", Operator:=1)
-        ###logger.info("Copying and pasting Worksheet")
         ws1.api.AutoFilter.Range.Copy()
         temp_sh.api.Paste()
-        ###logger.info("Applying Autofit")
         temp_sh.autofit()
         
         # ===================================Add Data to Excl Macq & IC and delete temp sheet
@@ -5744,6 +5742,11 @@ def unsetteled_payables(input_date, output_date):
         input_xl = drive+r'\REPORT\Unsettled Payables\Raw Files\Unsettled Payables _'+input_date+".xlsx"
         output_location = drive+r'\REPORT\Unsettled Payables\Output files\Unsettled Payables _'+input_date+".xlsx"
         
+        # For debug purpose 
+        # input_xl = r'Backups\Unsettled Payables\Raw Files\Unsettled Payables _'+input_date+".xlsx"
+        # output_location = r'Backups\Unsettled Payables\Output files\Unsettled Payables _'+input_date+".xlsx"
+        
+        
         if not os.path.exists(input_xl):
             return(f"Excel file not present for date {input_date}")
 
@@ -5782,17 +5785,30 @@ def unsetteled_payables(input_date, output_date):
         locationId_column = num_to_col_letters(column_list.index('Location Id')+1)
         locationId_column_num = column_list.index('Location Id')+1
         
-
+        
+        #======================================Creating temporary sheet
+        wb.sheets.add("Temporary_Sheet",after=inp_sht) 
+        temp_sh=wb.sheets["Temporary_Sheet"]
+        temp_sh.cells.clear_contents()
+        
+        ##======================================= Add Data To temp Sheet
         inp_sht.api.AutoFilterMode=False
+        inp_sht.api.Range(f"{vendor_column}1").AutoFilter(Feild:=vendor_column_num,Criteria1:="<>MACQUARIE BANK LIMITED", Operator:=1, Criteria2:="<>INTER-COMPANY PURCH/SALES")
+        inp_sht.api.Range(f"{locationId_column}1").AutoFilter(Feild:=locationId_column_num,Criteria1:="<>WPMEXICO", Operator:=7)
+        inp_sht.api.AutoFilter.Range.Copy()
+        temp_sh.api.Paste()
+        temp_sh.autofit()
+        
+        # ========================================== Add Data to excl macq sheet
+        temp_sh.api.AutoFilterMode=False
         #######logger.info("Removing  MACQUARIE COMMODITIES (USA) INC. and all INTER-COMPANY PURCH/SALES vendor")
-        inp_sht.api.Range(f"{vendor_column}1").AutoFilter(Feild:=vendor_column_num,Criteria1:="<>MACQUARIE COMMODITIES (USA) INC", Operator:=1, Criteria2:="<>INTER-COMPANY PURCH/SALES") #Removing macquarie and intercompany
+        temp_sh.api.Range(f"{vendor_column}1").AutoFilter(Feild:=vendor_column_num,Criteria1:="<>MACQUARIE COMMODITIES (USA) INC", Operator:=1, Criteria2:="<>INTER-COMPANY PURCH/SALES") #Removing macquarie and intercompany
         #######logger.info("Removing WPMEXICO Location ID")
-        inp_sht.api.Range(f"{locationId_column}1").AutoFilter(Feild:=locationId_column_num,Criteria1:="<>WPMEXICO", Operator:=7) #Removing WPMEXICO
+        temp_sh.api.Range(f"{locationId_column}1").AutoFilter(Feild:=locationId_column_num,Criteria1:="<>WPMEXICO", Operator:=7) #Removing WPMEXICO
         #######logger.info("Creating Excl IC & Macq and pasting data")
 
-        
         exc_sht = wb.sheets.add("Excl Macq & IC", after=inp_sht)
-        inp_sht.api.AutoFilter.Range.Copy()
+        temp_sh.api.AutoFilter.Range.Copy()
         time.sleep(1)
         exc_sht.api.Select()
         exc_sht.range("A1").api.Select()
@@ -5803,6 +5819,12 @@ def unsetteled_payables(input_date, output_date):
             except:
                 time.sleep(1)
 
+        ## Delete the Temp Sheet As it no longer neededd
+        try:
+            wb.sheets["Temporary_Sheet"].delete()
+        except:
+            pass
+        
         wb.app.api.CutCopyMode=False
 
         #######logger.info("Copying Inter Company Data from inp sheet  to Intercompany Sheet")
