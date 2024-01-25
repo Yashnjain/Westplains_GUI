@@ -5902,23 +5902,26 @@ def unsetteled_payables(input_date, output_date):
 def unsetteled_receivables(input_date, output_date):
     try:
         
-
         input_xl = drive+r'\REPORT\Unsettled Receivables\Raw Files\Unsettled Receivables _'+input_date+".xlsx"
         prev_output_location = drive+r'\REPORT\Unsettled Receivables\Output files\Unsettled Receivables _'+output_date+".xlsx"
         output_location = drive+r'\REPORT\Unsettled Receivables\Output files\Unsettled Receivables _'+input_date+".xlsx"
+        
+        # # For debug purpose 
+        # input_xl = r'Backups\Unsettled Receivables\Raw Files\Unsettled Receivables _'+input_date+".xlsx"
+        # prev_output_location = r'Backups\Unsettled Receivables\Output files\Unsettled Receivables _'+output_date+".xlsx"
+        # output_location = r'Backups\Unsettled Receivables\Output files\Unsettled Receivables _'+input_date+".xlsx"
         
         if not os.path.exists(input_xl):
             return(f"{input_xl} Excel file not present for date {input_date}")
 
         if not os.path.exists(prev_output_location):
-            return(f"{prev_output_location} Excel file not present for date {input_date}")
+            return(f"{prev_output_location} Excel file not present for date {output_date}")
 
         # if not os.path.exists(output_location):
         #     return(f"{output_location} Excel file not present for date {input_date}")
         
         
         prev_month = datetime.strftime(datetime.strptime(input_date, "%m.%d.%Y"), "%B")
-        
         
         retry=0
         while retry<10:
@@ -5944,10 +5947,6 @@ def unsetteled_receivables(input_date, output_date):
                 # retry+=1
                 # if retry==9:
                 #     raise e
-        
-
-        # inp_sht.range('AB2').formula = '=O2+Q2'
-        
 
         column_list = inp_sht.range("A1").expand('right').value
         vendor_column = num_to_col_letters(column_list.index('Customer/Vendor Name')+1)
@@ -5955,18 +5954,29 @@ def unsetteled_receivables(input_date, output_date):
         locationId_column = num_to_col_letters(column_list.index('Location Id')+1)
         locationId_column_num = column_list.index('Location Id')+1
         
-
+        #====================================== Creating temporary sheet
+        wb.sheets.add("Temporary_Sheet",after=inp_sht) 
+        temp_sh=wb.sheets["Temporary_Sheet"]
+        temp_sh.cells.clear_contents()
         
+        ##======================================= Add Data To temp Sheet
         inp_sht.api.AutoFilterMode=False
+        inp_sht.api.Range(f"{vendor_column}1").AutoFilter(Feild:=vendor_column_num,Criteria1:="<>MACQUARIE BANK LIMITED", Operator:=1, Criteria2:="<>INTER-COMPANY PURCH/SALES")
+        inp_sht.api.Range(f"{locationId_column}1").AutoFilter(Feild:=locationId_column_num,Criteria1:="<>WPMEXICO", Operator:=7)
+        inp_sht.api.AutoFilter.Range.Copy()
+        temp_sh.api.Paste()
+        temp_sh.autofit()
+        
+        ## ======================================== Add Data from temp sheet to exclude sheet
+        temp_sh.api.AutoFilterMode=False
         ######logger.info("Removing  MACQUARIE COMMODITIES (USA) INC. and all INTER-COMPANY PURCH/SALES vendor")
-        inp_sht.api.Range(f"{vendor_column}1").AutoFilter(Feild:=vendor_column_num,Criteria1:="<>MACQUARIE COMMODITIES (USA) INC", Operator:=1, Criteria2:="<>INTER-COMPANY PURCH/SALES") #Removing macquarie and intercompany
+        temp_sh.api.Range(f"{vendor_column}1").AutoFilter(Feild:=vendor_column_num,Criteria1:="<>MACQUARIE COMMODITIES (USA) INC", Operator:=1, Criteria2:="<>INTER-COMPANY PURCH/SALES") #Removing macquarie and intercompany
         ######logger.info("Removing WPMEXICO Location ID")
-        inp_sht.api.Range(f"{locationId_column}1").AutoFilter(Feild:=locationId_column_num,Criteria1:="<>WPMEXICO", Operator:=7) #Removing WPMEXICO
+        temp_sh.api.Range(f"{locationId_column}1").AutoFilter(Feild:=locationId_column_num,Criteria1:="<>WPMEXICO", Operator:=7) #Removing WPMEXICO
         ######logger.info("Creating Excl IC & Macq and pasting data")
 
-        
         exc_sht = wb.sheets.add("Excl Macq & IC", after=inp_sht)
-        inp_sht.api.AutoFilter.Range.Copy()
+        temp_sh.api.AutoFilter.Range.Copy()
         time.sleep(1)
         exc_sht.api.Select()
         exc_sht.range("A1").api.Select()
@@ -5977,6 +5987,12 @@ def unsetteled_receivables(input_date, output_date):
             except:
                 time.sleep(1)
 
+        ## Delete the Temp Sheet As it no longer neededd
+        try:
+            wb.sheets["Temporary_Sheet"].delete()
+        except:
+            pass
+        
         wb.app.api.CutCopyMode=False
 
         ######logger.info("Copying Inter Company Data from inp sheet  to Intercompany Sheet")
@@ -6448,7 +6464,7 @@ def fifo(input_date, output_date):
             # wb.app.selection.value = 0
             wb.app.selection.delete()
             inp_sht.api.AutoFilterMode=False
-           
+        
             if loc == "HRW":
                 inp_sht.api.Range(f"{unit_cost_col}2").AutoFilter(Field:=unit_cost_col_num,Criteria1:="<=1.7")
             else:
@@ -9308,14 +9324,14 @@ def weekly_estimate(input_date, output_date):
         basis_wb.activate()
         basis_sheet.activate()
         basis_sheet.api.Cells.Find(What:="CORN", After:=basis_sheet.api.Application.ActiveCell,LookIn:=win32c.FindLookIn.xlFormulas,
-                                   LookAt:=win32c.LookAt.xlPart, SearchOrder:=win32c.SearchOrder.xlByRows, SearchDirection:=win32c.SearchDirection.xlNext).Activate()
+                                LookAt:=win32c.LookAt.xlPart, SearchOrder:=win32c.SearchOrder.xlByRows, SearchDirection:=win32c.SearchDirection.xlNext).Activate()
         corn_cell_value = basis_sheet.api.Application.ActiveCell.Address.replace("$","")
         corn_df = basis_sheet.range(f"{corn_cell_value}").expand('table').options(pd.DataFrame,header=1,index=False).value
         corn_df = corn_df[["Location", monthYear]]
         corn_dict = corn_df.set_index("Location")[monthYear].to_dict()
         ###HRW Location dict logic
         basis_sheet.api.Cells.Find(What:="HRW", After:=basis_sheet.api.Application.ActiveCell,LookIn:=win32c.FindLookIn.xlFormulas,
-                                   LookAt:=win32c.LookAt.xlPart, SearchOrder:=win32c.SearchOrder.xlByRows, SearchDirection:=win32c.SearchDirection.xlNext).Activate()
+                                LookAt:=win32c.LookAt.xlPart, SearchOrder:=win32c.SearchOrder.xlByRows, SearchDirection:=win32c.SearchDirection.xlNext).Activate()
         hrw_cell_value = basis_sheet.api.Application.ActiveCell.Address.replace("$","")
         hrw_df = basis_sheet.range(f"{hrw_cell_value}").expand('table').options(pd.DataFrame,header=1,index=False).value
         hrw_df = hrw_df[["Location", monthYear]]
@@ -9444,8 +9460,8 @@ def weekly_estimate(input_date, output_date):
         macq_m_end_je_sht.activate()
         #1st Pivot
         macq_wb.api.ActiveSheet.PivotTables("PivotTable1").ChangePivotCache(macq_wb.api.PivotCaches().Create(SourceType=win32c.PivotTableSourceType.xlDatabase,
-                                                 SourceData= f"'{macq_date_sht.name}'!R{open_repo_row}C1:R{open_repo_last_row}C42",
-                                                 Version=8))
+                                                SourceData= f"'{macq_date_sht.name}'!R{open_repo_row}C1:R{open_repo_last_row}C42",
+                                                Version=8))
         # macq_wb.api.ActiveSheet.PivotTables(1).PivotCache().SourceData = f"'{macq_date_sht.name}'!R{open_repo_row}C1:R{open_repo_last_row}C42"
         macq_wb.api.ActiveSheet.PivotTables("PivotTable1").PivotCache().Refresh()
         #2nd Pivot
@@ -9470,7 +9486,7 @@ def weekly_estimate(input_date, output_date):
                         f'=IF(GETPIVOTDATA("CURRENT MONTH GROSS INTEREST",$B$last_row)=SUM(\'{macq_date_sht.name}\'!AB9:AB42),"TRUE","FALSE")'
                         ]
         finder_list = ['**MONTH END STORAGE ACCRUAL ON OPEN REPOS (REVERSING)', '**MONTH END STORAGE ON CURRENT MONTH BUYBACKS (NONREVERSING)',
-                       '**MONTH END REPO INV. & LIAB (REV ENTRY)', '**MONTH END REPO INTEREST RECLASS (NR ENTRY)']
+                    '**MONTH END REPO INV. & LIAB (REV ENTRY)', '**MONTH END REPO INTEREST RECLASS (NR ENTRY)']
         for finder in range(len(finder_list)):
 
             macq_wb.api.ActiveSheet.PivotTables(f"PivotTable{finder+1}").PivotSelect("",win32c.PTSelectionMode.xlDataAndLabel,True)
