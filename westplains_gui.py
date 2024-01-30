@@ -8780,7 +8780,9 @@ def open_ar_monthly(input_date, output_date):
         input_sheet2= drive+r'\REPORT\Open AR New\Raw Files'+f'\\Profile.xls'
         
         # For Debug Purpose
-        
+        # drive = os.getcwd()
+        # input_sheet = drive+r'\Backups\Open AR New\Raw Files'+f'\\Open AR_{input_date}.xlsx'
+        # input_sheet2= drive+r'\Backups\Open AR New\Raw Files'+f'\\Profile.xls'
         
         if not os.path.exists(input_sheet):
             return(f"{input_sheet} Excel file not present for date {input_date}")
@@ -8804,7 +8806,8 @@ def open_ar_monthly(input_date, output_date):
         Location_column_letter=num_to_col_letters(Location_column_no)
         last_row = input_tab.range(f'A'+ str(input_tab.cells.last_cell.row)).end('up').row
         last_column_letter=num_to_col_letters(input_tab.range('A1').end('right').last_cell.column)
-        dict1={"MACQUARIE COMMODITIES (USA) INC.":[Customer_Name_column_no,Customer_Name_column_letter],"INTER-COMPANY PURCH/SALES":[Customer_Name_column_no,Customer_Name_column_letter],"WPMEXICO":[Location_column_no,Location_column_letter]}
+        dict1={"MACQUARIE COMMODITIES (USA) INC.":[Customer_Name_column_no,Customer_Name_column_letter],"INTER-COMPANY PURCH/SALES":[Customer_Name_column_no,Customer_Name_column_letter],"WPMEXICO":[Location_column_no,Location_column_letter],"MACQUARIE BANK LIMITED":[Customer_Name_column_no,Customer_Name_column_letter]}
+        
         for key, value in dict1.items():
             try:
                 input_tab.api.Range(f"{value[1]}1").AutoFilter(Field:=f'{value[0]}', Criteria1:=[key], Operator:=7)
