@@ -299,7 +299,7 @@ def mtd_new_trades(input_date, output_date):
         column_list = gs_sheet.range("A1").expand('right').value
         edate_cl_no = column_list.index('End Date')+1
         pivotCount = template_wb.api.ActiveSheet.PivotTables().Count
-         # 'INPUT DATA'!$A$3:$I$86
+        # 'INPUT DATA'!$A$3:$I$86
         for j in range(1, pivotCount+1):
             # if template_wb.api.ActiveSheet.PivotTables(j).PivotCache().SourceData != f"'INPUT DATA'!R3C1:R{num_row}C{num_col}": #Updateing data source
             template_wb.api.ActiveSheet.PivotTables(j).PivotCache().SourceData = f"'GS QUERY'!R1C{edate_cl_no}:R{sale_last_rw + purchase_last_rw - 1}C{edate_cl_no}" #Updateing data source
@@ -368,7 +368,7 @@ def mtd_new_trades(input_date, output_date):
                 str1+=f' - Option month not found for row:{row}\n'
                 print(f"Option month value not found for row :: {row}")
                 interior_coloring_temp(49407,f'BU{row}',gs_sheet,template_wb)
-                continue   
+                continue
             year = "2" + text[1]
             mnth = option_mnt_dict[text[0]]
             price_flag = False
@@ -387,7 +387,7 @@ def mtd_new_trades(input_date, output_date):
                                     LookAt:=win32c.LookAt.xlWhole, SearchOrder:=win32c.SearchOrder.xlByRows, SearchDirection:=win32c.SearchDirection.xlNext).Activate()                        
 
                 price_row = pricing_sheet.api.Application.ActiveCell.Row
-
+                
                 pricing_sheet.api.Range(f"B{first_row}").Activate()
                 try: 
                     pricing_sheet.api.Cells.Find(What:=matching_mnth, After:=pricing_sheet.api.Application.ActiveCell,LookIn:=win32c.FindLookIn.xlFormulas,
@@ -400,8 +400,8 @@ def mtd_new_trades(input_date, output_date):
                         pricing_sheet.api.Cells.Find(What:=matching_mnth, After:=pricing_sheet.api.Application.ActiveCell,LookIn:=win32c.FindLookIn.xlFormulas,
                         LookAt:=win32c.LookAt.xlPart, SearchOrder:=win32c.SearchOrder.xlByColumns, SearchDirection:=win32c.SearchDirection.xlNext).Activate()
                         price_column = num_to_col_letters(pricing_sheet.api.Application.ActiveCell.Column)  
-                    else:    
-                        continue      
+                    else:
+                        continue
                 if pricing_sheet.range(f'{price_column}{price_row}').value !=None:
                     actual_price = pricing_sheet.range(f'{price_column}{price_row}').value
                     gs_sheet.activate()
@@ -468,22 +468,35 @@ def ar_exposure(input_date, output_date):
     try:
         # drive= r"C:\Users\amanullah.khan\OneDrive - BioUrja Trading LLC\p drive backup\projects\westplains_gui\AR Exposure Files"      
         job_name = 'ar_exposure_automation'
+        
+        #======================================for debugging purpose=============================================================
+        # drive = os.getcwd()+r"\Backups"
+        # input_sheet2 = drive+r'\AR EXPOSURE\Output'+f'\\Open AR_{output_date}.xlsx'
+        # input_sheet= drive+r'\AR EXPOSURE\Output'+f'\\Unsettled AR_{output_date}.xlsx'
+        # ap_ar_template = drive+r'\AR EXPOSURE'+f'\\WPLLC - AP_AR_Template.xlsx'
+        # ar_exposure_template = drive+r'\AR EXPOSURE'+f'\\WPLLC - AR Exposure_Template.xlsm'
+        # previous_sheet_ar_axposure = drive+r'\AR EXPOSURE\Output'+f'\\AR Exposure {output_date.replace(".","")}.xlsm'
+        # output_location = drive+r'\AR EXPOSURE\Ar_exposure_reports'
+        #======================================================================================================================== 
+        
         input_sheet2 = drive+r'\REPORT\AR EXPOSURE\Output'+f'\\Open AR_{output_date}.xlsx'
         input_sheet= drive+r'\REPORT\AR EXPOSURE\Output'+f'\\Unsettled AR_{output_date}.xlsx'
         ap_ar_template = drive+r'\REPORT\AR EXPOSURE'+f'\\WPLLC - AP_AR_Template.xlsx'
         ar_exposure_template = drive+r'\REPORT\AR EXPOSURE'+f'\\WPLLC - AR Exposure_Template.xlsm'
         previous_sheet_ar_axposure = drive+r'\REPORT\AR EXPOSURE\Output'+f'\\AR Exposure {output_date.replace(".","")}.xlsm'
-        output_location = drive+r'\REPORT\AR EXPOSURE\Ar_exposure_reports' 
+        output_location = drive+r'\REPORT\AR EXPOSURE\Ar_exposure_reports'
+        
+        
         if not os.path.exists(input_sheet):
             return(f"{input_sheet} Excel file not present for date {output_date}")
         if not os.path.exists(input_sheet2):
             return(f"{input_sheet2} Excel file not present for date {output_date}")   
         if not os.path.exists(ap_ar_template):
-            return(f"{ap_ar_template} Excel file not present")     
+            return(f"{ap_ar_template} Excel file not present")
         if not os.path.exists(ar_exposure_template):
             return(f"{ar_exposure_template} Excel file not present")
         if not os.path.exists(previous_sheet_ar_axposure):
-            return(f"{previous_sheet_ar_axposure} Excel file not present")                  
+            return(f"{previous_sheet_ar_axposure} Excel file not present")
         retry=0
         while retry < 10:
             try:
@@ -513,13 +526,13 @@ def ar_exposure(input_date, output_date):
         retry=0
         while retry < 10:
             try:
-                wb_ap_ar = xw.Book(ap_ar_template,update_links=False) 
+                wb_ap_ar = xw.Book(ap_ar_template,update_links=False)
                 break
             except Exception as e:
                 time.sleep(5)
                 retry+=1
                 if retry ==10:
-                    raise e 
+                    raise e
 
         ws2p2=wb_ap_ar.sheets["Pivot AR summary new"] 
         ws2p2.activate()
@@ -533,7 +546,7 @@ def ar_exposure(input_date, output_date):
                 time.sleep(5)
                 retry+=1
                 if retry ==10:
-                    raise e 
+                    raise e
         credit_over_utilized_tab=ar_exposure_wb.sheets["Credit Over Utilized"]
         credit_over_utilized_tab.activate()
         coulast_row = credit_over_utilized_tab.range(f'A'+ str(credit_over_utilized_tab.cells.last_cell.row)).end('up').row
@@ -753,7 +766,7 @@ def ar_exposure(input_date, output_date):
                 time.sleep(5)
                 retry+=1
                 if retry ==10:
-                    raise e 
+                    raise e
         pre_open_ar = pre_ar_exposure_wb.sheets["Open AR"]           
         pre_open_ar.activate()
         last_row_o_ar_pre = pre_open_ar.range(f'A'+ str(pre_open_ar.cells.last_cell.row)).end('up').row
@@ -1139,6 +1152,8 @@ def ar_exposure(input_date, output_date):
 def ar_reports_exposure(input_date, output_date):
     try:       
         job_name = 'exposure_ar_reports'
+        
+        
         input_sheet2 = drive+r'\REPORT\Ar_Exposure(Open AR,Unsettled AR)\Input'+f'\\Open AR_{input_date}.xlsx'
         input_sheet= drive+r'\REPORT\Ar_Exposure(Open AR,Unsettled AR)\Input'+f'\\Unsettled AR_{input_date}.xlsx'
         previous_sheet_unsettled= drive+r'\REPORT\Ar_Exposure(Open AR,Unsettled AR)\Output'+f'\\Unsettled AR_{output_date}.xlsx'
@@ -1146,6 +1161,18 @@ def ar_reports_exposure(input_date, output_date):
         ap_ar_template = drive+r'\REPORT\Ar_Exposure(Open AR,Unsettled AR)'+f'\\WPLLC - AP_AR_Template.xlsx'
         output_location = drive+r'\REPORT\AR EXPOSURE' 
         output_location2 = drive+r'\REPORT\AR EXPOSURE\Output'
+        
+        #========================for debug purpose======================================
+        # drive = os.getcwd()+r"\Backups"
+        # input_sheet2 = drive+r'\Ar_Exposure(Open AR,Unsettled AR)\Input'+f'\\Open AR_{input_date}.xlsx'
+        # input_sheet= drive+r'\Ar_Exposure(Open AR,Unsettled AR)\Input'+f'\\Unsettled AR_{input_date}.xlsx'
+        # previous_sheet_unsettled= drive+r'\Ar_Exposure(Open AR,Unsettled AR)\Output'+f'\\Unsettled AR_{output_date}.xlsx'
+        # ticket_summary_sheet = drive+r'\Ar_Exposure(Open AR,Unsettled AR)\Summary_sheet'+f'\\ticket query elevator 2015.xlsx'
+        # ap_ar_template = drive+r'\Ar_Exposure(Open AR,Unsettled AR)'+f'\\WPLLC - AP_AR_Template.xlsx'
+        # output_location = drive+r'\AR EXPOSURE' 
+        # output_location2 = drive+r'\AR EXPOSURE\Output'
+        #=============================================================================== 
+        
         if not os.path.exists(input_sheet):
             return(f"{input_sheet} Excel file not present for date {input_date}")
         if not os.path.exists(input_sheet2):
@@ -1251,7 +1278,7 @@ def ar_reports_exposure(input_date, output_date):
         last_row = input_tab.range(f'A'+ str(input_tab.cells.last_cell.row)).end('up').row
         input_tab.range(f"U2:U{last_row}").number_format="General"
         last_column_letter=num_to_col_letters(input_tab.range('A1').end('right').last_cell.column)
-        dict1={"MACQUARIE COMMODITIES (USA) INC.":[Customer_Name_column_no,Customer_Name_column_letter],"INTER-COMPANY PURCH/SALES":[Customer_Name_column_no,Customer_Name_column_letter],"WPMEXICO":[Location_column_no,Location_column_letter]}
+        dict1={"MACQUARIE COMMODITIES (USA) INC.":[Customer_Name_column_no,Customer_Name_column_letter],"INTER-COMPANY PURCH/SALES":[Customer_Name_column_no,Customer_Name_column_letter],"WPMEXICO":[Location_column_no,Location_column_letter],"MACQUARIE BANK LIMITED":[Customer_Name_column_no,Customer_Name_column_letter]}
         for key, value in dict1.items():
             try:
                 input_tab.api.Range(f"{value[1]}1").AutoFilter(Field:=f'{value[0]}', Criteria1:=[key], Operator:=7)
@@ -2633,7 +2660,7 @@ def ar_unsettled_by_tier(wb, unset_rec_loc, input_date):
         # sht = wb.sheets["AR-Trade By Tier - Eligible"]
         wb.api.ActiveSheet.PivotTables(1).PivotCache().SourceData = f"'J:\\WEST PLAINS\\REPORT\\Unsettled Receivables\\Output Files\\[Unsettled Receivables _{input_date}.xlsx]Excl Macq & IC'!R1C1:R{last_row}C36"
         
-          #f'Details!R1C1:R{len(new_rows)+1}C18' #Updateing data source
+        #f'Details!R1C1:R{len(new_rows)+1}C18' #Updateing data source
         wb.api.ActiveSheet.PivotTables(1).PivotCache().Refresh()
         for pf in wb.api.ActiveSheet.PivotTables(1).DataFields:
             pf.NumberFormat = '_("$"* #,##0.00_);_("$"* (#,##0.00);_("$"* "-"??_);_(@_)'
@@ -8747,8 +8774,14 @@ def unsettled_ar_by_location_part2(input_date, output_date):
 def open_ar_monthly(input_date, output_date):
     try:       
         job_name = 'open_ar_v2'
+        
+        
         input_sheet = drive+r'\REPORT\Open AR New\Raw Files'+f'\\Open AR_{input_date}.xlsx'
         input_sheet2= drive+r'\REPORT\Open AR New\Raw Files'+f'\\Profile.xls'
+        
+        # For Debug Purpose
+        
+        
         if not os.path.exists(input_sheet):
             return(f"{input_sheet} Excel file not present for date {input_date}")
         if not os.path.exists(input_sheet2):
@@ -8889,7 +8922,7 @@ def open_ar_monthly(input_date, output_date):
         wb.app.api.Selection.Value=0
         time.sleep(1)
         wb.app.api.ActiveSheet.ShowAllData()
-        print("ddd")        
+        print("ddd")
 
         wb.sheets.add("Pivot",after=input_tab)
         ###logger.info("Clearing contents for new sheet")
@@ -9198,7 +9231,7 @@ def weekly_estimate(input_date, output_date):
         receivable_last_column = num_to_col_letters(len(column_list))
         if receivable_last_column != "AE":
             return "Input Receivables column count change found, last column is not AE. Please fix and rerrun the job"
-               
+            
         inp_receivables_sht.api.AutoFilterMode=False
         ######logger.info("Removing  MACQUARIE COMMODITIES (USA) INC. and all INTER-COMPANY PURCH/SALES vendor")
         inp_receivables_sht.api.Range(f"{vendor_column}1").AutoFilter(Feild:=vendor_column_num,Criteria1:="<>MACQUARIE COMMODITIES (USA) INC", Operator:=1, Criteria2:="<>INTER-COMPANY PURCH/SALES") #Removing macquarie and intercompany
