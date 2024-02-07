@@ -7223,7 +7223,11 @@ def ctm_gl_entry_monthly(input_date, output_date):
         try:
             wb.api.ActiveSheet.PivotTables(1).PivotFields("Customer").PivotItems("MACQUARIE COMMODITIES (USA) INC.").Visible = False
         except Exception as e:
-            pass 
+            pass
+        try:
+            wb.api.ActiveSheet.PivotTables(1).PivotFields("Customer").PivotItems("MACQUARIE BANK LIMITED").Visible = False
+        except Exception as e:
+            pass
         try:
             wb.api.ActiveSheet.PivotTables(1).PivotFields("Location").PivotItems("WPMEXICO").Visible = False
         except Exception as e:
